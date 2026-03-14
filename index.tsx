@@ -7,6 +7,7 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { KeyboardProvider } from './contexts/KeyboardContext';
 
 import { AccessibilityProvider } from './contexts/AccessibilityContext';
+import ErrorBoundary from './components/Shared/ErrorBoundary';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -16,16 +17,18 @@ if (!rootElement) {
 const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
-    <AccessibilityProvider>
-      <ThemeProvider>
-        <ShopProvider>
-          <AuthProvider>
-            <KeyboardProvider>
-              <App />
-            </KeyboardProvider>
-          </AuthProvider>
-        </ShopProvider>
-      </ThemeProvider>
-    </AccessibilityProvider>
+    <ErrorBoundary>
+      <AccessibilityProvider>
+        <ThemeProvider>
+          <ShopProvider>
+            <AuthProvider>
+              <KeyboardProvider>
+                <App />
+              </KeyboardProvider>
+            </AuthProvider>
+          </ShopProvider>
+        </ThemeProvider>
+      </AccessibilityProvider>
+    </ErrorBoundary>
   </React.StrictMode>
 );
