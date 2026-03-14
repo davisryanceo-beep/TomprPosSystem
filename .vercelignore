@@ -1,0 +1,13 @@
+node_modules
+server/node_modules
+functions/node_modules
+mobile
+.firebase
+.vercel
+firebase_bin
+firebase-key.json
+firebase-key-dev.json
+pos_cafe.db
+.DS_Store
+functions
+dist

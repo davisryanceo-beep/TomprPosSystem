@@ -1,0 +1,7 @@
+﻿[dotenv@17.2.3] injecting env (4) from .env -- tip: ≡ƒ¢á∩╕Å  run anywhere with `dotenvx run -- yourcommand`
+------------------------------------------------
+Initializing Supabase Postgres connection
+URL: https://pthpxqzisshrcnjwwzlu.supabase.co
+------------------------------------------------
+Testing modifierGroups query...
+Testing modifiergroups query...

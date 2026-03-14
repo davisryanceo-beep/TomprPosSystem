@@ -1,0 +1,8 @@
+[
+  {
+    "code": "PGRST204",
+    "details": null,
+    "hint": null,
+    "message": "Could not find the 'modifierGroups' column of 'products' in the schema cache"
+  }
+]

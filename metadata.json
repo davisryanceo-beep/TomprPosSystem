@@ -1,0 +1,6 @@
+{
+  "name": "Amble Specialty Cafe",
+  "description": "A React-based coffee shop management system with Admin, Cashier, and Barista roles, featuring mock data management and Gemini API integration for content generation.",
+  "requestFramePermissions": [],
+  "prompt": ""
+}

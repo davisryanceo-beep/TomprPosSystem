@@ -1,0 +1,58 @@
+{
+  "users": [
+    {
+      "username": "globaladmin",
+      "password": "$2b$10$Jcqsrp.1HEXm6OQPnsCH5OVKun6.x99wQMIQXIr/jeE6OfQ6Lfi8q"
+    },
+    {
+      "username": "storeadmin",
+      "password": "$2b$10$XIamBvoZv.MKHGTA5ZVooOBMq4u0ZgHr0NSwLF89G3tA9844qgS/6"
+    },
+    {
+      "username": "cashier",
+      "password": "$2b$10$mizU/o/dBWtwmw1pjSzw.uMuhbcp1JRzKEXj37p1qC71ECEvJ3kzm"
+    },
+    {
+      "username": "barista",
+      "password": "$2b$10$Votfspg5V5oRe9IWoofDXeNrfgT/Eh.2d.Vk9De2wGmor40Tdq3Lu"
+    },
+    {
+      "username": "stockmanager",
+      "password": "$2b$10$mLJJjMlViRa0LOd.GE5tO.yR39hq0aONkSSSTPx5KLzntwVzPJtD."
+    },
+    {
+      "username": "solaceadmin",
+      "password": "$2a$10$9vKXK63NmXAiLVPTgVgSBuR32ud9TFoF9G8G93wGdCj5S/Hwug9vu"
+    },
+    {
+      "username": "minmin",
+      "password": "$2b$10$1eijav3XH0TUFQ8mw3otWOUMjFFbqnWycLqqB2ATXLRhsEZ/Cg94e"
+    },
+    {
+      "username": "try",
+      "password": "$2b$10$.0eAEr3CGW6dFrRqwyFzEuDLLjpZ0Gn22LbcmKfhNHMiIE4N6rN/K"
+    },
+    {
+      "username": "heng",
+      "password": "$2b$10$x822MaloW.uVC2HlxXuIZ.nu2d7l2QAdlwZXhrbKZX4kbsxGXCKeG"
+    },
+    {
+      "username": "solacecashier",
+      "password": "$2b$10$dgt.vDWIGl7ybAnnkkMxLuKVBB3rJj0kkCi0gye6kmHwUoZbUYwnC"
+    }
+  ],
+  "customers": [
+    {
+      "phoneNumber": "015743772",
+      "password": null
+    },
+    {
+      "phoneNumber": "077484575",
+      "password": "Kouch123()"
+    },
+    {
+      "phoneNumber": "015743372",
+      "password": "Kouch123()"
+    }
+  ]
+}
