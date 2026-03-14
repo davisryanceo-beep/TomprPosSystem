@@ -217,8 +217,8 @@ const App: React.FC = () => {
       if (STAMP_ONLY) {
         return <LoyaltyHome />;
       }
-      // Show homepage if no specific route
-      return <HomePage />;
+      // Default to POS login screen for the main domain
+      return <LoginScreen />;
     }
 
     // --- LOGGED IN FLOW ---

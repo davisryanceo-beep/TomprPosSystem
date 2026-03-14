@@ -1,5 +1,12 @@
 {
     "name": "poscafesystem",
+    "redirects": [
+        {
+            "source": "/stamp",
+            "destination": "https://tompr-stamp.vercel.app/",
+            "permanent": false
+        }
+    ],
     "rewrites": [
         {
             "source": "/api/(.*)",
