@@ -257,6 +257,11 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // --- USER MANAGEMENT REFACTOR ---
   const [usersDB, setUsersDB] = useState<User[]>([]);
 
+  // Detect STAMP_ONLY mode
+  const isStampOnly = useMemo(() => {
+    return import.meta.env.VITE_STAMP_ONLY === 'true' || window.location.hostname.includes('tompr-stamp');
+  }, []);
+
   // --- RELOAD DATA (Exposed) ---
   const reloadData = useCallback(async () => {
     // --- PHASE 1: CRITICAL DATA (Blocking) ---
@@ -269,6 +274,19 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
 
     const token = localStorage.getItem('token');
+    
+    // In STAMP_ONLY mode, we only need public stores if not logged in
+    if (isStampOnly && !token) {
+        try {
+            const storesRes = await getStores();
+            setStoresState(storesRes.data);
+        } catch (err) {
+            console.error("Failed to fetch stores for loyalty", err);
+        }
+        setLoading(false);
+        return;
+    }
+
     if (!token) {
       setLoading(false);
       return;
@@ -290,6 +308,22 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
 
     // --- PHASE 2: SECONDARY DATA (Background) ---
+    // Skip POS-specific data if in loyalty mode and not explicitly an admin
+    if (isStampOnly) {
+        // Just fetch promotions and announcements for loyalty
+        try {
+            const [promotionsRes, announcementsRes] = await Promise.all([
+                getPromotions(),
+                getAnnouncements()
+            ]);
+            setPromotionsState(promotionsRes.data || []);
+            setAnnouncementsState(announcementsRes.data || []);
+        } catch (e) {
+            console.error("Failed to fetch loyalty secondary data", e);
+        }
+        return;
+    }
+
     // Fetch remaining data to populate dashboards. Errors here won't block the UI load.
     try {
       const [productsRes, ordersRes, supplyRes, promotionsRes, categoriesRes, recipesRes, shiftsRes, wastageRes, timeLogsRes, cashLogsRes, announcementsRes, feedbackRes, leaveRes] = await Promise.all([

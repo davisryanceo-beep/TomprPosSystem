@@ -1,4 +1,4 @@
-﻿import express from "express";
+import express from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
 import { fileURLToPath } from "url";
@@ -138,7 +138,10 @@ const __dirname = dirname(__filename);
 const app = express();
 const PORT = 3001;
 
-app.use(cors());
+app.use(cors({
+  origin: ["https://poscafesystem.vercel.app", "https://tompr-stamp.vercel.app", "http://localhost:5173", "http://localhost:3000"],
+  credentials: true
+}));
 app.use(bodyParser.json({ limit: "50mb" }));
 app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
 

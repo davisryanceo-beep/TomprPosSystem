@@ -1,7 +1,18 @@
 import axios from 'axios';
 
+const getBaseURL = () => {
+    if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
+    
+    // If on the stamp portal domain, point to the POS system's API
+    if (window.location.hostname.includes('tompr-stamp')) {
+        return 'https://poscafesystem.vercel.app/api';
+    }
+    
+    return '/api';
+};
+
 const api = axios.create({
-    baseURL: import.meta.env.VITE_API_URL || '/api',
+    baseURL: getBaseURL(),
 });
 
 api.interceptors.request.use((config) => {
