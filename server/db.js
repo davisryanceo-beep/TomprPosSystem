@@ -1,7 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
+import { fetch } from 'undici';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+
+// Polyfill fetch for Supabase inside Vercel Node 18 environments
+if (!globalThis.fetch) {
+  globalThis.fetch = fetch;
+}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
