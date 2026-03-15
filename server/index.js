@@ -189,7 +189,7 @@ const logAuditAction = async (actor, action, details, storeId = null) => {
   }
 };
 
-// app.use(globalLimiter); // Temporarily disabled for live debugging
+app.use(globalLimiter);
 
 // Sanitize Logic
 app.use((req, res, next) => {
@@ -206,18 +206,6 @@ app.use((req, res, next) => {
 // Routes
 app.get("/", (req, res) => {
   res.send("Pos Cafe API Running (Firestore)");
-});
-
-app.get("/api/diagnostics/db", async (req, res) => {
-  try {
-    const { data, error } = await db.from("users").select("id").limit(1);
-    if (error) {
-      return res.status(500).json({ status: "error", message: error.message, details: error });
-    }
-    return res.status(200).json({ status: "success", data });
-  } catch (err) {
-    return res.status(500).json({ status: "fatal_error", message: err.message, stack: err.stack });
-  }
 });
 
 // --- PUBLIC MENU API (No Auth) ---

@@ -12,15 +12,6 @@ dotenv.config({ path: join(__dirname, '../.env') });
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
 
-console.log('--- VERIFYING VERCEL ENV VARS ---');
-console.log('SUPABASE_URL is set:', !!process.env.SUPABASE_URL);
-console.log('VITE_SUPABASE_URL is set:', !!process.env.VITE_SUPABASE_URL);
-console.log('SUPABASE_SERVICE_ROLE_KEY is set:', !!process.env.SUPABASE_SERVICE_ROLE_KEY);
-console.log('VITE_SUPABASE_ANON_KEY is set:', !!process.env.VITE_SUPABASE_ANON_KEY);
-console.log('Resolved URL:', supabaseUrl ? 'YES' : 'NO');
-console.log('Resolved Key:', supabaseServiceKey ? 'YES' : 'NO');
-console.log('---------------------------------');
-
 if (!supabaseUrl || !supabaseServiceKey) {
     console.error('CRITICAL ERROR: Missing Supabase Environment Variables inside Vercel Node runtime.');
 }
