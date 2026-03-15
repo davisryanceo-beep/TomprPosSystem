@@ -1,13 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
-import { fetch } from 'undici';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-
-// Polyfill fetch for Supabase inside Vercel Node 18 environments
-if (!globalThis.fetch) {
-  globalThis.fetch = fetch;
-}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -37,8 +31,6 @@ console.log(`URL: ${supabaseUrl}`);
 console.log('------------------------------------------------');
 
 // Define db as the Supabase client
-const fallbackUrl = 'https://dummy.supabase.co';
-const fallbackKey = 'dummy-key';
-const db = createClient(supabaseUrl || fallbackUrl, supabaseServiceKey || fallbackKey);
+const db = createClient(supabaseUrl || '', supabaseServiceKey || '');
 
 export { db };
