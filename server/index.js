@@ -189,7 +189,7 @@ const logAuditAction = async (actor, action, details, storeId = null) => {
   }
 };
 
-app.use(globalLimiter);
+// app.use(globalLimiter); // Temporarily disabled for live debugging
 
 // Sanitize Logic
 app.use((req, res, next) => {
