@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useShop } from '../../contexts/ShopContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { Order, OrderStatus, Recipe } from '../../types'; 
@@ -15,8 +15,35 @@ const BaristaPanel: React.FC = () => {
   const { currentUser } = useAuth();
   const [isRecipeModalOpen, setIsRecipeModalOpen] = useState(false); 
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
+  const prevOrdersCount = useRef(0);
+  const audioEnabled = useRef(false);
+
+  const newOrderSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+  const rushOrderSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2862/2862-preview.mp3');
 
   const paidOrders = getPaidOrders();
+  
+  useEffect(() => {
+    if (paidOrders.length > prevOrdersCount.current) {
+      const newOrders = paidOrders.slice(prevOrdersCount.current);
+      const hasRush = newOrders.some(o => o.isRushOrder);
+      
+      if (hasRush) {
+        rushOrderSound.play().catch(e => console.log('Audio playback blocked:', e));
+      } else {
+        newOrderSound.play().catch(e => console.log('Audio playback blocked:', e));
+      }
+    }
+    prevOrdersCount.current = paidOrders.length;
+  }, [paidOrders]);
+
+  const enableAudio = () => {
+    audioEnabled.current = true;
+    newOrderSound.play().then(() => {
+      newOrderSound.pause();
+      newOrderSound.currentTime = 0;
+    }).catch(e => console.log('Initial audio enable failed:', e));
+  };
   const preparingOrders = getOrdersByStatus(OrderStatus.PREPARING).filter(o => o.baristaId === currentUser?.id);
 
   const handleStartPreparing = (orderId: string) => {
@@ -40,10 +67,18 @@ const BaristaPanel: React.FC = () => {
         <div className="flex justify-between items-start">
             <div>
                 <h1 className="text-4xl font-extrabold text-charcoal-dark dark:text-cream-light flex items-center">
-                    <FaCoffee className="mr-3 text-emerald" />Barista Station
+                    <span className="mr-3 text-emerald"><FaCoffee size={40} /></span>Barista Station
                 </h1>
                 {currentUser && <p className="text-base text-charcoal-light dark:text-charcoal-light">Welcome, {currentUser.username}!</p>}
             </div>
+            <button
+              onClick={enableAudio}
+              className="flex items-center gap-2 bg-emerald/10 text-emerald px-4 py-2 rounded-lg hover:bg-emerald/20 transition-colors border border-emerald/20"
+              title="Click to enable notification sounds"
+            >
+              <FaConciergeBell />
+              <span>Test Alert Sound</span>
+            </button>
         </div>
       </header>
 
@@ -51,7 +86,7 @@ const BaristaPanel: React.FC = () => {
         {/* Paid Orders Queue */}
         <div className="bg-cream-light dark:bg-charcoal-dark shadow-xl rounded-xl p-4">
           <h2 className="text-2xl font-bold mb-3 text-charcoal-dark dark:text-cream-light flex items-center">
-            <FaClipboardList className="mr-2 text-emerald" />Incoming Orders ({paidOrders.length})
+            <span className="mr-2 text-emerald"><FaClipboardList /></span>Incoming Orders ({paidOrders.length})
           </h2>
           {paidOrders.length === 0 ? (
             <p className="text-center text-charcoal-light dark:text-charcoal-light py-10">No new orders. Time for a coffee break?</p>
@@ -80,7 +115,7 @@ const BaristaPanel: React.FC = () => {
         {/* Orders Being Prepared by Current Barista */}
         <div className="bg-cream-light dark:bg-charcoal-dark shadow-xl rounded-xl p-4">
           <h2 className="text-2xl font-bold mb-3 text-charcoal-dark dark:text-cream-light flex items-center">
-             <FaConciergeBell className="mr-2 text-blue-500" />My Current Preparations ({preparingOrders.length})
+             <span className="mr-2 text-blue-500"><FaConciergeBell /></span>My Current Preparations ({preparingOrders.length})
           </h2>
           {preparingOrders.length === 0 ? (
             <p className="text-center text-charcoal-light dark:text-charcoal-light py-10">You're not currently preparing any orders.</p>

@@ -118,9 +118,56 @@ CREATE TABLE IF NOT EXISTS orders (
     cashTendered REAL,
     changeGiven REAL,
     appliedPromotionId TEXT,
+    customerId TEXT,
+    customerPhone TEXT,
     storeId TEXT NOT NULL,
     qrPaymentState TEXT,
     FOREIGN KEY (storeId) REFERENCES stores(id) ON DELETE CASCADE
+);
+
+-- Customers Table
+CREATE TABLE IF NOT EXISTS customers (
+    id TEXT PRIMARY KEY,
+    phoneNumber TEXT NOT NULL,
+    password TEXT,
+    name TEXT,
+    currentStamps INTEGER DEFAULT 0,
+    totalEarnedStamps INTEGER DEFAULT 0,
+    loyaltyPoints INTEGER DEFAULT 0,
+    loyaltyTier TEXT DEFAULT 'Silver',
+    referralCode TEXT UNIQUE,
+    referredById TEXT,
+    createdAt TIMESTAMPTZ DEFAULT NOW(),
+    storeId TEXT NOT NULL,
+    FOREIGN KEY (storeId) REFERENCES stores(id) ON DELETE CASCADE,
+    FOREIGN KEY (referredById) REFERENCES customers(id) ON DELETE SET NULL,
+    UNIQUE(phoneNumber, storeId)
+);
+
+-- Stamp Claims Table (for QR Based Claims)
+CREATE TABLE IF NOT EXISTS stamp_claims (
+    id TEXT PRIMARY KEY DEFAULT 'claim-' || floor(random() * 1000000)::text,
+    order_id TEXT NOT NULL,
+    stamps INTEGER NOT NULL,
+    is_claimed BOOLEAN DEFAULT false,
+    expires_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    store_id TEXT NOT NULL,
+    FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE,
+    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+);
+
+-- Referral Logs Table
+CREATE TABLE IF NOT EXISTS referral_logs (
+    id TEXT PRIMARY KEY,
+    referrerId TEXT NOT NULL,
+    refereeId TEXT NOT NULL,
+    stampsAwarded INTEGER DEFAULT 1,
+    timestamp TIMESTAMPTZ DEFAULT NOW(),
+    storeId TEXT NOT NULL,
+    FOREIGN KEY (storeId) REFERENCES stores(id) ON DELETE CASCADE,
+    FOREIGN KEY (referrerId) REFERENCES customers(id) ON DELETE CASCADE,
+    FOREIGN KEY (refereeId) REFERENCES customers(id) ON DELETE CASCADE
 );
 
 -- Supply Items
@@ -291,4 +338,30 @@ CREATE TABLE IF NOT EXISTS leave_requests(
     storeId TEXT NOT NULL,
     FOREIGN KEY(storeId) REFERENCES stores(id) ON DELETE CASCADE,
     FOREIGN KEY(userId) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Audit Logs Table
+CREATE TABLE IF NOT EXISTS audit_logs (
+    id TEXT PRIMARY KEY,
+    timestamp TIMESTAMPTZ DEFAULT NOW(),
+    actorId TEXT,
+    actorName TEXT,
+    action TEXT NOT NULL,
+    details TEXT,
+    storeId TEXT,
+    FOREIGN KEY (storeId) REFERENCES stores(id) ON DELETE SET NULL
+);
+
+-- Expenses Table
+CREATE TABLE IF NOT EXISTS expenses (
+    id TEXT PRIMARY KEY,
+    date DATE DEFAULT CURRENT_DATE,
+    category TEXT NOT NULL,
+    amount REAL NOT NULL,
+    description TEXT,
+    reportedBy TEXT,
+    reportedByName TEXT,
+    storeId TEXT NOT NULL,
+    timestamp TIMESTAMPTZ DEFAULT NOW(),
+    FOREIGN KEY (storeId) REFERENCES stores(id) ON DELETE CASCADE
 );

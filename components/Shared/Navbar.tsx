@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useShop } from '../../contexts/ShopContext';
@@ -12,7 +11,8 @@ import { TimeLog } from '../../types';
 import DeclareCashModal from '../Cashier/DeclareCashModal';
 import EndOfDayReportModal from '../Cashier/EndOfDayReportModal';
 import AccessibilitySettings from './AccessibilitySettings';
-import { FaUniversalAccess, FaFileInvoiceDollar } from 'react-icons/fa';
+import { FaUniversalAccess, FaFileInvoiceDollar, FaGlobe } from 'react-icons/fa';
+import { useTranslation } from 'react-i18next';
 
 const STAMP_ONLY = import.meta.env.VITE_STAMP_ONLY === 'true';
 
@@ -31,6 +31,7 @@ const Navbar: React.FC = () => {
     stores, currentStoreId, getStoreById,
     clockIn, clockOut, getActiveTimeLogForUser, timeLogs
   } = useShop();
+  const { t, i18n } = useTranslation();
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -186,8 +187,25 @@ const Navbar: React.FC = () => {
                         <FaUniversalAccess /><span>Accessibility</span>
                       </button>
                       <ThemeToggle />
+                      
+                      <div className="px-2 py-1 text-xs font-bold text-charcoal-light border-t border-charcoal/10 dark:border-cream-light/10 mt-1 pt-1">Language</div>
+                      <div className="flex gap-1 p-1">
+                        <button 
+                          onClick={() => i18n.changeLanguage('en')}
+                          className={`flex-1 text-xs py-1 rounded-lg ${i18n.language === 'en' ? 'bg-emerald text-white' : 'bg-cream dark:bg-charcoal hover:bg-emerald/20'}`}
+                        >
+                          English
+                        </button>
+                        <button 
+                          onClick={() => i18n.changeLanguage('km')}
+                          className={`flex-1 text-xs py-1 rounded-lg ${i18n.language === 'km' ? 'bg-emerald text-white' : 'bg-cream dark:bg-charcoal hover:bg-emerald/20'}`}
+                        >
+                          ភាសាខ្មែរ
+                        </button>
+                      </div>
+
                       <button onClick={logout} className="w-full text-left flex items-center gap-3 p-2 rounded-lg text-terracotta hover:bg-terracotta/10">
-                        <FaSignOutAlt /><span>Logout</span>
+                        <FaSignOutAlt /><span>{t('common.logout')}</span>
                       </button>
                     </div>
                   )}

@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import { useAuth } from './contexts/AuthContext';
+import GlobalErrorBoundary from './components/Common/GlobalErrorBoundary';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ROLES } from './constants';
 import LoginScreen from './components/Auth/LoginScreen';
 import AdminDashboard from './components/Admin/AdminDashboard';
@@ -29,7 +30,7 @@ import POSAlerts from './components/Shared/POSAlerts';
 
 // ... (imports remain)
 
-const STAMP_ONLY = import.meta.env.VITE_STAMP_ONLY === 'true' || window.location.hostname.includes('tompr-stamp');
+export const STAMP_ONLY = import.meta.env.VITE_STAMP_ONLY === 'true' || window.location.hostname.includes('tompr-stamp');
 const PRIMARY_DOMAIN = 'poscafesystem.vercel.app';
 const LOYALTY_DOMAIN = 'tompr-stamp.vercel.app';
 const LOYALTY_URL = `https://${LOYALTY_DOMAIN}`;

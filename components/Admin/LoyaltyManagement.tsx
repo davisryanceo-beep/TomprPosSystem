@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useShop } from '../../contexts/ShopContext';
-import { lookupCustomer, updateCustomer } from '../../services/api';
-import { Customer } from '../../types';
+import { lookupCustomer, updateCustomer, getCustomerRecommendations } from '../../services/api';
+import { Customer, Product } from '../../types';
 import Button from '../Shared/Button';
 import Input from '../Shared/Input';
-import { FaSearch, FaStamp, FaPlus, FaMinus, FaUser, FaCheckCircle, FaExclamationCircle, FaGift, FaArrowRight } from 'react-icons/fa';
+import { FaSearch, FaStamp, FaPlus, FaMinus, FaUser, FaCheckCircle, FaExclamationCircle, FaGift, FaArrowRight, FaMagic, FaCoffee } from 'react-icons/fa';
 import LoadingSpinner from '../Shared/LoadingSpinner';
 import QRCode from "react-qr-code";
 
@@ -18,6 +18,8 @@ const LoyaltyManagement: React.FC = () => {
     const [customer, setCustomer] = useState<Customer | null>(null);
     const [adjustment, setAdjustment] = useState(0);
     const [status, setStatus] = useState<{ type: 'success' | 'error', message: string } | null>(null);
+    const [recommendations, setRecommendations] = useState<Product[]>([]);
+    const { products } = useShop();
 
     const handleSearch = async (e?: React.FormEvent) => {
         if (e) e.preventDefault();
@@ -31,6 +33,14 @@ const LoyaltyManagement: React.FC = () => {
             const res = await lookupCustomer(searchPhone, currentStoreId);
             if (res.data) {
                 setCustomer(res.data);
+                // Fetch recommendations
+                const recRes = await getCustomerRecommendations(res.data.id);
+                if (recRes.data) {
+                    const recommendedProducts = (recRes.data as string[]).map(pid => 
+                        products.find(p => p.id === pid)
+                    ).filter(Boolean) as Product[];
+                    setRecommendations(recommendedProducts);
+                }
             } else {
                 setStatus({ type: 'error', message: 'Customer not found at this store.' });
             }
@@ -166,7 +176,7 @@ const LoyaltyManagement: React.FC = () => {
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4 mt-10">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-10">
                             <div className="bg-emerald/5 dark:bg-emerald/10 p-5 rounded-2xl border border-emerald/10">
                                 <p className="text-[10px] font-black uppercase tracking-widest text-emerald-700/60 dark:text-emerald-300/60 mb-1">Current Balance</p>
                                 <p className="text-4xl font-black text-emerald">{customer.currentStamps}</p>
@@ -177,8 +187,19 @@ const LoyaltyManagement: React.FC = () => {
                                 <p className="text-4xl font-black text-charcoal-dark dark:text-cream-light">{customer.totalEarnedStamps || 0}</p>
                                 <p className="text-xs font-bold text-charcoal-light">Stamps</p>
                             </div>
+                            <div className="bg-blue-500/5 dark:bg-blue-500/10 p-5 rounded-2xl border border-blue-500/10">
+                                <p className="text-[10px] font-black uppercase tracking-widest text-blue-500/60 mb-1">Loyalty Tier</p>
+                                <p className="text-2xl font-black text-blue-500">{customer.loyaltyTier || 'Silver'}</p>
+                                <p className="text-xs font-bold text-charcoal-light">Member</p>
+                            </div>
+                            <div className="bg-purple-500/5 dark:bg-purple-500/10 p-5 rounded-2xl border border-purple-500/10">
+                                <p className="text-[10px] font-black uppercase tracking-widest text-purple-500/60 mb-1">Referral Code</p>
+                                <p className="text-2xl font-black text-purple-500 font-mono">{customer.referralCode || 'N/A'}</p>
+                                <p className="text-xs font-bold text-charcoal-light">Invite ID</p>
+                            </div>
                         </div>
                     </div>
+
 
                     {/* Reward Redemption Card */}
                     <div className="bg-white dark:bg-charcoal-dark rounded-3xl p-8 shadow-xl border border-charcoal/5 dark:border-white/5 flex flex-col justify-center">
@@ -295,13 +316,37 @@ const LoyaltyManagement: React.FC = () => {
             ) : (
                 !loading && (
                     <div className="bg-white dark:bg-charcoal-dark rounded-[2.5rem] p-16 text-center border-2 border-dashed border-charcoal/5 dark:border-white/5">
-                        <div className="w-24 h-24 bg-cream dark:bg-charcoal-900 rounded-[2rem] flex items-center justify-center mx-auto mb-6 text-charcoal-light opacity-30">
+                        <div className="w-24 h-24 bg-coffee-dark/5 dark:bg-charcoal-900 rounded-[2rem] flex items-center justify-center mx-auto mb-6 text-charcoal-light opacity-30">
                             <FaUser size={48} />
                         </div>
                         <h3 className="text-2xl font-black text-charcoal-dark dark:text-cream-light opacity-50">No Member Selected</h3>
                         <p className="text-charcoal-light max-w-xs mx-auto mt-2">Enter a phone number above to find a member and manage their rewards.</p>
                     </div>
                 )
+            )}
+
+            {customer && recommendations.length > 0 && (
+                <div className="bg-emerald/5 dark:bg-emerald/10 p-8 rounded-[3rem] border border-emerald/10 animate-in fade-in zoom-in-95 duration-700">
+                    <div className="flex items-center space-x-3 mb-6">
+                        <div className="p-2 bg-emerald text-white rounded-xl">
+                            <FaMagic />
+                        </div>
+                        <h4 className="text-xl font-black text-charcoal-dark dark:text-cream-light">Suggested for this Member</h4>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {recommendations.map(product => (
+                            <div key={product.id} className="bg-white dark:bg-charcoal-dark p-6 rounded-2xl shadow-sm border border-charcoal/5 flex items-center space-x-4">
+                                <div className="w-12 h-12 bg-cream dark:bg-charcoal-900 rounded-xl flex items-center justify-center text-emerald">
+                                    <FaCoffee size={20} />
+                                </div>
+                                <div>
+                                    <p className="font-black text-charcoal-dark dark:text-cream-light">{product.name}</p>
+                                    <p className="text-xs font-bold text-charcoal-light">{product.category}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
             )}
 
             {/* Status Message */}

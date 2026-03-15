@@ -11,6 +11,7 @@ import { seed } from "./seed.js";
 import mobileRoutes from "./mobile-routes.js";
 import helmet from "helmet";
 import xss from "xss";
+import rateLimit from "express-rate-limit";
 
 dotenv.config();
 
@@ -148,6 +149,48 @@ app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
 // Security Hardening
 app.use(helmet());
 
+// --- SECURITY & LOGGING ---
+
+// Global Rate Limiter
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  message: { error: "Too many requests from this IP, please try again after 15 minutes" },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Stricter limiter for public endpoints (Menu/Orders)
+const publicApiLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 20, // limit each IP to 20 requests per minute
+  message: { error: "Public API rate limit exceeded. Please wait a moment." },
+});
+
+// Audit Log Helper
+const logAuditAction = async (actor, action, details, storeId = null) => {
+  const logEntry = {
+    id: `log-${Date.now()}`,
+    timestamp: new Date().toISOString(),
+    actorId: actor?.id || 'system',
+    actorName: actor?.username || 'System',
+    action,
+    details: typeof details === 'string' ? details : JSON.stringify(details),
+    storeId: storeId || actor?.storeId || null
+  };
+
+  console.log(`[AUDIT LOG] ${action} by ${logEntry.actorName}:`, details);
+  
+  try {
+    const { error } = await db.from("audit_logs").insert(logEntry);
+    if (error) console.error("Failed to save audit log to DB:", error.message);
+  } catch (err) {
+    console.error("Audit log error:", err.message);
+  }
+};
+
+app.use(globalLimiter);
+
 // Sanitize Logic
 app.use((req, res, next) => {
   if (req.body) {
@@ -167,7 +210,7 @@ app.get("/", (req, res) => {
 
 // --- PUBLIC MENU API (No Auth) ---
 
-app.get("/api/public/menu/:storeId", async (req, res) => {
+app.get("/api/public/menu/:storeId", publicApiLimiter, async (req, res) => {
   const { storeId } = req.params;
   try {
     // Fetch Categories
@@ -226,7 +269,7 @@ app.get("/api/public/menu/:storeId", async (req, res) => {
   }
 });
 
-app.post("/api/public/orders", async (req, res) => {
+app.post("/api/public/orders", publicApiLimiter, async (req, res) => {
   const order = req.body;
 
   // Basic validation
@@ -342,6 +385,8 @@ app.post("/api/login", async (req, res) => {
       { expiresIn: "12h" },
     );
 
+    await logAuditAction(user, "User Login", { username: user.username });
+
     // Remove sensitive data
     const { password: _, pin: __, ...userWithoutSecrets } = user;
 
@@ -352,7 +397,7 @@ app.post("/api/login", async (req, res) => {
     // EMERGENCY DEV FALLBACK
     // If we are in dev/test mode and DB fails (Quota Exceeded), allow 'admin', 'manager', and 'cashier' access
     if (username === 'admin' || username === 'manager' || username === 'cashier') {
-      console.log("âš ï¸ ACTIVATING DEV FALLBACK LOGIN for:", username);
+      console.log("⚠️ ACTIVATING DEV FALLBACK LOGIN for:", username);
 
       let role = 'Cashier';
       if (username === 'admin') role = 'Admin';
@@ -365,7 +410,11 @@ app.post("/api/login", async (req, res) => {
         storeId: username === 'admin' ? null : 'store-1', // Cashiers need a storeId
         name: 'Dev Fallback ' + role
       };
+      
       const token = jwt.sign(mockUser, JWT_SECRET, { expiresIn: "1h" });
+      
+      logAuditAction(mockUser, "User Login (FALLBACK)", { username: username });
+
       return res.json({ token, user: mockUser });
     }
 
@@ -665,6 +714,9 @@ app.post("/api/products", authenticateToken, async (req, res) => {
   try {
     const { error } = await db.from("products").insert(p);
     if (error) throw error;
+    
+    await logAuditAction(req.user, "Create Product", { productId: p.id, name: p.name });
+
     res.json({ success: true, product: p });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -678,6 +730,9 @@ app.put("/api/products/:id", authenticateToken, verifyOwnership('products'), asy
     delete updates.id;
     const { error } = await db.from("products").update(updates).eq("id", id);
     if (error) throw error;
+
+    await logAuditAction(req.user, "Update Product", { productId: id, updates });
+
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -688,6 +743,9 @@ app.delete("/api/products/:id", authenticateToken, verifyOwnership('products'), 
   try {
     const { error } = await db.from("products").delete().eq("id", req.params.id);
     if (error) throw error;
+
+    await logAuditAction(req.user, "Delete Product", { productId: req.params.id });
+
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -1850,10 +1908,79 @@ app.get("/api/customers/lookup/:phoneNumber", authenticateToken, async (req, res
 app.post("/api/customers", authenticateToken, async (req, res) => {
   const customer = req.body;
   if (!customer.id) customer.id = `cust-${Date.now()}`;
+  
+  // Generate referral code if not provided
+  if (!customer.referralCode) {
+    customer.referralCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+  }
+
   try {
+    // Handle Referral logic
+    if (customer.referredById) {
+      // Award stamps to referrer
+      const { data: referrer, error: refErr } = await db
+        .from("customers")
+        .select("*")
+        .eq("id", customer.referredById)
+        .single();
+      
+      if (!refErr && referrer) {
+        await db.from("customers")
+          .update({ currentStamps: referrer.currentStamps + 1 })
+          .eq("id", customer.referredById);
+        
+        await db.from("referral_logs").insert({
+          id: `ref-${Date.now()}`,
+          referrerId: customer.referredById,
+          refereeId: customer.id,
+          stampsAwarded: 1,
+          storeId: customer.storeId
+        });
+      }
+      // Give initial stamp to referee too
+      customer.currentStamps = (customer.currentStamps || 0) + 1;
+    }
+
     const { error } = await db.from("customers").insert(customer);
     if (error) throw error;
+    
+    await logAuditAction(req.user, "Create Customer", { phone: customer.phoneNumber, referralCode: customer.referralCode });
+
     res.json({ success: true, customer });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get("/api/customers/:id/recommendations", authenticateToken, async (req, res) => {
+  const { id } = req.params;
+  try {
+    // Get last 20 orders for this customer to find favorites
+    const { data: orders, error } = await db
+      .from("orders")
+      .select("items")
+      .eq("customerId", id)
+      .order("timestamp", { ascending: false })
+      .limit(20);
+    
+    if (error) throw error;
+
+    const products = {};
+    orders.forEach(order => {
+      let items = order.items;
+      if (typeof items === 'string') items = JSON.parse(items);
+      items.forEach(item => {
+        products[item.productId] = (products[item.productId] || 0) + item.quantity;
+      });
+    });
+
+    // Sort by frequency and take top 3
+    const sorted = Object.entries(products)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 3)
+      .map(([id]) => id);
+
+    res.json(sorted);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -2072,19 +2199,61 @@ app.post("/api/public/customers/register", async (req, res) => {
       return res.status(400).json({ success: false, message: "This phone number is already registered at this store." });
     }
 
+    const { referralCode: referrerCode } = req.body;
+    let referredById = null;
+
+    if (referrerCode) {
+      const { data: referrers, error: refLookupErr } = await db
+        .from("customers")
+        .select("id")
+        .eq("referralCode", referrerCode.toUpperCase());
+      
+      if (!refLookupErr && referrers && referrers.length > 0) {
+        referredById = referrers[0].id;
+      }
+    }
+
     const newCustomer = {
       id: `cust-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
       phoneNumber,
       name: name || "Customer",
       storeId,
-      currentStamps: 0,
-      totalEarnedStamps: 0,
+      currentStamps: referredById ? 1 : 0, // Give initial stamp if referred
+      totalEarnedStamps: referredById ? 1 : 0,
       createdAt: new Date().toISOString(),
-      password
+      password,
+      referralCode: Math.random().toString(36).substring(2, 8).toUpperCase(),
+      referredById: referredById
     };
 
     const { error: insertError } = await db.from("customers").insert(newCustomer);
     if (insertError) throw insertError;
+
+    // Award stamp to referrer if they exist
+    if (referredById) {
+      const { data: referrer, error: refErr } = await db
+        .from("customers")
+        .select("currentStamps, totalEarnedStamps")
+        .eq("id", referredById)
+        .single();
+      
+      if (!refErr && referrer) {
+        await db.from("customers")
+          .update({ 
+            currentStamps: (referrer.currentStamps || 0) + 1,
+            totalEarnedStamps: (referrer.totalEarnedStamps || 0) + 1
+          })
+          .eq("id", referredById);
+        
+        await db.from("referral_logs").insert({
+          id: `ref-${Date.now()}`,
+          referrerId: referredById,
+          refereeId: newCustomer.id,
+          stampsAwarded: 1,
+          storeId: storeId
+        });
+      }
+    }
 
     res.json({ success: true, customer: newCustomer });
   } catch (err) {
@@ -2125,13 +2294,58 @@ app.post("/api/public/customers/login", async (req, res) => {
   }
 });
 
-// Export for Vercel
-export default app;
+// EXPENSES
+app.get("/api/expenses", authenticateToken, enforceStoreScope, async (req, res) => {
+  const { storeId } = req.query;
+  try {
+    const { data: expenses, error } = await db
+      .from("expenses")
+      .select("*")
+      .eq("storeId", storeId)
+      .order("date", { ascending: false });
+    if (error) throw error;
+    res.json(expenses);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/api/expenses", authenticateToken, async (req, res) => {
+  const expense = req.body;
+  if (req.user.storeId && expense.storeId !== req.user.storeId) {
+    return res.status(403).json({ error: "Forbidden: Cannot log expenses for other stores" });
+  }
+  try {
+    if (!expense.id) expense.id = `exp-${Date.now()}`;
+    const { error } = await db.from("expenses").insert(expense);
+    if (error) throw error;
+    
+    await logAuditAction(req.user, "Create Expense", { category: expense.category, amount: expense.amount });
+
+    res.json({ success: true, expense });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete("/api/expenses/:id", authenticateToken, verifyOwnership('expenses'), async (req, res) => {
+  try {
+    const { error } = await db.from("expenses").delete().eq("id", req.params.id);
+    if (error) throw error;
+
+    await logAuditAction(req.user, "Delete Expense", { expenseId: req.params.id });
+
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // Listen only if not imported (local dev)
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`Server running on port ${PORT}`);
   });
 }
 
+export default app;

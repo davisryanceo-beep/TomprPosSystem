@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-describe.skip('App Redirect Logic', () => {
+describe('App Redirect Logic', () => {
   beforeEach(() => {
     vi.resetModules();
     vi.stubGlobal('location', {
@@ -21,7 +21,11 @@ describe.skip('App Redirect Logic', () => {
   it('should identify Loyalty portal on stamp domain', async () => {
     // We use a separate describe block or test to isolate dynamic imports if needed
     // But let's try just changing the stub and importing again
-    vi.stubGlobal('location', { hostname: 'tompr-stamp.vercel.app' });
+    vi.stubGlobal('location', { 
+        hostname: 'tompr-stamp.vercel.app',
+        hash: '',
+        search: ''
+    });
     vi.stubEnv('VITE_STAMP_ONLY', 'false');
 
     const { STAMP_ONLY } = await import('../../App');

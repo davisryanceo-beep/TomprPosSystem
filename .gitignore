@@ -135,3 +135,6 @@ firebase_bin
 
 .vercel
 .env*.local
+
+.vercel
+.env*.local

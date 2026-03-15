@@ -42,17 +42,17 @@ describe('Stamp System API Tests', () => {
             const mockStore = { loyaltyEnabled: true };
             
             const fromMock = vi.mocked(db.from);
-            fromMock.mockReturnValueOnce({
+            fromMock.mockReturnValueOnce({ // 1. Store check
                 select: vi.fn().mockReturnThis(),
                 eq: vi.fn().mockReturnThis(),
                 single: vi.fn().mockResolvedValue({ data: mockStore, error: null })
             } as any)
-            .mockReturnValueOnce({
+            .mockReturnValueOnce({ // 2. Existing check
                 select: vi.fn().mockReturnThis(),
                 eq: vi.fn().mockReturnThis(),
                 then: vi.fn(resolve => resolve({ data: [], error: null }))
             } as any)
-            .mockReturnValueOnce({
+            .mockReturnValueOnce({ // 3. Insert
                 insert: vi.fn().mockResolvedValue({ error: null })
             } as any);
 
@@ -69,6 +69,56 @@ describe('Stamp System API Tests', () => {
             expect(res.body.success).toBe(true);
             expect(res.body.customer.phoneNumber).toBe(mockPhoneNumber);
         });
+
+        it('should award stamps to both parties when registered with a referral code', async () => {
+            const mockReferrerId = 'referrer-123';
+            const mockReferrer = { id: mockReferrerId, currentStamps: 10, totalEarnedStamps: 20 };
+            
+            const fromMock = vi.mocked(db.from);
+            fromMock.mockReturnValueOnce({ // 1. Store
+                select: vi.fn().mockReturnThis(),
+                eq: vi.fn().mockReturnThis(),
+                single: vi.fn().mockResolvedValue({ data: { loyaltyEnabled: true }, error: null })
+            } as any)
+            .mockReturnValueOnce({ // 2. Existing check
+                select: vi.fn().mockReturnThis(),
+                eq: vi.fn().mockReturnThis(),
+                then: vi.fn(resolve => resolve({ data: [], error: null }))
+            } as any)
+            .mockReturnValueOnce({ // 3. Referral lookup
+                select: vi.fn().mockReturnThis(),
+                eq: vi.fn().mockReturnThis(),
+                then: vi.fn(resolve => resolve({ data: [mockReferrer], error: null }))
+            } as any)
+            .mockReturnValueOnce({ // 4. Insert referee
+                insert: vi.fn().mockResolvedValue({ error: null })
+            } as any)
+            .mockReturnValueOnce({ // 5. Select referrer
+                select: vi.fn().mockReturnThis(),
+                eq: vi.fn().mockReturnThis(),
+                single: vi.fn().mockResolvedValue({ data: mockReferrer, error: null })
+            } as any)
+            .mockReturnValueOnce({ // 6. Update referrer
+                update: vi.fn().mockReturnThis(),
+                eq: vi.fn().mockResolvedValue({ error: null })
+            } as any)
+            .mockReturnValueOnce({ // 7. Insert referral log
+                insert: vi.fn().mockResolvedValue({ error: null })
+            } as any);
+
+            const res = await request(app)
+                .post('/api/public/customers/register')
+                .send({
+                    phoneNumber: '9998887777',
+                    name: 'Referee',
+                    storeId: mockStoreId,
+                    referralCode: 'REF-CODE-123',
+                    password: 'pass'
+                });
+
+            expect(res.status).toBe(200);
+            expect(res.body.success).toBe(true);
+        }); 
     });
 
     describe('POST /api/public/stamps/claim', () => {

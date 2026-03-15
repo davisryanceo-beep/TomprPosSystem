@@ -4,6 +4,7 @@ import Button from '../Shared/Button';
 import Input from '../Shared/Input';
 import { TABLE_NUMBERS } from '../../constants';
 import { FaChair, FaShoppingBag, FaEdit, FaCheck } from 'react-icons/fa';
+import TableMap from './TableMap';
 
 interface TableSelectionModalProps {
   isOpen: boolean;
@@ -12,28 +13,6 @@ interface TableSelectionModalProps {
   currentTable?: string;
 }
 
-const TableButton: React.FC<{
-  table: string;
-  onClick: () => void;
-  isActive: boolean;
-  icon: React.ReactNode;
-}> = ({ table, onClick, isActive, icon }) => (
-  <button
-    onClick={onClick}
-    className={`
-      flex flex-col items-center justify-center p-4 rounded-xl shadow-lg h-24
-      transform transition-all duration-200 active:scale-95
-      ${isActive
-        ? 'bg-emerald text-white ring-4 ring-emerald-dark ring-offset-2 ring-offset-cream-light dark:ring-offset-charcoal-dark'
-        : 'bg-cream-light dark:bg-charcoal-dark text-charcoal dark:text-cream-light hover:bg-cream dark:hover:bg-charcoal hover:-translate-y-1'
-      }
-    `}
-  >
-    {icon}
-    <span className="mt-2 font-bold text-lg">{table}</span>
-  </button>
-);
-
 const TableSelectionModal: React.FC<TableSelectionModalProps> = ({ isOpen, onClose, onSelectTable, currentTable }) => {
   const [customName, setCustomName] = useState('');
   const [isCustomInputVisible, setIsCustomInputVisible] = useState(false);
@@ -41,7 +20,7 @@ const TableSelectionModal: React.FC<TableSelectionModalProps> = ({ isOpen, onClo
   useEffect(() => {
     if (isOpen) {
         // If current table is a custom one, pre-fill the input
-        const isCustom = currentTable && !TABLE_NUMBERS.includes(currentTable);
+        const isCustom = currentTable && !TABLE_NUMBERS.includes(currentTable) && !currentTable.startsWith('T') && !currentTable.startsWith('P');
         if (isCustom) {
             setCustomName(currentTable);
             setIsCustomInputVisible(true);
@@ -58,32 +37,44 @@ const TableSelectionModal: React.FC<TableSelectionModalProps> = ({ isOpen, onClo
     }
   };
 
-  const getIconForTable = (table: string) => {
-    if (table === 'Takeaway') return <FaShoppingBag size={28} />;
-    if (table === 'Custom Name') return <FaEdit size={28} />;
-    return <FaChair size={28} />;
-  };
-
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Select Table or Order Name" size="xl">
-      <div className="space-y-4">
-        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
-          {TABLE_NUMBERS.map(table => (
-            <TableButton
-              key={table}
-              table={table}
-              onClick={() => {
-                if (table === 'Custom Name') {
-                  setIsCustomInputVisible(true);
-                } else {
-                  onSelectTable(table);
-                }
-              }}
-              isActive={currentTable === table}
-              icon={getIconForTable(table)}
-            />
-          ))}
+      <div className="space-y-6">
+        <div className="flex gap-4">
+          <button
+            onClick={() => onSelectTable('Takeaway')}
+            className={`
+              flex-1 flex items-center justify-center gap-2 p-6 rounded-xl shadow-lg border-2 transition-all
+              ${currentTable === 'Takeaway' 
+                ? 'bg-emerald text-white border-emerald' 
+                : 'bg-cream-light dark:bg-charcoal-dark border-cream-dark/20 dark:border-charcoal/20 text-charcoal'
+              }
+            `}
+          >
+            <FaShoppingBag size={24} />
+            <span className="font-bold text-xl">Takeaway</span>
+          </button>
+          
+          <button
+            onClick={() => setIsCustomInputVisible(!isCustomInputVisible)}
+            className={`
+              flex-1 flex items-center justify-center gap-2 p-6 rounded-xl shadow-lg border-2 transition-all
+              ${isCustomInputVisible 
+                ? 'bg-blue-500 text-white border-blue-600' 
+                : 'bg-cream-light dark:bg-charcoal-dark border-cream-dark/20 dark:border-charcoal/20 text-charcoal'
+              }
+            `}
+          >
+            <FaEdit size={24} />
+            <span className="font-bold text-xl">Custom Name</span>
+          </button>
         </div>
+
+        <TableMap 
+          onSelectTable={onSelectTable}
+          selectedTable={currentTable}
+        />
+
         {isCustomInputVisible && (
           <div className="flex items-center gap-2 pt-4 border-t border-charcoal/10 dark:border-cream-light/10">
             <Input

@@ -5,6 +5,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { ShopProvider } from './contexts/ShopContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { KeyboardProvider } from './contexts/KeyboardContext';
+import './i18n';
 
 import { AccessibilityProvider } from './contexts/AccessibilityContext';
 import ErrorBoundary from './components/Shared/ErrorBoundary';

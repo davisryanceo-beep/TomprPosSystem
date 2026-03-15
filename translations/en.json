@@ -1,0 +1,29 @@
+{
+  "common": {
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout",
+    "welcome": "Welcome",
+    "settings": "Settings",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "loading": "Loading...",
+    "search": "Search",
+    "all_stores": "All Stores"
+  },
+  "pos": {
+    "cashier": "Cashier",
+    "barista": "Barista",
+    "stock": "Stock",
+    "orders": "Orders",
+    "menu": "Menu",
+    "checkout": "Checkout",
+    "total": "Total",
+    "tax": "Tax",
+    "discount": "Discount",
+    "pay": "Pay",
+    "rush_order": "Rush Order"
+  }
+}

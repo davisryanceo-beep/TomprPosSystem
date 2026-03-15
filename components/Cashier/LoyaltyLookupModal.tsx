@@ -15,6 +15,7 @@ const LoyaltyLookupModal: React.FC<LoyaltyLookupModalProps> = ({ isOpen, onClose
 
     const [phoneNumber, setPhoneNumber] = useState('');
     const [customerName, setCustomerName] = useState('');
+    const [referralCode, setReferralCode] = useState('');
     const [isSearching, setIsSearching] = useState(false);
     const [isRegistering, setIsRegistering] = useState(false);
     const [lookupResult, setLookupResult] = useState<Customer | null>(null);
@@ -47,6 +48,7 @@ const LoyaltyLookupModal: React.FC<LoyaltyLookupModalProps> = ({ isOpen, onClose
             const newCustomer = await registerCustomer({
                 phoneNumber,
                 name: customerName,
+                referralCode: referralCode || undefined,
                 storeId: currentStoreId
             });
             if (newCustomer) {
@@ -105,8 +107,17 @@ const LoyaltyLookupModal: React.FC<LoyaltyLookupModalProps> = ({ isOpen, onClose
                             <div>
                                 <h4 className="font-bold text-green-800 dark:text-green-300">{selectedCustomer.name || 'Member'}</h4>
                                 <p className="text-sm text-green-600 dark:text-green-400">{selectedCustomer.phoneNumber}</p>
-                                <div className="flex items-center mt-1 text-sm font-medium text-amber-600 dark:text-amber-400">
-                                    <span className="mr-1"><FaStamp /></span> {selectedCustomer.currentStamps} Stamps
+                                <div className="flex items-center mt-1 space-x-2">
+                                    <div className="flex items-center text-sm font-medium text-amber-600 dark:text-amber-400">
+                                        <span className="mr-1"><FaStamp /></span> {selectedCustomer.currentStamps} Stamps
+                                    </div>
+                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tighter ${
+                                        selectedCustomer.loyaltyTier === 'Platinum' ? 'bg-purple-500 text-white' :
+                                        selectedCustomer.loyaltyTier === 'Gold' ? 'bg-amber-400 text-charcoal' :
+                                        'bg-charcoal/10 text-charcoal-light'
+                                    }`}>
+                                        {selectedCustomer.loyaltyTier || 'Silver'}
+                                    </span>
                                 </div>
                             </div>
                         </div>
@@ -160,6 +171,16 @@ const LoyaltyLookupModal: React.FC<LoyaltyLookupModalProps> = ({ isOpen, onClose
                                             onChange={(e) => setCustomerName(e.target.value)}
                                         />
                                     </div>
+                                    <div>
+                                        <label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Referral Code (Optional)</label>
+                                        <input
+                                            type="text"
+                                            placeholder="Who referred you?"
+                                            className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-coffee-medium outline-none"
+                                            value={referralCode}
+                                            onChange={(e) => setReferralCode(e.target.value)}
+                                        />
+                                    </div>
                                 </div>
                                 <div className="flex space-x-2 pt-2">
                                     <Button className="flex-1" onClick={handleRegister} disabled={isSearching}>
@@ -173,7 +194,16 @@ const LoyaltyLookupModal: React.FC<LoyaltyLookupModalProps> = ({ isOpen, onClose
                         {lookupResult && !isRegistering && (
                             <div className="p-4 border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10 rounded-xl flex items-center justify-between">
                                 <div>
-                                    <h4 className="font-bold text-gray-800 dark:text-gray-200">{lookupResult.name || 'Member'}</h4>
+                                    <div className="flex items-center space-x-2">
+                                        <h4 className="font-bold text-gray-800 dark:text-gray-200">{lookupResult.name || 'Member'}</h4>
+                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tighter ${
+                                            lookupResult.loyaltyTier === 'Platinum' ? 'bg-purple-500 text-white' :
+                                            lookupResult.loyaltyTier === 'Gold' ? 'bg-amber-400 text-charcoal' :
+                                            'bg-charcoal/10 text-charcoal-light'
+                                        }`}>
+                                            {lookupResult.loyaltyTier || 'Silver'}
+                                        </span>
+                                    </div>
                                     <p className="text-sm text-gray-500 dark:text-gray-400">{lookupResult.phoneNumber}</p>
                                     <p className="text-sm font-bold text-amber-600 dark:text-amber-400 mt-1 flex items-center">
                                         <span className="mr-1"><FaStamp /></span> {lookupResult.currentStamps} Stamps Available

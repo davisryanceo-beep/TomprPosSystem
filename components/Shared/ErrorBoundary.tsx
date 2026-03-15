@@ -36,89 +36,26 @@ class ErrorBoundary extends Component<Props, State> {
       }
 
       return (
-        <div style={{
-          minHeight: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)',
-          fontFamily: "'Nunito', sans-serif",
-          padding: '2rem',
-          textAlign: 'center',
-        }}>
-          <div style={{
-            background: 'white',
-            borderRadius: '1.5rem',
-            padding: '3rem 2.5rem',
-            boxShadow: '0 20px 60px rgba(0,0,0,0.08)',
-            maxWidth: '480px',
-            width: '100%',
-          }}>
-            {/* Icon */}
-            <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>⚠️</div>
-
-            <h1 style={{
-              fontSize: '1.5rem',
-              fontWeight: 800,
-              color: '#1f2937',
-              marginBottom: '0.75rem',
-            }}>
-              Something went wrong
-            </h1>
-
-            <p style={{
-              color: '#6b7280',
-              fontSize: '1rem',
-              lineHeight: 1.6,
-              marginBottom: '1.5rem',
-            }}>
-              The application ran into an unexpected error. Your data is safe — please refresh to try again.
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4 font-sans">
+          <div className="max-w-md w-full bg-white rounded-2xl shadow-2xl p-10 text-center border border-emerald-100">
+            <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner">
+              <span className="text-4xl">☕</span>
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-3 tracking-tight">Something went wrong</h1>
+            <p className="text-gray-600 mb-8 leading-relaxed">
+              We've encountered an unexpected error. Your data is safe—please reload to continue brewing.
             </p>
-
-            {/* Show error in development */}
-            {process.env.NODE_ENV !== 'production' && this.state.error && (
-              <details style={{
-                background: '#fef2f2',
-                border: '1px solid #fecaca',
-                borderRadius: '0.75rem',
-                padding: '1rem',
-                marginBottom: '1.5rem',
-                textAlign: 'left',
-              }}>
-                <summary style={{ cursor: 'pointer', color: '#ef4444', fontWeight: 600 }}>
-                  Error details
-                </summary>
-                <pre style={{
-                  marginTop: '0.5rem',
-                  fontSize: '0.75rem',
-                  color: '#7f1d1d',
-                  whiteSpace: 'pre-wrap',
-                  wordBreak: 'break-all',
-                }}>
-                  {this.state.error.toString()}
-                </pre>
+            {this.state.error && (
+              <details className="text-xs text-left bg-gray-50 p-4 rounded-xl mb-8 overflow-auto max-h-40 font-mono text-gray-400 border border-gray-100">
+                <summary className="cursor-pointer hover:text-emerald-600 transition-colors mb-2 font-semibold">Error technical details</summary>
+                {this.state.error.message}
               </details>
             )}
-
             <button
               onClick={this.handleReload}
-              style={{
-                background: 'linear-gradient(135deg, #10b981, #059669)',
-                color: 'white',
-                border: 'none',
-                borderRadius: '0.875rem',
-                padding: '0.875rem 2rem',
-                fontSize: '1rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-                width: '100%',
-                transition: 'opacity 0.2s',
-              }}
-              onMouseEnter={e => (e.currentTarget.style.opacity = '0.85')}
-              onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
+              className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl py-4 font-bold hover:from-emerald-600 hover:to-emerald-700 transition-all shadow-lg hover:shadow-emerald-200/50"
             >
-              🔄 Reload App
+              Reload Application
             </button>
           </div>
         </div>

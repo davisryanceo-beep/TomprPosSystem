@@ -172,6 +172,7 @@ export const apiClaimReward = async (rewardId: string, productId: string) => {
 export const lookupCustomer = (phoneNumber: string, storeId?: string) => api.get(`/customers/lookup/${phoneNumber}`, { params: { storeId } });
 export const createCustomer = (customer: any) => api.post('/customers', customer);
 export const updateCustomer = (id: string, updates: any) => api.put(`/customers/${id}`, updates);
+export const getCustomerRecommendations = (id: string) => api.get(`/customers/${id}/recommendations`);
 export const getPublicLoyalty = (storeId: string, phoneNumber: string) => api.get(`/public/loyalty/${storeId}/${phoneNumber}`);
 export const publicRegisterCustomer = (data: { phoneNumber: string; name?: string; storeId: string; password?: string }) => api.post('/public/customers/register', data);
 export const publicLoginCustomer = (data: { phoneNumber: string; storeId: string; password?: string }) => api.post('/public/customers/login', data);

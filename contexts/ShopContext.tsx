@@ -134,11 +134,11 @@ interface ShopContextType {
   getProductById: (productId: string) => Product | undefined;
   getProductsByCategory: (category: string) => Product[];
 
-  addCategory: (categoryName: string) => boolean;
-  updateCategoryName: (oldName: string, newName: string) => boolean;
-  deleteCategory: (categoryName: string) => boolean;
+  addCategory: (categoryName: string) => Promise<boolean>;
+  updateCategoryName: (oldName: string, newName: string) => Promise<boolean>;
+  deleteCategory: (categoryName: string) => Promise<boolean>;
 
-  addOrder: (orderData: Omit<Order, 'id' | 'storeId' | 'timestamp' | 'status' | 'totalAmount' | 'taxAmount' | 'finalAmount'>, items: OrderItem[]) => void;
+  addOrder: (orderData: Omit<Order, 'id' | 'storeId' | 'timestamp' | 'status' | 'totalAmount' | 'taxAmount' | 'finalAmount'>, items: OrderItem[]) => Promise<void>;
 
   updateOrderStatus: (orderId: string, status: OrderStatus, baristaId?: string) => void;
   updateOrder: (orderId: string, data: Partial<Order>) => Promise<void>;
@@ -147,9 +147,9 @@ interface ShopContextType {
   getPaidOrders: () => Order[];
   getShiftOrders: (cashierId: string, since: Date) => Order[];
 
-  addUser: (userData: Omit<User, 'id'>, actingUser: User) => boolean;
-  updateUser: (updatedUser: User, actingUser: User) => boolean;
-  deleteUser: (userId: string, actingUser: User) => boolean;
+  addUser: (userData: Omit<User, 'id'>, actingUser: User) => Promise<boolean>;
+  updateUser: (updatedUser: User, actingUser: User) => Promise<boolean>;
+  deleteUser: (userId: string, actingUser: User) => Promise<boolean>;
   registerUser: (userData: Omit<User, 'id'>) => Promise<{ success: boolean; message: string; user?: User }>;
   getUserForAuth: (username: string) => User | undefined;
   verifyPinForAuth: (userId: string, pin: string) => User | undefined;
@@ -175,7 +175,7 @@ interface ShopContextType {
       changeGiven?: number;
       paymentCurrency?: PaymentCurrency;
     }
-  ) => Order | null;
+  ) => Promise<Order | null>;
   updateCurrentOrder: (updates: Partial<Order>) => void;
   setRushOrder: (isRush: boolean) => void;
   setTableNumberForCurrentOrder: (tableNumber: string) => void;
@@ -226,7 +226,12 @@ interface ShopContextType {
   reloadData: () => Promise<void>;
 
   leaveRequests: LeaveRequest[];
-  updateLeaveRequest: (id: string, updates: Partial<LeaveRequest>) => Promise<void>;
+  updateLeaveRequest: (requestId: string, status: 'Approved' | 'Rejected', managerNotes?: string) => Promise<boolean>;
+  
+  // Offline & Sync
+  isOnline: boolean;
+  pendingOrdersCount: number;
+  syncPendingOrders: () => Promise<void>;
   clearAllOrders: () => Promise<boolean>;
 
   // Alerts
@@ -253,6 +258,66 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [announcementsState, setAnnouncementsState] = useState<Announcement[]>([]);
   const [feedbackListState, setFeedbackListState] = useState<Feedback[]>([]);
   const [leaveRequestsState, setLeaveRequestsState] = useState<LeaveRequest[]>([]);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [pendingOrders, setPendingOrders] = useState<Order[]>([]);
+
+  useEffect(() => {
+    // Sync online status
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    // Load pending orders from localStorage
+    const saved = localStorage.getItem('pending_orders');
+    if (saved) {
+      try {
+        setPendingOrders(JSON.parse(saved));
+      } catch (e) {
+        console.error("Failed to parse pending orders", e);
+      }
+    }
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  useEffect(() => {
+    // Persist pending orders
+    localStorage.setItem('pending_orders', JSON.stringify(pendingOrders));
+  }, [pendingOrders]);
+
+  const syncPendingOrders = useCallback(async () => {
+    if (!isOnline || pendingOrders.length === 0) return;
+
+    console.log(`Attempting to sync ${pendingOrders.length} pending orders...`);
+    const successIds: string[] = [];
+    
+    for (const order of pendingOrders) {
+      try {
+        await createOrder(order);
+        const store = storesState.find(s => s.id === order.storeId);
+        if (store) sendTelegramNotification(order, store);
+        successIds.push(order.id);
+      } catch (e) {
+        console.error(`Failed to sync order ${order.id}`, e);
+        // Stop syncing if we hit a network error again
+        if (!navigator.onLine) break;
+      }
+    }
+
+    if (successIds.length > 0) {
+      setPendingOrders(prev => prev.filter(o => !successIds.includes(o.id)));
+    }
+  }, [isOnline, pendingOrders, storesState]);
+
+  useEffect(() => {
+    if (isOnline) {
+      syncPendingOrders();
+    }
+  }, [isOnline, syncPendingOrders]);
 
   // --- USER MANAGEMENT REFACTOR ---
   const [usersDB, setUsersDB] = useState<User[]>([]);
@@ -460,7 +525,6 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       localStorage.removeItem('currentOrder');
     }
   }, [currentOrder]);
-
 
   const setCurrentStoreId = useCallback((storeId: string | null) => {
     setCurrentStoreIdState(storeId);
@@ -694,7 +758,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       setProductsState(prev => prev.map(p => (p.category === oldName && p.storeId === currentStoreId) ? { ...p, category: trimmedNewName } : p));
 
-      await Promise.all(productsToUpdate.map(p => updateProduct(p.id, { category: trimmedNewName })));
+      await Promise.all(productsToUpdate.map(p => updateProduct({ ...p, category: trimmedNewName })));
       return true;
     } catch (e) {
       console.error("Failed to update category name", e);
@@ -912,12 +976,20 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     newOrder.dailyOrderNumber = maxOrderNum + 1;
 
     try {
-      await createOrder(newOrder);
-      setOrdersState(prev => [...prev, newOrder]);
-    } catch (err) {
-      console.error("Failed to create order", err);
+      if (isOnline) {
+        await createOrder(newOrder);
+        setOrdersState(prev => [...prev, newOrder]);
+      } else {
+        // Queue for later
+        setPendingOrders(prev => [...prev, newOrder]);
+        alert("You are offline. Order saved locally and will sync when online.");
+      }
+    } catch (error) {
+      console.error('Failed to save order to server, queuing offline', error);
+      setPendingOrders(prev => [...prev, newOrder]);
+      alert("Failed to save order to server. Order saved locally and will sync when online.");
     }
-  }, [currentStoreId]);
+  }, [currentStoreId, isOnline, ordersState, getStoreById]);
 
   const updateOrder = useCallback(async (orderId: string, data: Partial<Order>) => {
     try {
@@ -1100,11 +1172,23 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
 
     const finalAfterDiscount = Math.max(0, total - discount);
+    
+    // Tiered Discount (Silver: 0%, Gold: 5%, Platinum: 10%)
+    let tierDiscount = 0;
+    if (selectedCustomer) {
+      if (selectedCustomer.loyaltyTier === 'Gold') {
+        tierDiscount = finalAfterDiscount * 0.05;
+      } else if (selectedCustomer.loyaltyTier === 'Platinum') {
+        tierDiscount = finalAfterDiscount * 0.10;
+      }
+    }
+    
+    const finalAfterTierDiscount = finalAfterDiscount - tierDiscount;
     const storeTaxRate = currentStore?.taxRate ?? 0;
-    const tax = finalAfterDiscount * storeTaxRate;
-    const final = finalAfterDiscount + tax;
+    const tax = finalAfterTierDiscount * storeTaxRate;
+    const final = finalAfterTierDiscount + tax;
 
-    return { total, tax, final, discount };
+    return { total, tax, final, discount: discount + tierDiscount };
   };
 
 
@@ -1255,6 +1339,8 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       timestamp: new Date(),
       cashierId: cashierId,
       paymentMethod,
+      customerId: selectedCustomer?.id,
+      customerPhone: selectedCustomer?.phoneNumber,
       ...paymentDetails
     };
 
@@ -1271,14 +1357,24 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     try {
       let globalSavedOrder: Order;
-      if (isExistingTab) {
-        await apiUpdateOrder(orderId, finalizedOrder);
-        globalSavedOrder = finalizedOrder;
-        setOrdersState(prev => prev.map(o => o.id === orderId ? finalizedOrder : o));
+      if (isOnline) {
+        if (isExistingTab) {
+          await apiUpdateOrder(orderId, finalizedOrder);
+          globalSavedOrder = finalizedOrder;
+          setOrdersState(prev => prev.map(o => o.id === orderId ? finalizedOrder : o));
+        } else {
+          const res = await createOrder(finalizedOrder);
+          globalSavedOrder = { ...res.data.order };
+          setOrdersState(prev => [...prev, globalSavedOrder]);
+        }
+        const store = storesState.find(s => s.id === currentStoreId);
+        if (store) sendTelegramNotification(globalSavedOrder, store);
       } else {
-        const res = await createOrder(finalizedOrder);
-        globalSavedOrder = { ...res.data.order };
-        setOrdersState(prev => [...prev, globalSavedOrder]);
+        // Offline: Queue for later
+        globalSavedOrder = finalizedOrder; // Use the finalized order as the "saved" one for local state
+        setPendingOrders(prev => [...prev, finalizedOrder]);
+        setOrdersState(prev => [...prev, finalizedOrder]); // Add to ordersState for immediate display
+        alert("You are offline. Order saved locally and will sync when online.");
       }
 
       setProductsState(prevProducts => {
@@ -1304,6 +1400,24 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (totalStamps > 0) {
           if (selectedCustomer) {
             await awardStamps(selectedCustomer.id, totalStamps);
+            
+            // Auto-upgrade tier
+            const newTotalStamps = (selectedCustomer.totalEarnedStamps || 0) + totalStamps;
+            let newTier = selectedCustomer.loyaltyTier || 'Silver';
+            if (newTotalStamps >= 150) newTier = 'Platinum';
+            else if (newTotalStamps >= 50) newTier = 'Gold';
+            
+            if (newTier !== selectedCustomer.loyaltyTier) {
+              await apiUpdateCustomer(selectedCustomer.id, { 
+                loyaltyTier: newTier,
+                loyaltyPoints: (selectedCustomer.loyaltyPoints || 0) + Math.floor(finalizedOrder.finalAmount)
+              });
+              setSelectedCustomer({ ...selectedCustomer, loyaltyTier: newTier, currentStamps: selectedCustomer.currentStamps + totalStamps, totalEarnedStamps: newTotalStamps });
+            } else {
+              await apiUpdateCustomer(selectedCustomer.id, {
+                loyaltyPoints: (selectedCustomer.loyaltyPoints || 0) + Math.floor(finalizedOrder.finalAmount)
+              });
+            }
           } else {
             try {
               const claimRes = await createStampClaim({
@@ -1325,8 +1439,6 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
       }
 
-      if (store) sendTelegramNotification(globalSavedOrder, store);
-
       // Explicitly broadcast success to Customer Display via localStorage
       // before clearing the local cashier cart state.
       const successDisplayOrder = {
@@ -1339,9 +1451,14 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return globalSavedOrder;
     } catch (err) {
       console.error("Failed to finalize order", err);
+      if (!isOnline) {
+        // If already offline, it's already queued. If it failed while online, queue it.
+        setPendingOrders(prev => [...prev, finalizedOrder]);
+        alert("Failed to finalize order to server. Order saved locally and will sync when online.");
+      }
       return null;
     }
-  }, [currentOrder, currentStoreId, clearCurrentOrderLocal, storesState, selectedCustomer, awardStamps]);
+  }, [currentOrder, currentStoreId, clearCurrentOrderLocal, storesState, selectedCustomer, awardStamps, isOnline, ordersState]);
 
   const saveOrderAsTab = useCallback(async (cashierId: string) => {
 
@@ -1754,13 +1871,14 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [currentStoreId]);
 
-  const updateLeaveRequest = useCallback(async (id: string, updates: Partial<LeaveRequest>) => {
+  const updateLeaveRequest = useCallback(async (requestId: string, status: 'Approved' | 'Rejected', managerNotes?: string): Promise<boolean> => {
     try {
-      await apiUpdateLeaveRequest(id, updates);
-      setLeaveRequestsState(prev => prev.map(req => req.id === id ? { ...req, ...updates } : req));
+      await apiUpdateLeaveRequest(requestId, { status, managerNotes });
+      setLeaveRequestsState(prev => prev.map(req => req.id === requestId ? { ...req, status, managerNotes } : req));
+      return true;
     } catch (e) {
       console.error("Failed to update leave request", e);
-      throw e;
+      return false;
     }
   }, []);
 
@@ -1793,9 +1911,9 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const acknowledgeOrder = async (orderId: string) => {
     try {
       // Update status to 'Received' to stop it showing up
-      await apiUpdateOrder(orderId, { status: 'Received' });
+      await apiUpdateOrder(orderId, { status: OrderStatus.RECEIVED });
       // Optimistic update
-      setOrdersState(prev => prev.map(o => o.id === orderId ? { ...o, status: 'Received' } : o));
+      setOrdersState(prev => prev.map(o => o.id === orderId ? { ...o, status: OrderStatus.RECEIVED } : o));
       setNewOnlineOrders(prev => prev.filter(o => o.id !== orderId));
     } catch (e) {
       console.error("Failed to acknowledge order", e);
@@ -1827,7 +1945,8 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     reloadData,
     clearAllOrders,
     newOnlineOrders,
-    acknowledgeOrder
+    acknowledgeOrder,
+    isOnline, pendingOrdersCount: pendingOrders.length, syncPendingOrders
   };
 
   return <ShopContext.Provider value={contextValue}>{children}</ShopContext.Provider>;

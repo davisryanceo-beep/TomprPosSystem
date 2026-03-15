@@ -23,11 +23,12 @@ import SeasonalItemsManagement from './SeasonalItemsManagement';
 import OrderManagement from './OrderManagement';
 import LeaveManagement from './LeaveManagement';
 import LoyaltyManagement from './LoyaltyManagement';
+import ExpenseManagement from './ExpenseManagement';
 import {
   FaUsers, FaChartLine, FaBoxes, FaConciergeBell, FaArchive, FaBookOpen,
   FaCalendarAlt, FaTags, FaClock, FaCalculator, FaStore,
   FaCertificate, FaUserShield, FaBrain, FaDesktop, FaStar, FaCogs, FaReceipt,
-  FaCalendarTimes, FaStamp
+  FaCalendarTimes, FaStamp, FaMoneyBillWave
 } from 'react-icons/fa';
 import { useAuth } from '../../contexts/AuthContext';
 import { ROLES } from '../../constants';
@@ -37,7 +38,7 @@ const STAMP_ONLY = import.meta.env.VITE_STAMP_ONLY === 'true' || window.location
 
 // Define specific tab sets for each admin type
 type GlobalAdminTab = 'stores' | 'licenses' | 'users' | 'store-settings' | 'loyalty' | 'settings';
-type StoreAdminTab = 'users' | 'orders' | 'loyalty' | 'sales' | 'inventory' | 'modifiers' | 'supplies' | 'recipes' | 'combos' | 'addons' | 'seasonal' | 'shifts' | 'promotions' | 'attendance' | 'leave' | 'eod' | 'display' | 'feedback' | 'settings';
+type StoreAdminTab = 'users' | 'orders' | 'loyalty' | 'sales' | 'expenses' | 'inventory' | 'modifiers' | 'supplies' | 'recipes' | 'combos' | 'addons' | 'seasonal' | 'shifts' | 'promotions' | 'attendance' | 'leave' | 'eod' | 'display' | 'feedback' | 'settings';
 
 const AdminDashboard: React.FC = () => {
   const { currentUser } = useAuth();
@@ -92,6 +93,7 @@ const AdminDashboard: React.FC = () => {
         case 'orders': return <OrderManagement />;
         case 'loyalty': return <LoyaltyManagement />;
         case 'sales': return <SalesDashboard />;
+        case 'expenses': return <ExpenseManagement />;
         case 'inventory': return <InventoryOverview />;
         case 'modifiers': return <ModifierManagement />;
         case 'supplies': return <SupplyManagement />;
@@ -164,6 +166,7 @@ const AdminDashboard: React.FC = () => {
             <TabButton tabName="orders" label="Orders" icon={<FaReceipt />} />
             <TabButton tabName="loyalty" label="Stamps" icon={<FaStamp />} />
             <TabButton tabName="sales" label="Sales" icon={<FaChartLine />} />
+            <TabButton tabName="expenses" label="Expenses" icon={<FaMoneyBillWave />} />
             <TabButton tabName="inventory" label="Products" icon={<FaBoxes />} />
             <TabButton tabName="modifiers" label="Modifiers" icon={<FaArchive />} />
             <TabButton tabName="supplies" label="Supplies" icon={<FaArchive />} />

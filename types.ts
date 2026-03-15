@@ -62,6 +62,9 @@ export interface Customer {
   name?: string;
   currentStamps: number;
   totalEarnedStamps: number;
+  loyaltyTier?: string;
+  loyaltyPoints?: number;
+  referralCode?: string;
   storeId: string;
   createdAt: Date;
 }
@@ -182,6 +185,8 @@ export interface Order {
   storeId: string;
   qrPaymentState?: QRPaymentState;
   dailyOrderNumber?: number;
+  customerId?: string;
+  customerPhone?: string;
   // Kitchen Display fields
   kitchenStatus?: 'pending' | 'preparing' | 'ready' | 'completed';
   kitchenStartTime?: Date;
