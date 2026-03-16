@@ -1966,12 +1966,26 @@ app.get("/api/customers/:id/recommendations", authenticateToken, async (req, res
     if (error) throw error;
 
     const products = {};
-    orders.forEach(order => {
+    (orders || []).forEach(order => {
       let items = order.items;
-      if (typeof items === 'string') items = JSON.parse(items);
-      items.forEach(item => {
-        products[item.productId] = (products[item.productId] || 0) + item.quantity;
-      });
+      if (!items) return;
+
+      try {
+        if (typeof items === 'string') {
+          items = JSON.parse(items);
+        }
+      } catch (e) {
+        console.error("Failed to parse items for order recommendation logic:", e);
+        return;
+      }
+
+      if (Array.isArray(items)) {
+        items.forEach(item => {
+          if (item && item.productId) {
+            products[item.productId] = (products[item.productId] || 0) + (parseFloat(item.quantity) || 0);
+          }
+        });
+      }
     });
 
     // Sort by frequency and take top 3
@@ -1982,6 +1996,7 @@ app.get("/api/customers/:id/recommendations", authenticateToken, async (req, res
 
     res.json(sorted);
   } catch (err) {
+    console.error("Recommendations API Error:", err);
     res.status(500).json({ error: err.message });
   }
 });
