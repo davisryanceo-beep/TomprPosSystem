@@ -12,6 +12,11 @@ const LoyaltyLogin: React.FC = () => {
     const [isLoggingIn, setIsLoggingIn] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [isLoadingStores, setIsLoadingStores] = useState(true);
+    const [successMessage, setSuccessMessage] = useState<string | null>(() => {
+        const hashParts = window.location.hash.split('?');
+        const params = new URLSearchParams(window.location.search || hashParts[1] || '');
+        return params.get('reason') === 'session_expired' ? 'Your session has expired. Please log in again.' : null;
+    });
 
     React.useEffect(() => {
         const fetchStores = async () => {
@@ -151,6 +156,12 @@ const LoyaltyLogin: React.FC = () => {
                             </div>
                         </div>
                     </div>
+
+                    {successMessage && (
+                        <div className="p-4 bg-emerald/10 border border-emerald/20 rounded-2xl text-emerald text-xs font-bold text-center mb-4">
+                            {successMessage}
+                        </div>
+                    )}
 
                     {error && (
                         <div className="p-4 bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30 rounded-2xl text-red-600 dark:text-red-400 text-xs font-bold text-center">

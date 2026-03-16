@@ -16,9 +16,16 @@ const LoginScreen: React.FC = () => {
   const { login, loginWithGoogle } = useAuth();
   const { appSettings } = useShop();
 
+  // Detect session expiry from URL
+  const [successMessage, setSuccessMessage] = useState<string | null>(() => {
+    const params = new URLSearchParams(window.location.search || window.location.hash.split('?')[1]);
+    return params.get('reason') === 'session_expired' ? 'Your session has expired. Please log in again.' : null;
+  });
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setSuccessMessage(null);
     setIsLoading(true);
     const success = await login(username, password);
     if (!success) {
@@ -39,6 +46,12 @@ const LoginScreen: React.FC = () => {
             Sign in to start your shift
           </p>
         </div>
+
+        {successMessage && (
+          <div className="bg-emerald/10 border border-emerald/20 p-3 rounded-lg text-emerald text-sm text-center">
+            {successMessage}
+          </div>
+        )}
 
         <form onSubmit={handleLogin} className="space-y-6">
           <Input

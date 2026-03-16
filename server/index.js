@@ -29,8 +29,8 @@ const authenticateToken = (req, res, next) => {
     if (err) {
       console.error("JWT Verification Error:", err.message);
       return res
-        .status(403)
-        .json({ error: "Forbidden: Invalid Token", details: err.message });
+        .status(401)
+        .json({ error: "Unauthorized: Invalid Token", details: err.message });
     }
     req.user = user;
     next();

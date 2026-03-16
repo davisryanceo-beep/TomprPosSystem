@@ -26,14 +26,19 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
     (response) => response,
     (error) => {
-        if (error.response && error.response.status === 401) {
-            // Token is missing or invalid — clear session and redirect to login
+        const isExpiredToken = 
+            error.response?.status === 403 && 
+            error.response?.data?.error?.toLowerCase().includes('token');
+
+        if (error.response && (error.response.status === 401 || isExpiredToken)) {
+            // Token is missing, invalid, or expired — clear session and redirect to login
             localStorage.removeItem('token');
             localStorage.removeItem('currentUser');
 
             // Redirect to login if not already there to prevent loops
             if (!window.location.pathname.includes('/login')) {
-                window.location.href = '/login';
+                const searchParam = isExpiredToken ? '?reason=session_expired' : '';
+                window.location.href = `/login${searchParam}`;
             }
         }
         // 403 = Forbidden (wrong permissions) — do NOT clear token, just reject
