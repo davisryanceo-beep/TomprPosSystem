@@ -7,12 +7,13 @@ import Input from '../Shared/Input';
 import Select from '../Shared/Select';
 import { generateSalesReportPDF } from '../../services/pdfService';
 import LoadingSpinner from '../Shared/LoadingSpinner';
-import { FaDollarSign, FaBrain, FaFilePdf, FaFilter, FaTimesCircle, FaChartPie, FaSortAmountDown, FaSortAmountUp, FaSync } from 'react-icons/fa';
+import { FaDollarSign, FaBrain, FaFilePdf, FaFilter, FaTimesCircle, FaChartPie, FaSortAmountDown, FaSortAmountUp, FaSync, FaBoxOpen } from 'react-icons/fa';
 import { useTheme } from '../../contexts/ThemeContext';
 import { COFFEE_COLORS } from '../../constants';
+import { calculateHourlySales, calculateProductMargins, calculateComboPerformance } from '../../services/analytics';
 
 const SalesDashboard: React.FC = () => {
-  const { orders, knownCategories, products } = useShop();
+  const { orders, knownCategories, products, recipes, supplyItems } = useShop();
   const { theme } = useTheme();
 
   const today = useMemo(() => new Date(), []);
@@ -106,6 +107,19 @@ const SalesDashboard: React.FC = () => {
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value);
   }, [filteredSalesData, products]);
+  
+  const hourlySalesData = useMemo(() => calculateHourlySales(filteredSalesData), [filteredSalesData]);
+
+  const marginAnalysisData = useMemo(() => 
+    calculateProductMargins(products, recipes, supplyItems).slice(0, 10), 
+  [products, recipes, supplyItems]);
+
+  const comboPerformanceData = useMemo(() => 
+    calculateComboPerformance(filteredSalesData).map(d => ({ 
+      ...d, 
+      color: d.name === 'Combos' ? COFFEE_COLORS.accent : COFFEE_COLORS.medium 
+    })), 
+  [filteredSalesData]);
 
   const productPerformanceData = useMemo(() => {
     const productSales: { [name: string]: { sales: number, quantity: number } } = {};
@@ -252,6 +266,47 @@ const SalesDashboard: React.FC = () => {
           </div>
         </div>
 
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+          <div>
+            <h3 className="text-xl font-bold mb-4 text-charcoal-dark dark:text-cream-light flex items-center">
+              <FaSync className="mr-2 text-emerald" /> Peak Business Hours
+            </h3>
+            <div className="h-64 bg-cream dark:bg-charcoal-dark/50 p-4 rounded-lg shadow-inner">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={hourlySalesData}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'} />
+                  <XAxis dataKey="hour" tick={{ fill: theme === 'dark' ? '#cbd5e1' : '#475569', fontSize: 10 }} />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: theme === 'dark' ? '#1e293b' : '#fff', borderRadius: '0.5rem', border: 'none' }}
+                    itemStyle={{ color: COFFEE_COLORS.accent, fontWeight: 'bold' }}
+                  />
+                  <Bar dataKey="count" name="Orders" fill={COFFEE_COLORS.accent} radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          <div>
+            <h3 className="text-xl font-bold mb-4 text-charcoal-dark dark:text-cream-light flex items-center">
+              <FaBrain className="mr-2 text-emerald" /> Top Margin Products (%)
+            </h3>
+            <div className="h-64 bg-cream dark:bg-charcoal-dark/50 p-4 rounded-lg shadow-inner">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={marginAnalysisData} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'} />
+                  <XAxis type="number" unit="%" tick={{ fill: theme === 'dark' ? '#cbd5e1' : '#475569', fontSize: 10 }} />
+                  <YAxis dataKey="name" type="category" width={80} tick={{ fill: theme === 'dark' ? '#cbd5e1' : '#475569', fontSize: 10 }} />
+                  <Tooltip 
+                    formatter={(val: number) => [`${val.toFixed(1)}%`, "Profit Margin"]}
+                    contentStyle={{ backgroundColor: theme === 'dark' ? '#1e293b' : '#fff', borderRadius: '0.5rem', border: 'none' }}
+                  />
+                  <Bar dataKey="margin" fill={COFFEE_COLORS.medium} radius={[0, 4, 4, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
           <div className="bg-cream dark:bg-charcoal-dark/50 p-4 rounded-lg shadow-inner min-h-[400px]">
             <h4 className="text-lg font-bold mb-2 text-charcoal-dark dark:text-cream-light flex items-center"><FaChartPie className="mr-2 text-emerald" />Sales by Category</h4>
@@ -275,6 +330,38 @@ const SalesDashboard: React.FC = () => {
           <div className="space-y-4">
             {renderProductList(topSellingProducts, "Top 5 Selling Products", <FaSortAmountUp className="mr-2 text-emerald" />)}
             {renderProductList(leastSellingProducts, "Bottom 5 Selling Products", <FaSortAmountDown className="mr-2 text-terracotta" />)}
+          </div>
+          <div className="bg-cream dark:bg-charcoal-dark/50 p-4 rounded-lg shadow-inner min-h-[400px] flex flex-col">
+            <h4 className="text-lg font-bold mb-2 text-charcoal-dark dark:text-cream-light flex items-center"><FaBoxOpen className="mr-2 text-emerald" />Combo vs Regular Sales</h4>
+            <div className="flex-grow">
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={comboPerformanceData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={100}
+                    paddingAngle={5}
+                    dataKey="value"
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  >
+                    {comboPerformanceData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value: number) => `$${value.toFixed(2)}`} />
+                  <Legend verticalAlign="bottom" height={36} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="mt-4 p-4 bg-emerald/5 rounded-lg border border-emerald/10">
+              <p className="text-xs text-charcoal-light dark:text-cream-dark italic">
+                {comboPerformanceData[1].value > comboPerformanceData[0].value
+                  ? "Combos are driving more revenue than regular items! Consider adding more variety."
+                  : "Regular items dominate. Try promoting combos at checkout to increase average order value."}
+              </p>
+            </div>
           </div>
         </div>
       </section>

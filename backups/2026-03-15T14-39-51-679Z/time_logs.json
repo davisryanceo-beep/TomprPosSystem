@@ -1,0 +1,82 @@
+[
+  {
+    "id": "time-1772539603526",
+    "userId": "user-1769946916813",
+    "userName": "solacecashier",
+    "role": "Cashier",
+    "clockInTime": "2026-03-03T12:06:43.526Z",
+    "clockOutTime": null,
+    "notes": null,
+    "storeId": "store-1769421861055"
+  },
+  {
+    "id": "time-1772539595774",
+    "userId": "user-1769946916813",
+    "userName": "solacecashier",
+    "role": "Cashier",
+    "clockInTime": "2026-03-03T12:06:35.774Z",
+    "clockOutTime": "2026-03-03T12:07:16.467Z",
+    "notes": null,
+    "storeId": "store-1769421861055"
+  },
+  {
+    "id": "13569a14-86d3-4026-aaba-137fa8fcb81b",
+    "userId": "user-1769422389861",
+    "userName": "chan jasmine",
+    "role": "Cashier",
+    "clockInTime": "2026-01-30T04:03:38.510Z",
+    "clockOutTime": "2026-01-30T04:03:49.074Z",
+    "notes": null,
+    "storeId": "store-1769421861055"
+  },
+  {
+    "id": "2e6c2c51-3c83-44c3-b547-ea08d1b4688b",
+    "userId": "user-1769422389861",
+    "userName": "chan jasmine",
+    "role": "Cashier",
+    "clockInTime": "2026-01-30T08:14:23.076Z",
+    "clockOutTime": null,
+    "notes": null,
+    "storeId": "store-1769421861055"
+  },
+  {
+    "id": "5a8ae3af-efa3-40e2-b54b-6ab4678b4e6e",
+    "userId": "user-1769422389861",
+    "userName": "chan jasmine",
+    "role": "Cashier",
+    "clockInTime": "2026-01-30T04:58:13.334Z",
+    "clockOutTime": null,
+    "notes": null,
+    "storeId": "store-1769421861055"
+  },
+  {
+    "id": "67dd80ef-7182-4e05-89db-24a37099b724",
+    "userId": "user-1769422389861",
+    "userName": "chan jasmine",
+    "role": "Cashier",
+    "clockInTime": "2026-01-30T14:10:52.792Z",
+    "clockOutTime": null,
+    "notes": null,
+    "storeId": "store-1769421861055"
+  },
+  {
+    "id": "7dbe1e77-0def-43fd-af8c-aac9fa510252",
+    "userId": "user-1769422389861",
+    "userName": "chan jasmine",
+    "role": "Cashier",
+    "clockInTime": "2026-01-30T04:55:47.652Z",
+    "clockOutTime": null,
+    "notes": null,
+    "storeId": "store-1769421861055"
+  },
+  {
+    "id": "a1aa8be5-aef3-4567-a8cb-ca960637d18e",
+    "userId": "user-1769422389861",
+    "userName": "chan jasmine",
+    "role": "Cashier",
+    "clockInTime": "2026-01-30T14:01:29.887Z",
+    "clockOutTime": "2026-01-30T14:09:32.514Z",
+    "notes": null,
+    "storeId": "store-1769421861055"
+  }
+]

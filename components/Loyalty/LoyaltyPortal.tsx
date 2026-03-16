@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { getPublicLoyalty, publicClaimStamps } from '../../services/api';
-import { Customer, Store } from '../../types';
+import { Customer, Store, LOYALTY_TIERS } from '../../types';
 import LoadingSpinner from '../Shared/LoadingSpinner';
 import { FaCoffee, FaTrophy, FaSync, FaCamera, FaFire, FaGift } from 'react-icons/fa';
+import { GiMedal, GiTrophyCup, GiJeweledChalice } from 'react-icons/gi';
 import QRScannerModal from './QRScannerModal';
 import PWAInstallButton from '../Shared/PWAInstallButton';
+import { getTierInfo } from '../../services/loyalty';
 
 // Navy & White color palette
 const NAVY = '#0A1628';
@@ -188,6 +190,17 @@ const LoyaltyPortal: React.FC = () => {
         ? customer.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
         : 'C';
 
+    const getTierDisplay = (totalStamps: number) => {
+        const info = getTierInfo(totalStamps);
+        let icon = <GiMedal className="text-orange-500" />;
+        if (info.name === LOYALTY_TIERS.GOLD.name) icon = <GiJeweledChalice className="text-amber-400" />;
+        if (info.name === LOYALTY_TIERS.SILVER.name) icon = <GiTrophyCup className="text-slate-300" />;
+        return { ...info, icon };
+    };
+
+    const currentTier = getTierDisplay(totalEarned);
+    const nextTierProgress = currentTier.next ? Math.min(100, (totalEarned / currentTier.next.threshold) * 100) : 100;
+
     return (
         <div className="min-h-screen pb-32" style={{ background: '#F1F5F9' }}>
 
@@ -328,22 +341,77 @@ const LoyaltyPortal: React.FC = () => {
                 </div>
             </div>
 
-            {/* ─── LIFETIME STATS ─── */}
-            <div className="px-5 mt-5 grid grid-cols-2 gap-4">
-                <div className="bg-white rounded-3xl p-5 text-center shadow-sm" style={{ border: '1px solid #E2E8F0' }}>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Lifetime Stamps</p>
-                    <p className="text-4xl font-black" style={{ color: NAVY }}>{totalEarned}</p>
-                    <p className="text-[10px] text-slate-400 mt-1">☕ Total Earned</p>
+            {/* ─── TIER PROGRESS ─── */}
+            <div className="px-5 mt-5">
+                <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100">
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center space-x-3">
+                            <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-2xl">
+                                {currentTier.icon}
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Current Status</p>
+                                <h3 className="text-xl font-black" style={{ color: NAVY }}>{currentTier.name} Member</h3>
+                            </div>
+                        </div>
+                        {currentTier.next && (
+                            <div className="text-right">
+                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Next Tier</p>
+                                <p className="text-xs font-bold" style={{ color: AMBER }}>{currentTier.next.name}</p>
+                            </div>
+                        )}
+                    </div>
+
+                    {currentTier.next && (
+                        <div className="space-y-2">
+                            <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                                <div 
+                                    className="h-full bg-amber-400 transition-all duration-1000" 
+                                    style={{ width: `${nextTierProgress}%` }}
+                                />
+                            </div>
+                            <p className="text-[10px] font-medium text-slate-400 flex justify-between">
+                                <span>{totalEarned} / {currentTier.next.threshold} lifetime stamps</span>
+                                <span>{currentTier.next.threshold - totalEarned} more stamps to {currentTier.next.name}</span>
+                            </p>
+                        </div>
+                    )}
+
+                    <div className="mt-4 pt-4 border-t border-slate-50">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Tier Perks</p>
+                        <ul className="space-y-1">
+                            <li className="text-xs font-bold text-slate-600 flex items-center">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald mr-2" />
+                                {currentTier.perks}
+                            </li>
+                            {currentTier.next && (
+                                <li className="text-xs font-medium text-slate-400 flex items-center">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-slate-200 mr-2" />
+                                    Unlock {currentTier.next.name}: {currentTier.next.perks}
+                                </li>
+                            )}
+                        </ul>
+                    </div>
                 </div>
-                <div className="bg-white rounded-3xl p-5 text-center shadow-sm" style={{ border: '1px solid #E2E8F0' }}>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Member Status</p>
-                    <p
-                        className="text-2xl font-black uppercase tracking-tight"
-                        style={{ color: AMBER }}
-                    >
-                        {totalEarned >= 50 ? 'Gold' : totalEarned >= 20 ? 'Silver' : 'Member'}
-                    </p>
-                    <p className="text-[10px] text-slate-400 mt-1">🏆 Rewards Club</p>
+            </div>
+
+            {/* ─── LIFETIME STATS ─── */}
+            <div className="px-5 mt-4">
+                <div className="bg-white rounded-3xl p-5 flex items-center justify-between shadow-sm border border-slate-100">
+                    <div className="flex items-center space-x-4">
+                        <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center">
+                            <FaFire className="text-orange-500" />
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Total Brews</p>
+                            <p className="text-lg font-black" style={{ color: NAVY }}>{totalEarned} Lifetime Stamps</p>
+                        </div>
+                    </div>
+                    <div className="w-1 h-8 bg-slate-100 rounded-full" />
+                    <div className="text-right">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Stamps Left</p>
+                        <p className="text-lg font-black text-emerald">{stampsLeft} to freebie</p>
+                    </div>
                 </div>
             </div>
 

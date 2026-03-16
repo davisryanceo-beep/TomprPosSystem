@@ -1,0 +1,54 @@
+[
+  {
+    "id": "promo-1769521257768",
+    "name": "Staff Promotion ",
+    "description": "",
+    "type": "Percentage off total order",
+    "value": 20,
+    "startDate": "2026-01-27",
+    "endDate": "",
+    "minOrderAmount": null,
+    "isActive": 1,
+    "applicableProductIds": null,
+    "storeId": "store-1769421861055"
+  },
+  {
+    "id": "promo-1769773326377",
+    "name": "Close Sell",
+    "description": "",
+    "type": "Percentage off total order",
+    "value": 100,
+    "startDate": "2026-01-30",
+    "endDate": "",
+    "minOrderAmount": null,
+    "isActive": 1,
+    "applicableProductIds": null,
+    "storeId": "store-1769421861055"
+  },
+  {
+    "id": "promo-1770262331257",
+    "name": "Family discount ",
+    "description": "",
+    "type": "Percentage off total order",
+    "value": 40,
+    "startDate": "2026-02-05",
+    "endDate": "",
+    "minOrderAmount": null,
+    "isActive": 1,
+    "applicableProductIds": null,
+    "storeId": "store-1769421861055"
+  },
+  {
+    "id": "promo-1772416365535",
+    "name": "Take away promotion ",
+    "description": "",
+    "type": "Percentage off total order",
+    "value": 20,
+    "startDate": "2026-03-02",
+    "endDate": "2026-03-31",
+    "minOrderAmount": null,
+    "isActive": 1,
+    "applicableProductIds": "[]",
+    "storeId": "store-1769421861055"
+  }
+]

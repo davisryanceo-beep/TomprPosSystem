@@ -1,0 +1,72 @@
+[
+  {
+    "id": "cat-1769424949827",
+    "name": "Coffee",
+    "storeId": "store-1769421861055"
+  },
+  {
+    "id": "cat-1769441097199",
+    "name": "Soda",
+    "storeId": "store-1769421861055"
+  },
+  {
+    "id": "cat-1769441109384",
+    "name": "Signature Drink",
+    "storeId": "store-1769421861055"
+  },
+  {
+    "id": "cat-1769441135438",
+    "name": "Smoothie",
+    "storeId": "store-1769421861055"
+  },
+  {
+    "id": "cat-1769441148819",
+    "name": "Tea Shake",
+    "storeId": "store-1769421861055"
+  },
+  {
+    "id": "cat-1769441214078",
+    "name": "Non Coffee",
+    "storeId": "store-1769421861055"
+  },
+  {
+    "id": "cat-1769450278768",
+    "name": "Hot Drink",
+    "storeId": "store-1769421861055"
+  },
+  {
+    "id": "cat-1769782395020",
+    "name": "Snack",
+    "storeId": "store-1769421861055"
+  },
+  {
+    "id": "cat1",
+    "name": "Coffee",
+    "storeId": "store1-downtown"
+  },
+  {
+    "id": "cat2",
+    "name": "Tea",
+    "storeId": "store1-downtown"
+  },
+  {
+    "id": "cat3",
+    "name": "Pastries",
+    "storeId": "store1-downtown"
+  },
+  {
+    "id": "cat4",
+    "name": "Food",
+    "storeId": "store1-downtown"
+  },
+  {
+    "id": "cat5",
+    "name": "Merchandise",
+    "storeId": "store1-downtown"
+  },
+  {
+    "id": "cat6",
+    "name": "Uncategorized",
+    "storeId": "store1-downtown"
+  }
+]

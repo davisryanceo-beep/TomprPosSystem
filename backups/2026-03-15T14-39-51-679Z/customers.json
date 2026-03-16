@@ -1,0 +1,22 @@
+[
+  {
+    "id": "cust-1772512914893-530",
+    "phoneNumber": "015743772",
+    "name": "Chesda",
+    "currentStamps": 0,
+    "totalEarnedStamps": 0,
+    "storeId": "store-1769421861055",
+    "createdAt": "2026-03-03T04:41:54.893+00:00",
+    "password": "Kouch123()"
+  },
+  {
+    "id": "cust-1772519428820-398",
+    "phoneNumber": "081848777",
+    "name": "Nuna",
+    "currentStamps": 0,
+    "totalEarnedStamps": 0,
+    "storeId": "store-1769421861055",
+    "createdAt": "2026-03-03T06:30:28.82+00:00",
+    "password": "nunssolace"
+  }
+]

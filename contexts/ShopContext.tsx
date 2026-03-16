@@ -31,6 +31,7 @@ import {
   deleteAllOrders,
   lookupCustomer as apiLookupCustomer, createCustomer as apiCreateCustomer, updateCustomer as apiUpdateCustomer
 } from '../services/api';
+import { savePendingOrder, getPendingOrders, removePendingOrder } from '../services/offlineStorage';
 
 // Helper to get future date string (YYYY-MM-DD)
 const getFutureDateString = (months: number, fromDate?: Date): string => {
@@ -230,7 +231,7 @@ interface ShopContextType {
   
   // Offline & Sync
   isOnline: boolean;
-  pendingOrdersCount: number;
+  pendingOrders: Order[];
   syncPendingOrders: () => Promise<void>;
   clearAllOrders: () => Promise<boolean>;
 
@@ -268,26 +269,23 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
     
-    // Load pending orders from localStorage
-    const saved = localStorage.getItem('pending_orders');
-    if (saved) {
+    // Load pending orders from IndexedDB
+    const loadPending = async () => {
       try {
-        setPendingOrders(JSON.parse(saved));
+        const saved = await getPendingOrders();
+        setPendingOrders(saved);
       } catch (e) {
-        console.error("Failed to parse pending orders", e);
+        console.error("Failed to load pending orders from IndexedDB", e);
       }
-    }
+    };
+    loadPending();
 
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
   }, []);
-
-  useEffect(() => {
-    // Persist pending orders
-    localStorage.setItem('pending_orders', JSON.stringify(pendingOrders));
-  }, [pendingOrders]);
+  // Peristed state managed via savePendingOrder in finalizeCurrentOrder
 
   const syncPendingOrders = useCallback(async () => {
     if (!isOnline || pendingOrders.length === 0) return;
@@ -300,6 +298,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         await createOrder(order);
         const store = storesState.find(s => s.id === order.storeId);
         if (store) sendTelegramNotification(order, store);
+        await removePendingOrder(order.id);
         successIds.push(order.id);
       } catch (e) {
         console.error(`Failed to sync order ${order.id}`, e);
@@ -1372,9 +1371,11 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       } else {
         // Offline: Queue for later
         globalSavedOrder = finalizedOrder; // Use the finalized order as the "saved" one for local state
+        await savePendingOrder(finalizedOrder);
         setPendingOrders(prev => [...prev, finalizedOrder]);
         setOrdersState(prev => [...prev, finalizedOrder]); // Add to ordersState for immediate display
-        alert("You are offline. Order saved locally and will sync when online.");
+        // We'll use a better UI toast later, but keeping alert for now as fallback
+        console.log("Working offline - Order queued in IndexedDB");
       }
 
       setProductsState(prevProducts => {
@@ -1946,7 +1947,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     clearAllOrders,
     newOnlineOrders,
     acknowledgeOrder,
-    isOnline, pendingOrdersCount: pendingOrders.length, syncPendingOrders
+    isOnline, pendingOrders, syncPendingOrders
   };
 
   return <ShopContext.Provider value={contextValue}>{children}</ShopContext.Provider>;

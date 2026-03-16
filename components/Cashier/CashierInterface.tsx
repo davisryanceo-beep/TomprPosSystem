@@ -10,7 +10,7 @@ import { OrderItem, Order, ProductCategory, PaymentMethod, PaymentCurrency, QRPa
 import useKeyboardShortcuts from '../../hooks/useKeyboardShortcuts';
 import OnlineMenuModal from './OnlineMenuModal';
 import OnlineOrdersModal from './OnlineOrdersModal';
-import { FaReceipt, FaShoppingCart, FaCoffee, FaLeaf, FaCookieBite, FaShoppingBag, FaQuestionCircle, FaDesktop, FaStore, FaBell, FaFolderOpen, FaUserTag } from 'react-icons/fa';
+import { FaReceipt, FaShoppingCart, FaCoffee, FaLeaf, FaCookieBite, FaShoppingBag, FaQuestionCircle, FaDesktop, FaStore, FaBell, FaFolderOpen, FaUserTag, FaWifi, FaCloudUploadAlt } from 'react-icons/fa';
 import PrintableReceipt from './PrintableReceipt';
 import CashPaymentModal from './CashPaymentModal';
 import TableSelectionModal from './TableSelectionModal';
@@ -23,7 +23,7 @@ const CashierInterface: React.FC = () => {
     products, currentOrder, createOrUpdateCurrentOrder, clearCurrentOrder,
     finalizeCurrentOrder, setRushOrder, getProductById, currentStoreId,
     setTableNumberForCurrentOrder, updateCurrentOrder, knownCategories,
-    saveOrderAsTab, loadOrderAsCurrent, selectedCustomer
+    saveOrderAsTab, loadOrderAsCurrent, selectedCustomer, isOnline, pendingOrders
   } = useShop();
   const { currentUser } = useAuth();
   const [showReceiptModal, setShowReceiptModal] = useState(false);
@@ -149,6 +149,7 @@ const CashierInterface: React.FC = () => {
       saveOrderAsTab(currentUser.id);
     }
   };
+
 
   const handleLoadTab = (order: Order) => {
     loadOrderAsCurrent(order);
@@ -282,7 +283,23 @@ const CashierInterface: React.FC = () => {
   ], !isQRPaymentInProgress);
 
   return (
-    <div className="fade-in grid grid-cols-1 lg:grid-cols-5 xl:grid-cols-3 gap-4 h-[calc(100vh-80px)] p-4">
+    <div className="relative h-screen flex flex-col">
+      {!isOnline && (
+        <div className="bg-amber-500 text-white px-4 py-2 flex items-center justify-between animate-pulse-slow z-50">
+          <div className="flex items-center gap-2 font-bold">
+            <FaWifi className="animate-bounce" />
+            <span>OFFLINE MODE - Orders will be queued and synced automatically when back online.</span>
+          </div>
+          {pendingOrders.length > 0 && (
+            <div className="flex items-center gap-2">
+              <FaCloudUploadAlt />
+              <span className="text-sm font-black bg-white/20 px-2 py-0.5 rounded-full">{pendingOrders.length} Pending Orders</span>
+            </div>
+          )}
+        </div>
+      )}
+      
+      <div className="fade-in grid grid-cols-1 lg:grid-cols-5 xl:grid-cols-3 gap-4 flex-grow p-4 min-h-0 overflow-hidden">
       {/* Product Panel */}
       <div className={`lg:col-span-3 xl:col-span-2 bg-cream dark:bg-charcoal-dark/50 p-4 rounded-xl shadow-lg flex flex-col transition-opacity duration-300 ${isQRPaymentInProgress ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
         <div className="flex-shrink-0">
@@ -299,6 +316,9 @@ const CashierInterface: React.FC = () => {
                   </span>
                 )}
               </Button>
+              <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold ${isOnline ? 'bg-emerald/10 text-emerald' : 'bg-amber-500 text-white'}`}>
+                {isOnline ? <><FaWifi /> Online</> : <><FaWifi className="animate-pulse" /> Offline ({pendingOrders.length})</>}
+              </div>
               <Button onClick={() => setShowShortcutsHelp(true)} variant="ghost" size="sm" title="Keyboard Shortcuts (?)">
                 <span className="text-lg">⌨️</span>
               </Button>
@@ -313,7 +333,7 @@ const CashierInterface: React.FC = () => {
               </Button>
               <Button
                 onClick={() => setShowLoyaltyModal(true)}
-                variant={selectedCustomer ? "outline" : "ghost"}
+                variant={selectedCustomer ? "secondary" : "ghost"}
                 leftIcon={<FaUserTag />}
                 className={selectedCustomer ? "border-emerald text-emerald" : ""}
               >
@@ -413,6 +433,7 @@ const CashierInterface: React.FC = () => {
         isOpen={showLoyaltyModal}
         onClose={() => setShowLoyaltyModal(false)}
       />
+      </div>
     </div>
   );
 };

@@ -69,6 +69,12 @@ export interface Customer {
   createdAt: Date;
 }
 
+export const LOYALTY_TIERS = {
+    BRONZE: { name: 'Bronze', threshold: 0, perks: 'Member status' },
+    SILVER: { name: 'Silver', threshold: 50, perks: 'Free Birthday Drink' },
+    GOLD: { name: 'Gold', threshold: 150, perks: '20% off all Merch + Free Birthday Treat' }
+};
+
 export interface User {
   id: string;
   username: string;

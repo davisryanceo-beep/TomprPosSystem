@@ -1,0 +1,24 @@
+[
+  {
+    "id": "shift-1769744982128",
+    "userId": "user-1769422389861",
+    "userName": "chan jasmine (solacecashier)",
+    "role": "Cashier",
+    "date": "2026-01-30",
+    "startTime": "21:30",
+    "endTime": "22:55",
+    "notes": "",
+    "storeId": "store-1769421861055"
+  },
+  {
+    "id": "shift1",
+    "userId": "cashier1",
+    "userName": "Default Cashier",
+    "role": "Cashier",
+    "date": "2026-01-26",
+    "startTime": "08:00",
+    "endTime": "16:00",
+    "notes": "Opening shift",
+    "storeId": "store1-downtown"
+  }
+]
