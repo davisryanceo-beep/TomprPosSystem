@@ -2430,15 +2430,17 @@ app.post("/api/public/customers/login", async (req, res) => {
 app.get("/api/expenses", authenticateToken, enforceStoreScope, async (req, res) => {
   const { storeId } = req.query;
   try {
-    const { data: expenses, error } = await db
-      .from("expenses")
-      .select("*")
-      .eq("storeId", storeId)
-      .order("date", { ascending: false });
+    let query = db.from("expenses").select("*");
+    if (storeId) {
+      query = query.eq("storeId", storeId);
+    }
+    
+    const { data: expenses, error } = await query.order("date", { ascending: false });
     if (error) throw error;
-    res.json(expenses);
+    res.json(expenses || []);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("Expenses GET Error:", err);
+    res.status(500).json({ error: err.message, stack: err.stack });
   }
 });
 
