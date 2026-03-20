@@ -8,7 +8,7 @@ import Constants from 'expo-constants';
 // 2. Production (Release Mode): Automatically connects to the Firebase Live URL.
 // 3. Manual Override: Uncomment logic below if auto-detection fails.
 
-const PROD_API_URL = 'https://possystem-7a66f.web.app/api';
+const PROD_API_URL = 'https://poscafesystem.vercel.app/api';
 
 const getBaseUrl = () => {
     // 1. Force Production if needed (Uncomment to test prod in dev)

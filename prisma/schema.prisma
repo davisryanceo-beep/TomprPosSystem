@@ -1,0 +1,401 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model addons {
+  id         String  @id
+  name       String
+  price      Float   @db.Real
+  category   String?
+  isSeasonal Int?    @default(0)
+  storeId    String
+  stores     stores  @relation(fields: [storeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model announcements {
+  id          String  @id
+  title       String
+  message     String
+  priority    String
+  authorId    String
+  authorName  String?
+  timestamp   String?
+  isArchived  Int?    @default(0)
+  targetRoles String?
+  storeId     String?
+  stores      stores? @relation(fields: [storeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model app_settings {
+  id                  Int     @id
+  registrationEnabled Int?    @default(1)
+  updatedAt           String?
+}
+
+model cash_drawer_logs {
+  id             String  @id
+  shiftDate      String?
+  declaredAmount Float   @db.Real
+  expectedAmount Float?  @db.Real
+  discrepancy    Float?  @db.Real
+  notes          String?
+  adminNotes     String?
+  reportedBy     String?
+  logTimestamp   String?
+  storeId        String
+  stores         stores  @relation(fields: [storeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model categories {
+  id      String @id
+  name    String
+  storeId String
+  stores  stores @relation(fields: [storeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model combos {
+  id           String  @id
+  name         String
+  description  String?
+  items        String?
+  comboPrice   Float?  @db.Real
+  regularPrice Float?  @db.Real
+  savings      Float?  @db.Real
+  storeId      String
+  stores       stores  @relation(fields: [storeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model current_orders {
+  id                 String  @id
+  storeId            String
+  terminalId         String?
+  items              String?
+  tableNumber        String?
+  totalAmount        Float?  @db.Real
+  taxAmount          Float?  @db.Real
+  discountAmount     Float?  @db.Real
+  finalAmount        Float?  @db.Real
+  cashierId          String?
+  isRushOrder        Int?
+  appliedPromotionId String?
+  qrPaymentState     String?
+  lastUpdated        String?
+  stores             stores  @relation(fields: [storeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model customers {
+  id                String    @id
+  phoneNumber       String
+  name              String?
+  currentStamps     Int?      @default(0)
+  totalEarnedStamps Int?      @default(0)
+  storeId           String?
+  createdAt         DateTime? @default(now()) @db.Timestamptz(6)
+  password          String?
+  stores            stores?   @relation(fields: [storeId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([phoneNumber], map: "idx_customers_phone")
+  @@index([storeId], map: "idx_customers_store")
+}
+
+model feedback {
+  id        String  @id
+  type      String
+  message   String
+  timestamp String?
+  userId    String?
+  userName  String?
+  storeId   String
+  stores    stores  @relation(fields: [storeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model leave_requests {
+  id          String  @id
+  userid      String
+  username    String?
+  type        String
+  startdate   String
+  enddate     String
+  reason      String?
+  status      String? @default("pending")
+  appliedat   String?
+  respondedat String?
+  storeid     String
+  stores      stores  @relation(fields: [storeid], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users       users   @relation(fields: [userid], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model modifierGroups {
+  id            String  @id
+  name          String
+  description   String?
+  selectionType String?
+  minSelections Int?
+  maxSelections Int?
+  options       Json?
+  storeid       String
+  stores        stores  @relation(fields: [storeid], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model modifier_groups {
+  id            String  @id
+  name          String
+  minSelections Int?    @default(0)
+  maxSelections Int?    @default(1)
+  modifiers     String?
+  storeId       String
+  stores        stores  @relation(fields: [storeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model modifiergroups {
+  id            String  @id
+  name          String
+  description   String?
+  selectionType String?
+  minSelections Int?
+  maxSelections Int?
+  options       Json?
+  storeId       String
+  stores        stores  @relation(fields: [storeId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model orders {
+  id                 String  @id
+  items              String?
+  tableNumber        String?
+  totalAmount        Float?  @db.Real
+  taxAmount          Float?  @db.Real
+  discountAmount     Float?  @db.Real
+  finalAmount        Float?  @db.Real
+  status             String?
+  timestamp          String?
+  cashierId          String?
+  baristaId          String?
+  isRushOrder        Int?
+  paymentMethod      String?
+  paymentCurrency    String?
+  cashTendered       Float?  @db.Real
+  changeGiven        Float?  @db.Real
+  appliedPromotionId String?
+  storeId            String
+  qrPaymentState     String?
+  orderType          String? @default("POS")
+  stores             stores  @relation(fields: [storeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model products {
+  id             String    @id
+  name           String
+  price          Float     @db.Real
+  category       String?
+  stock          Int?
+  imageUrl       String?
+  storeId        String
+  description    String?
+  modifierGroups Json?
+  allowAddOns    Boolean?  @default(true)
+  stores         stores    @relation(fields: [storeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  recipes        recipes[]
+}
+
+model promotions {
+  id                   String  @id
+  name                 String
+  description          String?
+  type                 String
+  value                Float   @db.Real
+  startDate            String?
+  endDate              String?
+  minOrderAmount       Float?  @db.Real
+  isActive             Int?    @default(1)
+  applicableProductIds String?
+  storeId              String
+  stores               stores  @relation(fields: [storeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model recipes {
+  id           String   @id
+  productId    String
+  productName  String?
+  ingredients  String?
+  instructions String?
+  notes        String?
+  storeId      String
+  products     products @relation(fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  stores       stores   @relation(fields: [storeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model shifts {
+  id        String  @id
+  userId    String
+  userName  String?
+  role      String?
+  date      String?
+  startTime String?
+  endTime   String?
+  notes     String?
+  storeId   String
+  stores    stores  @relation(fields: [storeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users     users   @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model staff_rewards {
+  id                 String  @id
+  userId             String
+  userName           String?
+  storeId            String
+  shiftId            String?
+  claimedOrderId     String?
+  claimedProductId   String?
+  claimedProductName String?
+  claimedAt          String?
+  stores             stores  @relation(fields: [storeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users              users   @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model stamp_claims {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  store_id    String
+  order_id    String
+  stamps      Int
+  claimed     Boolean?  @default(false)
+  claimed_at  DateTime? @db.Timestamptz(6)
+  customer_id String?
+  created_at  DateTime? @default(now()) @db.Timestamptz(6)
+  expires_at  DateTime? @default(dbgenerated("(now() + '01:00:00'::interval)")) @db.Timestamptz(6)
+}
+
+model store_tasks {
+  id          String  @id
+  title       String
+  description String?
+  status      String? @default("Pending")
+  storeId     String
+  assignedTo  String?
+  completedBy String?
+  completedAt String?
+  createdAt   String?
+  stores      stores  @relation(fields: [storeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model stores {
+  id                       String             @id
+  name                     String
+  address                  String?
+  contactInfo              String?
+  currencyCode             String?
+  timezone                 String?
+  createdAt                String?
+  licenseExpiryDate        String?
+  logoUrl                  String?
+  backgroundImageUrl       String?
+  welcomeMessage           String?
+  qrCodeUrl                String?
+  displayTheme             String?
+  backgroundColor          String?
+  overlayOpacity           Float?             @db.Real
+  accentColor              String?
+  fontFamily               String?
+  headerColor              String?
+  bodyTextColor            String?
+  logoSize                 Int?
+  telegramBotToken         String?
+  telegramChatId           String?
+  displayLayout            String?            @default("standard")
+  slideshowImageUrls       Json?              @default("[]")
+  loyaltyEnabled           Boolean?           @default(false)
+  stampsPerItem            Int?               @default(1)
+  stampsToRedeem           Int?               @default(10)
+  loyaltyRewardDescription String?            @default("Free Drink")
+  addons                   addons[]
+  announcements            announcements[]
+  cash_drawer_logs         cash_drawer_logs[]
+  categories               categories[]
+  combos                   combos[]
+  current_orders           current_orders[]
+  customers                customers[]
+  feedback                 feedback[]
+  leave_requests           leave_requests[]
+  modifierGroups           modifierGroups[]
+  modifier_groups          modifier_groups[]
+  modifiergroups           modifiergroups[]
+  orders                   orders[]
+  products                 products[]
+  promotions               promotions[]
+  recipes                  recipes[]
+  shifts                   shifts[]
+  staff_rewards            staff_rewards[]
+  store_tasks              store_tasks[]
+  supply_items             supply_items[]
+  time_logs                time_logs[]
+  users                    users[]
+  wastage_logs             wastage_logs[]
+}
+
+model supply_items {
+  id                String  @id
+  name              String
+  category          String?
+  currentStock      Float?  @db.Real
+  unit              String?
+  lowStockThreshold Float?  @db.Real
+  notes             String?
+  purchaseDate      String?
+  expiryDate        String?
+  storeId           String
+  stores            stores  @relation(fields: [storeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model time_logs {
+  id           String  @id
+  userId       String
+  userName     String?
+  role         String?
+  clockInTime  String?
+  clockOutTime String?
+  notes        String?
+  storeId      String
+  stores       stores  @relation(fields: [storeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users        users   @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model users {
+  id                String           @id
+  username          String           @unique
+  role              String
+  password          String?
+  pin               String?
+  firstName         String?
+  lastName          String?
+  profilePictureUrl String?
+  email             String?
+  phoneNumber       String?
+  storeId           String?
+  hourlyRate        Float?           @default(0) @db.Real
+  loyalty_points    Int?             @default(0)
+  tier              String?          @default("Silver")
+  leave_requests    leave_requests[]
+  shifts            shifts[]
+  staff_rewards     staff_rewards[]
+  time_logs         time_logs[]
+  stores            stores?          @relation(fields: [storeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model wastage_logs {
+  id         String  @id
+  itemId     String
+  itemName   String
+  quantity   Float   @db.Real
+  reason     String?
+  date       String?
+  reportedBy String?
+  storeId    String
+  stores     stores  @relation(fields: [storeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}

@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/node";
 import express from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
@@ -14,6 +15,14 @@ import xss from "xss";
 import rateLimit from "express-rate-limit";
 
 dotenv.config();
+
+// Initialize Sentry before everything else
+if (process.env.SENTRY_DSN) {
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    tracesSampleRate: 1.0,
+  });
+}
 
 const JWT_SECRET = "production-secret-key-fixed-2024";
 
@@ -138,6 +147,15 @@ const __dirname = dirname(__filename);
 
 const app = express();
 const PORT = 3001;
+
+// Sentry Request Handler must be the first middleware on the app
+if (process.env.SENTRY_DSN) {
+  app.use(Sentry.Handlers.requestHandler());
+}
+
+app.use(helmet({
+  contentSecurityPolicy: false, // Vite/HMR compatibility
+}));
 
 app.use(cors({
   origin: ["https://poscafesystem.vercel.app", "https://tompr-stamp.vercel.app", "https://mobile-tau-khaki.vercel.app", "http://localhost:5173", "http://localhost:3000"],
@@ -2075,14 +2093,93 @@ app.get("/api/public/loyalty/:storeId/:phoneNumber", async (req, res) => {
 
     if (storeError) throw storeError;
 
-    if (!customers || customers.length === 0) {
-      return res.status(404).json({ success: false, message: "Customer not found. Please register first." });
-    }
+// STAFF PERFORMANCE (For Leaderboard)
+app.get("/api/staff-performance", authenticateToken, async (req, res) => {
+  const { storeId } = req.query;
+  if (!storeId) return res.status(400).json({ error: "Missing storeId" });
+
+  try {
+    // 1. Get all staff for the store
+    const { data: staff, error: staffError } = await db
+      .from("users")
+      .select("id, name, role")
+      .eq("storeId", storeId);
+    
+    if (staffError) throw staffError;
+
+    // 2. Get orders for current month
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0,0,0,0);
+
+    const { data: orders, error: ordersError } = await db
+      .from("orders")
+      .select("totalAmount, createdBy")
+      .eq("storeId", storeId)
+      .gte("timestamp", startOfMonth.toISOString());
+
+    if (ordersError) throw ordersError;
+
+    // 3. Get Attendance (Time Logs)
+    const { data: logs, error: logsError } = await db
+      .from("time_logs")
+      .select("userid")
+      .eq("storeId", storeId)
+      .gte("timestamp", startOfMonth.toISOString());
+
+    if (logsError) throw logsError;
+
+    // Calculate Scores
+    const leaderboard = staff.map(s => {
+      let score = 0;
+      
+      // Sales Points: 1 per $
+      const sales = orders
+        ?.filter(o => o.createdBy === s.id)
+        .reduce((sum, o) => sum + (parseFloat(o.totalAmount) || 0), 0) || 0;
+      score += Math.floor(sales);
+
+      // Attendance Points: 50 per unique day
+      const daysWorked = new Set(
+        logs
+          ?.filter(l => l.userid === s.id)
+          .map(l => new Date(l.timestamp).toDateString())
+      ).size;
+      score += (daysWorked * 50);
+
+      // Mock task points for now (since store_tasks might be empty)
+      // score += 100; 
+
+      return {
+        id: s.id,
+        name: s.name,
+        role: s.role,
+        score: score
+      };
+    });
+
+    res.json(leaderboard);
+  } catch (err) {
+    console.error("Staff Performance API Error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Auto-Tiering Logic Helper
+const calculateTier = (totalStamps) => {
+  if (totalStamps >= 100) return "GOLD";
+  if (totalStamps >= 50) return "SILVER";
+  if (totalStamps >= 10) return "BRONZE";
+  return "MEMBER";
+};
 
     res.json({
       success: true,
-      customer: customers[0],
-      store: store
+      customer: {
+        ...customers[0],
+        tier: calculateTier(customers[0].totalEarnedStamps || 0)
+      },
+      store
     });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -2379,6 +2476,11 @@ app.delete("/api/expenses/:id", authenticateToken, verifyOwnership('expenses'), 
     res.status(500).json({ error: err.message });
   }
 });
+
+// Sentry Error Handler must be before any other error middleware and after all controllers
+if (process.env.SENTRY_DSN) {
+  app.use(Sentry.Handlers.errorHandler());
+}
 
 // Listen only if not imported (local dev)
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

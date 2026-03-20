@@ -216,7 +216,7 @@ export default function DashboardScreen({ route, navigation }: any) {
                         <TouchableOpacity onPress={() => navigation.navigate('History', { userId })} style={[styles.iconBtn, { backgroundColor: colors.card }]}>
                             <Ionicons name="time-outline" size={20} color={colors.text} />
                         </TouchableOpacity>
-                        <TouchableOpacity onPress={handleSignOut} style={[styles.iconBtn, { backgroundColor: colors.danger + '20' }]}>
+                        <TouchableOpacity testID="logout-btn" onPress={handleSignOut} style={[styles.iconBtn, { backgroundColor: colors.danger + '20' }]}>
                             <Ionicons name="log-out-outline" size={20} color={colors.danger} />
                         </TouchableOpacity>
                     </View>

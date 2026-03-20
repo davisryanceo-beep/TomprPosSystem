@@ -44,6 +44,11 @@ const ProductCard: React.FC<{ product: Product; onSelect: (cust: Partial<OrderIt
               <span className="text-cream-light font-bold text-lg tracking-widest -rotate-12 border-2 border-terracotta p-2 rounded">OUT OF STOCK</span>
             </div>
           )}
+          {!isOutOfStock && product.stock > 0 && product.stock <= 5 && (
+            <div className="absolute top-2 left-2 bg-amber-500 text-white text-[10px] font-black px-2 py-0.5 rounded shadow-lg animate-pulse">
+              LOW STOCK: {product.stock}
+            </div>
+          )}
           {product.isSeasonal && (
             <div className="absolute top-2 right-2 bg-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow shadow-orange-950/20">
               {product.seasonalInfo?.badge || 'SEASONAL'}

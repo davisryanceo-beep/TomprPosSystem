@@ -65,6 +65,20 @@ export default defineConfig({
                 statuses: [0, 200]
               }
             }
+          },
+          {
+            urlPattern: /\/api\/products|\/api\/categories|\/api\/stores/,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'api-data-cache',
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 60 * 24 // 24 hours
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
           }
         ]
       }

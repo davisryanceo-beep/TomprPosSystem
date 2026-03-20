@@ -138,3 +138,5 @@ firebase_bin
 
 .vercel
 .env*.local
+
+/generated/prisma
