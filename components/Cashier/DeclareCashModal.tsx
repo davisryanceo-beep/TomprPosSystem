@@ -6,7 +6,7 @@ import Textarea from '../Shared/Textarea';
 import { useShop } from '../../contexts/ShopContext';
 import { 
   FaMoneyBillWave, FaCoins, FaCalculator, FaHistory, 
-  FaExclamationTriangle, FaCheckCircle, FaSun, FaMoon, FaArrowLeft 
+  FaExclamationTriangle, FaCheckCircle, FaSun, FaMoon, FaArrowLeft, FaStore
 } from 'react-icons/fa';
 
 interface DeclareCashModalProps {
@@ -28,13 +28,14 @@ const KHR_DENOMINATIONS = [
 ];
 
 const DeclareCashModal: React.FC<DeclareCashModalProps> = ({ isOpen, onClose, cashierId, cashierName }) => {
-  const { addCashDrawerLog, getExpectedCash, cashDrawerLogs } = useShop();
+  const { addCashDrawerLog, getExpectedCash, cashDrawerLogs, orders, currentStoreId } = useShop();
   const [declarationType, setDeclarationType] = useState<'OPEN' | 'CLOSE' | null>(null);
   const [counts, setCounts] = useState<Record<string, string>>({});
   const [cashierNotes, setCashierNotes] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
 
-  const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
+  // Use local date string (YYYY-MM-DD) for consistency with ShopContext fix
+  const todayStr = useMemo(() => new Date().toLocaleDateString('en-CA'), []);
 
   // Find the opening log for today if it exists
   const openingLog = useMemo(() => {
@@ -42,6 +43,18 @@ const DeclareCashModal: React.FC<DeclareCashModalProps> = ({ isOpen, onClose, ca
       .reverse()
       .find(l => l.cashierId === cashierId && l.type === 'OPEN' && l.shiftDate === todayStr);
   }, [cashDrawerLogs, cashierId, todayStr]);
+
+  // Store-wide cash sales for the day (all cashiers)
+  const storeTotalCashSales = useMemo(() => {
+    return orders
+      .filter(o => 
+        o.storeId === currentStoreId && 
+        (o.status === 'Paid' || o.status === 'Completed') && 
+        o.paymentMethod === 'Cash' &&
+        new Date(o.timestamp).toLocaleDateString('en-CA') === todayStr
+      )
+      .reduce((sum, order) => sum + (order.finalAmount || 0), 0);
+  }, [orders, currentStoreId, todayStr]);
 
   const expectedAmount = useMemo(() => {
     if (!declarationType) return 0;
@@ -223,36 +236,50 @@ const DeclareCashModal: React.FC<DeclareCashModalProps> = ({ isOpen, onClose, ca
               
               <div className="space-y-4">
                 {declarationType === 'CLOSE' ? (
-                  <>
+                  <div className="bg-cream/30 dark:bg-charcoal-dark/50 p-4 rounded-xl border border-emerald/10 space-y-3">
                     <div className="flex justify-between items-center text-xs">
-                      <span className="text-charcoal-light font-bold">☀️ Opening Balance:</span>
+                      <span className="flex items-center gap-1.5 text-charcoal-light font-bold">
+                        <FaSun className="text-amber-500" /> Opening Balance:
+                      </span>
                       <span className="font-black text-charcoal-dark dark:text-cream-light">{formatCurrency(openingLog?.declaredAmount || 0)}</span>
                     </div>
                     <div className="flex justify-between items-center text-xs">
-                      <span className="text-charcoal-light font-bold">📈 Cash Sales:</span>
+                      <span className="flex items-center gap-1.5 text-charcoal-light font-bold">
+                        <FaMoneyBillWave className="text-emerald" /> Your Cash Sales:
+                      </span>
                       <span className="font-black text-charcoal-dark dark:text-cream-light">{formatCurrency(expectedAmount - (openingLog?.declaredAmount || 0))}</span>
                     </div>
-                    <div className="pt-2 border-t border-charcoal/5 dark:border-cream/5 flex justify-between items-center text-sm">
-                      <span className="text-charcoal-dark dark:text-cream-light font-black uppercase">🛒 Total Expected:</span>
-                      <span className="font-black text-charcoal-dark dark:text-cream-light">{formatCurrency(expectedAmount)}</span>
+                    <div className="pt-2 border-t border-charcoal/10 dark:border-cream/10 flex justify-between items-center">
+                      <span className="text-charcoal-dark dark:text-cream-light text-xs font-black uppercase">🛒 Total Expected:</span>
+                      <span className="font-black text-lg text-charcoal-dark dark:text-cream-light">{formatCurrency(expectedAmount)}</span>
                     </div>
-                  </>
+                  </div>
                 ) : (
                   <div className="flex justify-between items-center text-sm">
-                    <span className="text-charcoal-light font-bold">Planned Opening:</span>
+                    <span className="text-charcoal-light font-bold">Opening Target:</span>
                     <span className="font-black text-charcoal-dark dark:text-cream-light">{formatCurrency(0)}</span>
                   </div>
                 )}
 
-                <div className="flex justify-between items-center text-sm pt-2 border-t border-charcoal/5 dark:border-cream/5">
+                {/* Additional context for Store-wide sales - help user verify */}
+                <div className="bg-charcoal/5 dark:bg-white/5 p-3 rounded-lg border border-charcoal/5 space-y-2">
+                  <div className="flex justify-between items-center text-[10px]">
+                    <span className="flex items-center gap-1 text-charcoal-light/70 font-bold">
+                      <FaStore className="text-charcoal-light/50" /> STORE TOTAL CASH TODAY:
+                    </span>
+                    <span className="font-black text-charcoal-dark/60 dark:text-cream-light/60">{formatCurrency(storeTotalCashSales)}</span>
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center text-sm pt-2">
                   <span className="text-charcoal-light font-bold">Total Counted:</span>
-                  <span className="font-black text-emerald font-lg font-black">{formatCurrency(totalDeclared)}</span>
+                  <span className="font-black text-emerald text-lg">{formatCurrency(totalDeclared)}</span>
                 </div>
                 
-                <div className="pt-4">
-                  <div className={`p-4 rounded-xl flex flex-col items-center justify-center text-center ${
-                    Math.abs(discrepancy) < 1 ? 'bg-emerald/10 text-emerald' : 
-                    discrepancy > 0 ? 'bg-amber-500/10 text-amber-600' : 'bg-terracotta/10 text-terracotta'
+                <div className="pt-2">
+                  <div className={`p-4 rounded-xl flex flex-col items-center justify-center text-center shadow-sm border ${
+                    Math.abs(discrepancy) < 1 ? 'bg-emerald/10 text-emerald border-emerald/20' : 
+                    discrepancy > 0 ? 'bg-amber-500/10 text-amber-600 border-amber-500/20' : 'bg-terracotta/10 text-terracotta border-terracotta/20'
                   }`}>
                     <p className="text-[10px] font-black uppercase tracking-widest mb-1">
                       {declarationType === 'OPEN' ? 'Initial Deviation' : 'Final Variance'}
@@ -275,8 +302,8 @@ const DeclareCashModal: React.FC<DeclareCashModalProps> = ({ isOpen, onClose, ca
 
                 <div className="text-[10px] text-charcoal-light/60 mt-4 leading-relaxed italic">
                   {declarationType === 'CLOSE' 
-                    ? `* Closing expectation is computed as: Opening Cash (${formatCurrency(openingLog?.declaredAmount || 0)}) + Cash Sales today.`
-                    : "* Perform an opening declaration to establish the 'Starting Balance' for your shift."}
+                    ? `* Calculation: Opening Cash (${formatCurrency(openingLog?.declaredAmount || 0)}) + Your recorded sales.`
+                    : "* Establish your starting balance to begin shift tracking."}
                 </div>
               </div>
             </div>
