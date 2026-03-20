@@ -31,3 +31,31 @@
 .simple-keyboard .hg-button.hg-button-enter {
     @apply bg-emerald hover:bg-emerald-dark text-white;
 }
+
+/* === Global Responsive Utilities === */
+
+/* Thin scrollbar for horizontal nav bars */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0,0,0,0.15) transparent;
+}
+.scrollbar-thin::-webkit-scrollbar {
+  height: 4px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.15);
+  border-radius: 2px;
+}
+
+/* Overflow-x-auto table wrapper */
+.responsive-table {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Ensure minimum 44px touch targets on mobile */
+@media (max-width: 640px) {
+  button, a, [role="button"] {
+    min-height: 36px;
+  }
+}

@@ -120,7 +120,7 @@ const AdminDashboard: React.FC = () => {
     return (
       <button
         onClick={() => setActiveTab(tabName)}
-        className={`flex items-center space-x-3 px-4 py-3 text-base font-bold rounded-lg transition-all duration-200 flex-grow sm:flex-grow-0 justify-center transform active:scale-95 ${isActive
+      className={`flex items-center space-x-2 px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base font-bold rounded-lg transition-all duration-200 whitespace-nowrap transform active:scale-95 ${isActive
           ? 'bg-cream-light dark:bg-charcoal-dark text-emerald shadow-lg'
           : 'text-charcoal-light dark:text-charcoal-light hover:bg-cream dark:hover:bg-charcoal-dark'
           }`}
@@ -137,8 +137,8 @@ const AdminDashboard: React.FC = () => {
 
   return (
     <div className="space-y-8 fade-in">
-      <header className="bg-cream-light dark:bg-charcoal-dark shadow-xl rounded-xl p-6">
-        <h1 className="text-4xl font-extrabold text-charcoal-dark dark:text-cream-light flex items-center">
+      <header className="bg-cream-light dark:bg-charcoal-dark shadow-xl rounded-xl p-4 sm:p-6">
+        <h1 className="text-2xl sm:text-4xl font-extrabold text-charcoal-dark dark:text-cream-light flex items-center">
           {adminIcon}
           {adminTitle}
         </h1>
@@ -149,7 +149,8 @@ const AdminDashboard: React.FC = () => {
         )}
       </header>
 
-      <div className="flex flex-wrap gap-3 mb-6 p-3 bg-cream dark:bg-charcoal-dark/50 rounded-xl shadow-inner">
+      <div className="overflow-x-auto scrollbar-thin pb-1 -mx-1 px-1">
+        <div className="flex gap-2 mb-4 p-2 bg-cream dark:bg-charcoal-dark/50 rounded-xl shadow-inner min-w-max sm:min-w-0 sm:flex-wrap">
         {STAMP_ONLY ? (
           <TabButton tabName="loyalty" label="Stamps" icon={<FaStamp />} />
         ) : isGlobalAdmin ? (
@@ -184,9 +185,10 @@ const AdminDashboard: React.FC = () => {
             <TabButton tabName="feedback" label="Feedback" icon={<FaStar />} />
           </>
         )}
+        </div>
       </div>
 
-      <div className="bg-cream-light dark:bg-charcoal-dark shadow-xl rounded-xl p-0 sm:p-0 min-h-[400px]">
+      <div className="bg-cream-light dark:bg-charcoal-dark shadow-xl rounded-xl p-0 min-h-[400px]">
         {renderTabContent()}
       </div>
     </div>

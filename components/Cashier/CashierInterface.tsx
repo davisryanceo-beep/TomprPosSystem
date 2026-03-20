@@ -286,9 +286,10 @@ const CashierInterface: React.FC = () => {
     <div className="relative h-screen flex flex-col">
       {!isOnline && (
         <div className="bg-amber-500 text-white px-4 py-2 flex items-center justify-between animate-pulse-slow z-50">
-          <div className="flex items-center gap-2 font-bold">
+          <div className="flex items-center gap-2 font-bold text-sm">
             <FaWifi className="animate-bounce" />
-            <span>OFFLINE MODE - Orders will be queued and synced automatically when back online.</span>
+            <span className="hidden sm:inline">OFFLINE MODE - Orders will be queued and synced automatically when back online.</span>
+            <span className="sm:hidden">OFFLINE MODE</span>
           </div>
           {pendingOrders.length > 0 && (
             <div className="flex items-center gap-2">
@@ -299,54 +300,50 @@ const CashierInterface: React.FC = () => {
         </div>
       )}
       
-      <div className="fade-in grid grid-cols-1 lg:grid-cols-5 xl:grid-cols-3 gap-4 flex-grow p-4 min-h-0 overflow-hidden">
+      <div className="fade-in grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 flex-grow p-2 sm:p-4 min-h-0 overflow-hidden">
       {/* Product Panel */}
-      <div className={`lg:col-span-3 xl:col-span-2 bg-cream dark:bg-charcoal-dark/50 p-4 rounded-xl shadow-lg flex flex-col transition-opacity duration-300 ${isQRPaymentInProgress ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
+      <div className={`lg:col-span-2 bg-cream dark:bg-charcoal-dark/50 p-3 sm:p-4 rounded-xl shadow-lg flex flex-col transition-opacity duration-300 ${isQRPaymentInProgress ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
         <div className="flex-shrink-0">
-          <div className="flex justify-between items-center mb-4">
-            <h1 className="text-3xl font-extrabold text-charcoal-dark dark:text-cream-light">Menu</h1>
-            <div className="flex gap-2">
+          <div className="flex justify-between items-center mb-3 gap-2">
+            <h1 className="text-xl sm:text-3xl font-extrabold text-charcoal-dark dark:text-cream-light">Menu</h1>
+            <div className="flex items-center gap-1 sm:gap-2 flex-wrap justify-end">
+              {/* Online indicator */}
+              <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold ${isOnline ? 'bg-emerald/10 text-emerald' : 'bg-amber-500 text-white'}`}>
+                <FaWifi className={isOnline ? '' : 'animate-pulse'} />
+                <span className="hidden sm:inline">{isOnline ? 'Online' : `Offline (${pendingOrders.length})`}</span>
+              </div>
+              {/* Online Orders bell */}
               <Button onClick={() => setShowOnlineOrdersModal(true)} variant="ghost" className="relative" title="Online Orders">
-                <span className={activeOnlineOrdersCount > 0 ? "text-emerald animate-pulse" : ""}>
-                  <FaBell />
-                </span>
+                <span className={activeOnlineOrdersCount > 0 ? "text-emerald animate-pulse" : ""}><FaBell /></span>
                 {activeOnlineOrdersCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">
-                    {activeOnlineOrdersCount}
-                  </span>
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">{activeOnlineOrdersCount}</span>
                 )}
               </Button>
-              <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold ${isOnline ? 'bg-emerald/10 text-emerald' : 'bg-amber-500 text-white'}`}>
-                {isOnline ? <><FaWifi /> Online</> : <><FaWifi className="animate-pulse" /> Offline ({pendingOrders.length})</>}
+              {/* Desktop buttons */}
+              <div className="hidden md:flex items-center gap-1">
+                <Button onClick={() => setShowShortcutsHelp(true)} variant="ghost" size="sm" title="Keyboard Shortcuts (?)"><span className="text-base">⌨️</span></Button>
+                <Button onClick={() => setShowOnlineMenuModal(true)} variant="ghost" leftIcon={<FaStore />}><span className="hidden xl:inline">Online Menu</span></Button>
+                <Button onClick={() => setShowOpenTabsModal(true)} variant="ghost" leftIcon={<FaFolderOpen />}><span className="hidden xl:inline">Open Tabs</span></Button>
+                <Button onClick={openCustomerDisplay} variant="ghost" leftIcon={<FaDesktop />}><span className="hidden xl:inline">Screen</span></Button>
+                <Button onClick={() => setShowLoyaltyModal(true)} variant={selectedCustomer ? 'secondary' : 'ghost'} leftIcon={<FaUserTag />} className={selectedCustomer ? 'border-emerald text-emerald' : ''}>
+                  <span className="hidden xl:inline">Loyalty {selectedCustomer ? `(${selectedCustomer.name || selectedCustomer.phoneNumber.slice(-4)})` : ''}</span>
+                </Button>
               </div>
-              <Button onClick={() => setShowShortcutsHelp(true)} variant="ghost" size="sm" title="Keyboard Shortcuts (?)">
-                <span className="text-lg">⌨️</span>
-              </Button>
-              <Button onClick={() => setShowOnlineMenuModal(true)} variant="ghost" leftIcon={<FaStore />}>
-                Online Menu
-              </Button>
-              <Button onClick={() => setShowOpenTabsModal(true)} variant="ghost" leftIcon={<FaFolderOpen />}>
-                Open Tabs
-              </Button>
-              <Button onClick={openCustomerDisplay} variant="ghost" leftIcon={<FaDesktop />}>
-                Customer Screen
-              </Button>
-              <Button
-                onClick={() => setShowLoyaltyModal(true)}
-                variant={selectedCustomer ? "secondary" : "ghost"}
-                leftIcon={<FaUserTag />}
-                className={selectedCustomer ? "border-emerald text-emerald" : ""}
-              >
-                Loyalty {selectedCustomer ? `(${selectedCustomer.name || selectedCustomer.phoneNumber.slice(-4)})` : ''}
-              </Button>
+              {/* Mobile icon-only buttons */}
+              <div className="flex md:hidden items-center gap-1">
+                <Button onClick={() => setShowOnlineMenuModal(true)} variant="ghost" size="sm" title="Online Menu"><FaStore /></Button>
+                <Button onClick={() => setShowOpenTabsModal(true)} variant="ghost" size="sm" title="Open Tabs"><FaFolderOpen /></Button>
+                <Button onClick={openCustomerDisplay} variant="ghost" size="sm" title="Customer Screen"><FaDesktop /></Button>
+                <Button onClick={() => setShowLoyaltyModal(true)} variant={selectedCustomer ? 'secondary' : 'ghost'} size="sm" title="Loyalty" className={selectedCustomer ? 'border-emerald text-emerald' : ''}><FaUserTag /></Button>
+              </div>
             </div>
           </div>
-          <div className="flex flex-wrap gap-2 mb-4">
+          <div className="flex flex-wrap gap-1 sm:gap-2 mb-3">
             {knownCategories.map(category => (
               <button
                 key={category}
                 onClick={() => setActiveCategory(category)}
-                className={`flex-grow sm:flex-grow-0 flex items-center gap-3 px-4 py-3 text-base font-bold rounded-lg transition-all transform active:scale-95 shadow-md ${activeCategory === category
+                className={`flex-grow sm:flex-grow-0 flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-bold rounded-lg transition-all transform active:scale-95 shadow-md ${activeCategory === category
                   ? 'bg-emerald text-white'
                   : 'bg-cream-light dark:bg-charcoal-dark text-charcoal-light dark:text-cream-light hover:bg-cream dark:hover:bg-charcoal'
                   }`}
@@ -366,9 +363,9 @@ const CashierInterface: React.FC = () => {
       </div>
 
       {/* Order Summary Panel */}
-      <div className="lg:col-span-2 xl:col-span-1 bg-cream-light dark:bg-charcoal-dark p-4 rounded-xl shadow-lg flex flex-col">
-        <h2 className="text-3xl font-extrabold text-charcoal-dark dark:text-cream-light mb-4 flex items-center flex-shrink-0">
-          <span className="mr-3 text-emerald"><FaShoppingCart /></span>Current Order
+      <div className="lg:col-span-1 bg-cream-light dark:bg-charcoal-dark p-3 sm:p-4 rounded-xl shadow-lg flex flex-col max-h-[45vh] lg:max-h-none overflow-hidden">
+        <h2 className="text-lg sm:text-2xl font-extrabold text-charcoal-dark dark:text-cream-light mb-3 flex items-center flex-shrink-0">
+          <span className="mr-2 text-emerald"><FaShoppingCart /></span>Current Order
         </h2>
         <OrderSummary
           order={currentOrder}

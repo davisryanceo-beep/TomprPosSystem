@@ -38,7 +38,7 @@ const ProductCard: React.FC<{ product: Product; onSelect: (cust: Partial<OrderIt
         `}
       >
         <div className="relative">
-          <img src={product.imageUrl} alt={product.name} className="w-full h-40 object-cover rounded-lg" />
+          <img src={product.imageUrl} alt={product.name} className="w-full h-28 sm:h-40 object-cover rounded-lg" />
           {isOutOfStock && (
             <div className="absolute inset-0 bg-charcoal-900/70 flex items-center justify-center rounded-lg">
               <span className="text-cream-light font-bold text-lg tracking-widest -rotate-12 border-2 border-terracotta p-2 rounded">OUT OF STOCK</span>
@@ -52,11 +52,11 @@ const ProductCard: React.FC<{ product: Product; onSelect: (cust: Partial<OrderIt
         </div>
         <div className="pt-4 flex-grow flex flex-col justify-between">
           <div>
-            <h3 className="text-xl font-extrabold text-charcoal-dark dark:text-cream-light truncate" title={product.name}>{product.name}</h3>
-            <p className="text-sm text-charcoal-light dark:text-charcoal-light h-10 overflow-hidden">{product.description || 'A delicious treat.'}</p>
+            <h3 className="text-sm sm:text-xl font-extrabold text-charcoal-dark dark:text-cream-light truncate" title={product.name}>{product.name}</h3>
+            <p className="text-xs sm:text-sm text-charcoal-light dark:text-charcoal-light h-8 sm:h-10 overflow-hidden">{product.description || 'A delicious treat.'}</p>
           </div>
           <div className="mt-4 flex justify-between items-center">
-            <p className="text-2xl font-bold text-emerald">${product.price.toFixed(2)}</p>
+            <p className="text-xl sm:text-2xl font-bold text-emerald">${product.price.toFixed(2)}</p>
             <Button
               onClick={(e) => { e.stopPropagation(); handleSelect(); }}
               disabled={isOutOfStock}
@@ -98,7 +98,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, onAddItem }) => {
   }
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 h-full overflow-y-auto pr-2 pb-4">
+    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-4 h-full overflow-y-auto pr-1 pb-4">
       {/* Show combos first if they are active */}
       {combos.filter(c => c.isActive).map(combo => (
         <ComboProductCard

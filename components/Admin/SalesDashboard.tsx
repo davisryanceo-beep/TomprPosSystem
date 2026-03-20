@@ -197,10 +197,10 @@ const SalesDashboard: React.FC = () => {
         <h2 className="text-2xl font-bold text-charcoal-dark dark:text-cream-light mb-4 flex items-center">
           <FaDollarSign className="mr-2 text-emerald" />Today's Sales Snapshot (USD)
         </h2>
-        <div className="grid grid-cols-1 gap-4 mb-6">
-          <div className="bg-cream dark:bg-charcoal-dark/50 p-4 rounded-lg shadow-inner text-center">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+          <div className="sm:col-span-3 bg-cream dark:bg-charcoal-dark/50 p-4 rounded-lg shadow-inner text-center">
             <h3 className="text-base font-bold text-charcoal-light uppercase tracking-wider">Today's Sales</h3>
-            <p className="text-4xl font-extrabold text-emerald">${totalSalesToday.toFixed(2)}</p>
+            <p className="text-3xl sm:text-4xl font-extrabold text-emerald">${totalSalesToday.toFixed(2)}</p>
             <p className="text-sm text-charcoal-light">
               {todaysOrders.length} orders | Cash: ${cashSalesToday.toFixed(2)}, QR: ${qrSalesToday.toFixed(2)}
             </p>
@@ -220,7 +220,7 @@ const SalesDashboard: React.FC = () => {
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 p-4 bg-cream dark:bg-charcoal-dark/50 rounded-lg shadow-inner">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6 p-3 sm:p-4 bg-cream dark:bg-charcoal-dark/50 rounded-lg shadow-inner">
           <Input type="date" label="Start Date" name="startDate" value={filters.startDate} onChange={handleFilterChange} />
           <Input type="date" label="End Date" name="endDate" value={filters.endDate} onChange={handleFilterChange} />
           <Select label="Category" name="category" options={categoryOptions} value={filters.category} onChange={handleFilterChange} />
@@ -229,7 +229,7 @@ const SalesDashboard: React.FC = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           <StatCard title="Total Sales" value={`$${totalFilteredSales.toFixed(2)}`} />
           <StatCard title="Total Orders" value={totalFilteredOrders.toString()} />
           <StatCard title="Avg. Order Value" value={`$${avgOrderValueFiltered.toFixed(2)}`} />
