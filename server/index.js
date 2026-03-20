@@ -140,7 +140,7 @@ const app = express();
 const PORT = 3001;
 
 app.use(cors({
-  origin: ["https://poscafesystem.vercel.app", "https://tompr-stamp.vercel.app", "http://localhost:5173", "http://localhost:3000"],
+  origin: ["https://poscafesystem.vercel.app", "https://tompr-stamp.vercel.app", "https://mobile-tau-khaki.vercel.app", "http://localhost:5173", "http://localhost:3000"],
   credentials: true
 }));
 app.use(bodyParser.json({ limit: "50mb" }));
