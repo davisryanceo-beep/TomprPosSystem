@@ -18,7 +18,9 @@ const LoginScreen: React.FC = () => {
 
   // Detect session expiry from URL
   const [successMessage, setSuccessMessage] = useState<string | null>(() => {
-    const params = new URLSearchParams(window.location.search || window.location.hash.split('?')[1]);
+    const search = window.location.search;
+    const hash = window.location.hash || '';
+    const params = new URLSearchParams(search || hash.split('?')[1] || '');
     return params.get('reason') === 'session_expired' ? 'Your session has expired. Please log in again.' : null;
   });
 
