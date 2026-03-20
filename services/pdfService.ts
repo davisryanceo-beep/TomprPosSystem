@@ -1,11 +1,6 @@
-
 import jsPDF from 'jspdf';
-import 'jspdf-autotable'; // Ensure plugin is imported for autoTable method
-import { Order, Product, SupplyItem, OrderItem, ChartDataPoint, TimeLog, WastageLog, CashDrawerLog, User } from '../types'; // Added WastageLog, CashDrawerLog, User
-import { USD_TO_KHR_RATE } from '../constants';
-
-// Extend jsPDF interface to include autoTable
-// The import 'jspdf-autotable' should augment the jsPDF type if types are correctly set up.
+import 'jspdf-autotable';
+import { Order, Product, SupplyItem, OrderItem, TimeLog, WastageLog, CashDrawerLog, User } from '../types';
 
 const SHOP_NAME = "Amble Specialty Cafe";
 
@@ -39,6 +34,10 @@ const addHeaderFooter = (doc: jsPDF, title: string, reportDate: Date, filterInfo
   }
 };
 
+const formatCurrency = (val: number) => {
+  return val.toLocaleString() + '៛';
+};
+
 const formatCustomizationsForPDF = (customizations?: OrderItem['customizations']) => {
   if (!customizations) return '-';
   const parts = [];
@@ -48,7 +47,6 @@ const formatCustomizationsForPDF = (customizations?: OrderItem['customizations']
   if (customizations.ice && customizations.ice !== 'None') parts.push(customizations.ice);
   return parts.length > 0 ? parts.join(', ') : '-';
 };
-
 
 export const generateSalesReportPDF = (
   ordersToReport: Order[],
@@ -73,28 +71,28 @@ export const generateSalesReportPDF = (
   let startY = 35;
 
   doc.setFontSize(12);
-  doc.text("Sales Summary for Selection:", 14, startY);
+  doc.text("Sales Summary:", 14, startY);
   startY += 7;
   doc.setFontSize(10);
   doc.text(`Total Orders: ${ordersToReport.length}`, 14, startY);
   startY += 5;
-  doc.text(`Total Sales (USD): $${totalSales.toFixed(2)}`, 14, startY);
+  doc.text(`Total Sales (KHR): ${formatCurrency(totalSales)}`, 14, startY);
   startY += 5;
-  doc.text(`- Cash Sales (USD): $${cashSales.toFixed(2)}`, 18, startY);
+  doc.text(`- Cash Sales: ${formatCurrency(cashSales)}`, 18, startY);
   startY += 5;
-  doc.text(`- QR Sales (USD): $${qrSales.toFixed(2)}`, 18, startY);
+  doc.text(`- QR Sales: ${formatCurrency(qrSales)}`, 18, startY);
   startY += 10;
 
-  const head = [['Order ID', 'Time', 'Items', 'Payment', 'Total (USD)']];
+  const head = [['Order ID', 'Time', 'Items', 'Payment', 'Total (KHR)']];
   const body = ordersToReport.map(order => {
     const itemsSummary = order.items.map(item => `${item.quantity}x ${item.productName} ${formatCustomizationsForPDF(item.customizations)}`).join('; ');
     const paymentInfo = `${order.paymentMethod || 'N/A'}${order.paymentMethod === 'Cash' && order.paymentCurrency ? ` (${order.paymentCurrency})` : ''}`;
     return [
       order.dailyOrderNumber ? `#${order.dailyOrderNumber}` : order.id.slice(-6),
-      new Date(order.timestamp).toLocaleTimeString(),
+      new Date(order.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       itemsSummary,
       paymentInfo,
-      `$${order.finalAmount.toFixed(2)}`
+      formatCurrency(order.finalAmount)
     ];
   });
 
@@ -103,10 +101,11 @@ export const generateSalesReportPDF = (
     body,
     startY,
     theme: 'striped',
-    headStyles: { fillColor: [30, 41, 59] }, // charcoal-dark
+    headStyles: { fillColor: [30, 41, 59] },
     styles: { fontSize: 8 },
     columnStyles: {
       2: { cellWidth: 60 },
+      4: { halign: 'right' }
     }
   });
 
@@ -120,12 +119,12 @@ export const generateProductInventoryReportPDF = (products: Product[]) => {
   const title = "Product Inventory Report";
   const reportDate = new Date();
 
-  const head = [['ID', 'Name', 'Category', 'Price (USD)', 'Stock', 'Description']];
+  const head = [['ID', 'Name', 'Category', 'Price (KHR)', 'Stock', 'Description']];
   const body = products.map(p => [
     p.id.slice(-6),
     p.name,
     p.category,
-    `$${p.price.toFixed(2)}`,
+    formatCurrency(p.price),
     p.stock.toString(),
     p.description || '-'
   ]);
@@ -135,9 +134,10 @@ export const generateProductInventoryReportPDF = (products: Product[]) => {
     body,
     startY: 35,
     theme: 'striped',
-    headStyles: { fillColor: [30, 41, 59] }, // charcoal-dark
+    headStyles: { fillColor: [30, 41, 59] },
     styles: { fontSize: 8 },
     columnStyles: {
+      3: { halign: 'right' },
       5: { cellWidth: 60 }
     }
   });
@@ -169,7 +169,7 @@ export const generateSupplyStockReportPDF = (supplyItems: SupplyItem[]) => {
     body,
     startY: 35,
     theme: 'striped',
-    headStyles: { fillColor: [30, 41, 59] }, // charcoal-dark
+    headStyles: { fillColor: [30, 41, 59] },
     styles: { fontSize: 8 },
     columnStyles: {
       8: { cellWidth: 40 }
@@ -197,13 +197,13 @@ export const generateAttendanceReportPDF = (
   filterCriteria: { userId?: string, startDate?: string, endDate?: string },
   totalHoursSummary: { userName: string, totalHours: string, logCount: number }[]
 ) => {
-  const doc = new jsPDF('landscape'); // Use landscape for more columns
+  const doc = new jsPDF('landscape');
   const title = "Staff Attendance Report";
   const reportDate = new Date();
   let filterInfoString = "Filters: ";
   const filterParts = [];
   if (filterCriteria.userId) {
-    const user = totalHoursSummary.find(u => u.userName.includes(filterCriteria.userId!)); // Ensure userId is not undefined for includes
+    const user = totalHoursSummary.find(u => u.userName.includes(filterCriteria.userId!));
     filterParts.push(`Staff: ${user ? user.userName.split(' (')[0] : filterCriteria.userId}`);
   } else {
     filterParts.push("Staff: All");
@@ -216,7 +216,7 @@ export const generateAttendanceReportPDF = (
 
   if (totalHoursSummary.length > 0) {
     doc.setFontSize(12);
-    doc.text("Total Hours Summary (for selection):", 14, startY);
+    doc.text("Total Hours Summary:", 14, startY);
     startY += 7;
     doc.setFontSize(10);
     totalHoursSummary.forEach(summary => {
@@ -229,7 +229,6 @@ export const generateAttendanceReportPDF = (
     });
     startY += 5;
   }
-
 
   const head = [['Staff', 'Role', 'Clock In', 'Clock Out', 'Duration', 'Notes']];
   const body = timeLogs.map(log => [
@@ -246,7 +245,7 @@ export const generateAttendanceReportPDF = (
     body,
     startY,
     theme: 'striped',
-    headStyles: { fillColor: [30, 41, 59] }, // charcoal-dark
+    headStyles: { fillColor: [30, 41, 59] },
     styles: { fontSize: 8 },
     columnStyles: {
       0: { cellWidth: 40 },
@@ -291,7 +290,7 @@ export const generateWastageReportPDF = (
     body,
     startY: 35,
     theme: 'striped',
-    headStyles: { fillColor: [30, 41, 59] }, // charcoal-dark
+    headStyles: { fillColor: [30, 41, 59] },
     styles: { fontSize: 8 }
   });
 
@@ -302,7 +301,7 @@ export const generateWastageReportPDF = (
 export const generateEODReportPDF = (
   cashDrawerLogs: CashDrawerLog[],
   filterCriteria: { cashierId?: string, date?: string },
-  allUsers: User[] // Pass all users to find cashier names
+  allUsers: User[]
 ) => {
   const doc = new jsPDF('landscape');
   const title = "End-of-Day Cash Reconciliation Report";
@@ -318,15 +317,15 @@ export const generateEODReportPDF = (
   if (filterCriteria.date) filterParts.push(`Date: ${filterCriteria.date}`);
   filterInfoString += filterParts.join('; ') || 'None';
 
-  const head = [['Date', 'Cashier', 'Expected (USD)', 'Declared (USD)', 'Discrepancy', 'Cashier Notes', 'Admin Notes']];
+  const head = [['Type', 'Date', 'Cashier', 'Expected', 'Declared', 'Variance', 'Notes']];
   const body = cashDrawerLogs.map(log => [
+    log.type || 'CLOSE',
     log.shiftDate,
     log.cashierName,
-    `$${log.expectedAmount.toFixed(2)}`,
-    `$${log.declaredAmount.toFixed(2)}`,
-    `${log.discrepancy > 0 ? '+' : ''}$${log.discrepancy.toFixed(2)}`,
-    log.cashierNotes || '-',
-    log.adminNotes || '-'
+    formatCurrency(log.expectedAmount || 0),
+    formatCurrency(log.declaredAmount),
+    `${log.discrepancy > 0 ? '+' : ''}${formatCurrency(log.discrepancy || 0)}`,
+    (log.cashierNotes || log.adminNotes) ? `${log.cashierNotes || ''}${log.adminNotes ? ` (Admin: ${log.adminNotes})` : ''}` : '-'
   ]);
 
   (doc as any).autoTable({
@@ -334,16 +333,16 @@ export const generateEODReportPDF = (
     body,
     startY: 35,
     theme: 'striped',
-    headStyles: { fillColor: [30, 41, 59] }, // charcoal-dark
+    headStyles: { fillColor: [30, 41, 59] },
     styles: { fontSize: 8 },
     columnStyles: {
-      0: { cellWidth: 25 }, // Date
-      1: { cellWidth: 35 }, // Cashier
-      2: { cellWidth: 25, halign: 'right' }, // Expected
-      3: { cellWidth: 25, halign: 'right' }, // Declared
-      4: { cellWidth: 25, halign: 'right' }, // Discrepancy
-      5: { cellWidth: 'auto' }, // Cashier Notes
-      6: { cellWidth: 'auto' }, // Admin Notes
+      0: { cellWidth: 20 }, // Type
+      1: { cellWidth: 25 }, // Date
+      2: { cellWidth: 35 }, // Cashier
+      3: { cellWidth: 30, halign: 'right' }, // Expected
+      4: { cellWidth: 30, halign: 'right' }, // Declared
+      5: { cellWidth: 30, halign: 'right' }, // Variance
+      6: { cellWidth: 'auto' }, // Notes
     }
   });
 
