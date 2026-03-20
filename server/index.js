@@ -220,6 +220,18 @@ app.get("/api/health-check", async (req, res) => {
   });
 });
 
+import { readFileSync } from 'fs';
+import { join } from 'path';
+app.get("/api/debug-code", (req, res) => {
+  try {
+    const filePath = join(__dirname, 'mobile-routes.js');
+    const content = readFileSync(filePath, 'utf8');
+    res.send(content);
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
+
 // --- PUBLIC MENU API (No Auth) ---
 
 app.get("/api/public/menu/:storeId", publicApiLimiter, async (req, res) => {
