@@ -326,6 +326,7 @@ export interface CashDrawerLog {
   declaredAmount: number;
   expectedAmount: number;
   discrepancy: number;
+  type: 'OPEN' | 'CLOSE';
   cashierNotes?: string;
   adminNotes?: string;
   logTimestamp: string;

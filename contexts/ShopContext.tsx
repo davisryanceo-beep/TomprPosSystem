@@ -147,7 +147,7 @@ interface ShopContextType {
   getOrdersByStatus: (status: OrderStatus) => Order[];
   getPaidOrders: () => Order[];
   getShiftOrders: (cashierId: string, since: Date) => Order[];
-  getExpectedCash: (cashierId: string) => number;
+  getExpectedCash: (cashierId: string, type?: 'OPEN' | 'CLOSE') => number;
 
   addUser: (userData: Omit<User, 'id'>, actingUser: User) => Promise<boolean>;
   updateUser: (updatedUser: User, actingUser: User) => Promise<boolean>;
@@ -1770,17 +1770,20 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setTimeLogsState(prev => prev.filter(log => log.id !== timeLogId));
     } catch (e) { console.error("Failed to delete time log", e); }
   }, []);
-  const getExpectedCash = useCallback((cashierId: string): number => {
+  const getExpectedCash = useCallback((cashierId: string, type: 'OPEN' | 'CLOSE' = 'CLOSE'): number => {
     if (!currentStoreId) return 0;
+    
+    if (type === 'OPEN') return 0;
+
     const activeTimeLog = getActiveTimeLogForUser(cashierId);
-    let expectedAmount = 0;
+    let salesAmount = 0;
     const todayStr = new Date().toISOString().split('T')[0];
 
     if (activeTimeLog) {
       const shiftStartTime = new Date(activeTimeLog.clockInTime);
       const shiftOrders = getShiftOrders(cashierId, shiftStartTime);
       const cashOrders = shiftOrders.filter(o => o.paymentMethod === 'Cash');
-      expectedAmount = cashOrders.reduce((sum, order) => sum + (order.finalAmount || 0), 0);
+      salesAmount = cashOrders.reduce((sum, order) => sum + (order.finalAmount || 0), 0);
     } else {
       const todaysPaidOrders = ordersState.filter(o => 
         o.storeId === currentStoreId && 
@@ -1789,15 +1792,22 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         o.paymentMethod === 'Cash' &&
         new Date(o.timestamp).toISOString().split('T')[0] === todayStr
       );
-      expectedAmount = todaysPaidOrders.reduce((sum, order) => sum + (order.finalAmount || 0), 0);
+      salesAmount = todaysPaidOrders.reduce((sum, order) => sum + (order.finalAmount || 0), 0);
     }
-    return expectedAmount;
-  }, [currentStoreId, ordersState, getActiveTimeLogForUser, getShiftOrders]);
+
+    const openingLog = [...cashDrawerLogsState]
+      .reverse()
+      .find(l => l.cashierId === cashierId && l.type === 'OPEN' && l.shiftDate === todayStr);
+    
+    const openingBalance = openingLog ? openingLog.declaredAmount : 0;
+
+    return openingBalance + salesAmount;
+  }, [currentStoreId, ordersState, cashDrawerLogsState, getActiveTimeLogForUser, getShiftOrders]);
 
   const addCashDrawerLog = useCallback(async (logData: Omit<CashDrawerLog, 'id' | 'expectedAmount' | 'discrepancy' | 'logTimestamp' | 'adminNotes' | 'storeId'>) => {
     if (!currentStoreId) return;
     
-    const expectedAmount = getExpectedCash(logData.cashierId);
+    const expectedAmount = getExpectedCash(logData.cashierId, logData.type);
     const discrepancy = logData.declaredAmount - expectedAmount;
     const newLog: CashDrawerLog = { ...logData, id: `cdl-${Date.now()}`, expectedAmount, discrepancy, logTimestamp: new Date().toISOString(), storeId: currentStoreId };
     try {
