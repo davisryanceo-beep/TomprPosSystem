@@ -65,6 +65,20 @@ export default defineConfig({
                 statuses: [0, 200]
               }
             }
+          },
+          {
+            urlPattern: /\/api\/public\/loyalty|\/api\/public\/stores|\/api\/stamps/,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'stamp-api-cache',
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 60 * 24 // 24 hours
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
           }
         ]
       }

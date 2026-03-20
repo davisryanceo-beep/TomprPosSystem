@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Tompr Pos Cafe Management",
-    "slug": "tompr-staff-pos-system",
+    "name": "Tompr Stamp Loyalty",
+    "slug": "tompr-stamp-loyalty",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -10,19 +10,19 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.possystem.mobile",
+      "bundleIdentifier": "com.possystem.stamp",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#2B1B17",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "package": "com.possystem.mobile",
+      "package": "com.possystem.stamp",
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
     },
@@ -38,7 +38,7 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff",
+          "backgroundColor": "#2B1B17",
           "dark": {
             "backgroundColor": "#000000"
           }
@@ -53,7 +53,7 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "b6b92c41-c47d-4a4a-b456-9caaada181f7"
+        "projectId": "a7afd0d3-14ad-4e41-bf59-e0bcbd2c06ae"
       }
     },
     "owner": "gr0kro0ts-organization"
