@@ -57,9 +57,9 @@ router.post('/clock-in', async (req, res) => {
         const { data: shifts, error: shiftErr } = await db
             .from('shifts')
             .select('*')
-            .eq('userId', userId)
+            .eq('userid', userId)
             .eq('date', dateStr)
-            .eq('storeId', storeId)
+            .eq('storeid', storeId)
             .limit(1);
 
         if (shiftErr) throw shiftErr;
@@ -286,7 +286,7 @@ router.get('/rewards/:userId', async (req, res) => {
         const { data: rewards, error } = await db
             .from('staff_rewards')
             .select('*')
-            .eq('userId', userId);
+            .eq('userid', userId);
 
         if (error) throw error;
         res.json(rewards);
@@ -305,9 +305,9 @@ router.get('/history/:userId', async (req, res) => {
     try {
         // Run queries in parallel
         const [rewardsRes, logsRes, leaveRes, userRes] = await Promise.all([
-            db.from('staff_rewards').select('*').eq('userId', userId),
-            db.from('time_logs').select('*').eq('userId', userId),
-            db.from('leave_requests').select('*').eq('userId', userId),
+            db.from('staff_rewards').select('*').eq('userid', userId),
+            db.from('time_logs').select('*').eq('userid', userId),
+            db.from('leave_requests').select('*').eq('userid', userId),
             db.from('users').select('*').eq('id', userId).single()
         ]);
 
@@ -405,8 +405,8 @@ router.get('/announcements/:storeId', async (req, res) => {
         const { data: allAnns, error } = await db
             .from('announcements')
             .select('*')
-            .eq('isArchived', false)
-            .or(`storeId.eq.${storeId},storeId.is.null`);
+            .eq('isArchived', 0)
+            .or(`storeid.eq.${storeId},storeid.is.null`);
 
         if (error) throw error;
 
@@ -459,7 +459,7 @@ router.get('/shifts/upcoming/:userId', async (req, res) => {
         const { data: shifts, error } = await db
             .from('shifts')
             .select('*')
-            .eq('userId', userId)
+            .eq('userid', userId)
             .gte('date', today)
             .order('date', { ascending: true })
             .limit(10);
