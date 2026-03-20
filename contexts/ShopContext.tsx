@@ -1777,7 +1777,8 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const activeTimeLog = getActiveTimeLogForUser(cashierId);
     let salesAmount = 0;
-    const todayStr = new Date().toISOString().split('T')[0];
+    // Use local date string (YYYY-MM-DD)
+    const todayStr = new Date().toLocaleDateString('en-CA');
 
     if (activeTimeLog) {
       const shiftStartTime = new Date(activeTimeLog.clockInTime);
@@ -1790,7 +1791,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         o.cashierId === cashierId && 
         (o.status === 'Paid' || o.status === 'Completed') && 
         o.paymentMethod === 'Cash' &&
-        new Date(o.timestamp).toISOString().split('T')[0] === todayStr
+        new Date(o.timestamp).toLocaleDateString('en-CA') === todayStr
       );
       salesAmount = todaysPaidOrders.reduce((sum, order) => sum + (order.finalAmount || 0), 0);
     }
