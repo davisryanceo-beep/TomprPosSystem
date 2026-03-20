@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Modal from '../Shared/Modal';
 import Input from '../Shared/Input';
 import Button from '../Shared/Button';
 import Textarea from '../Shared/Textarea';
 import { useShop } from '../../contexts/ShopContext';
+import { FaMoneyBillWave, FaCoins, FaCalculator, FaHistory, FaExclamationTriangle, FaCheckCircle } from 'react-icons/fa';
 
 interface DeclareCashModalProps {
   isOpen: boolean;
@@ -12,39 +13,71 @@ interface DeclareCashModalProps {
   cashierName: string;
 }
 
+const USD_DENOMINATIONS = [
+  { label: 'Bills', items: [
+    { label: '$100', value: 100 },
+    { label: '$50', value: 50 },
+    { label: '$20', value: 20 },
+    { label: '$10', value: 10 },
+    { label: '$5', value: 5 },
+    { label: '$1', value: 1 },
+  ]},
+  { label: 'Coins', items: [
+    { label: '25¢', value: 0.25 },
+    { label: '10¢', value: 0.10 },
+    { label: '5¢', value: 0.05 },
+    { label: '1¢', value: 0.01 },
+  ]}
+];
+
 const DeclareCashModal: React.FC<DeclareCashModalProps> = ({ isOpen, onClose, cashierId, cashierName }) => {
-  const { addCashDrawerLog } = useShop();
-  const [declaredAmount, setDeclaredAmount] = useState<string>('');
+  const { addCashDrawerLog, getExpectedCash } = useShop();
+  const [counts, setCounts] = useState<Record<string, string>>({});
   const [cashierNotes, setCashierNotes] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
 
+  const expectedAmount = useMemo(() => getExpectedCash(cashierId), [cashierId, isOpen, getExpectedCash]);
+
+  const totalDeclared = useMemo(() => {
+    return Object.entries(counts).reduce((sum, [valStr, countStr]) => {
+      const val = parseFloat(valStr);
+      const count = parseInt(countStr) || 0;
+      return sum + (val * count);
+    }, 0);
+  }, [counts]);
+
+  const discrepancy = totalDeclared - expectedAmount;
+
+  const handleCountChange = (val: number, count: string) => {
+    setCounts(prev => ({
+      ...prev,
+      [val.toString()]: count
+    }));
+  };
+
   const handleSubmit = () => {
-    const amount = parseFloat(declaredAmount);
-    if (isNaN(amount) || amount < 0) {
-      setError('Please enter a valid positive amount.');
+    if (totalDeclared < 0) {
+      setError('Declared amount cannot be negative.');
       return;
     }
     setError(null);
 
     const today = new Date();
-    const shiftDate = today.toISOString().split('T')[0]; // YYYY-MM-DD
+    const shiftDate = today.toISOString().split('T')[0];
 
     addCashDrawerLog({
       cashierId,
       cashierName,
       shiftDate,
-      declaredAmount: amount,
+      declaredAmount: totalDeclared,
       cashierNotes: cashierNotes.trim() || undefined,
     });
 
-    setDeclaredAmount('');
-    setCashierNotes('');
-    onClose();
-    alert('Cash declaration submitted successfully!');
+    handleModalClose();
   };
 
   const handleModalClose = () => {
-    setDeclaredAmount('');
+    setCounts({});
     setCashierNotes('');
     setError(null);
     onClose();
@@ -54,45 +87,125 @@ const DeclareCashModal: React.FC<DeclareCashModalProps> = ({ isOpen, onClose, ca
     <Modal
       isOpen={isOpen}
       onClose={handleModalClose}
-      title="Declare Cash Drawer"
-      size="md"
+      title={
+        <div className="flex items-center gap-2">
+          <FaCalculator className="text-emerald" />
+          <span>Cash Drawer Declaration</span>
+        </div>
+      }
+      size="xl"
       footer={
-        <div className="flex justify-end space-x-2">
-          <Button variant="ghost" onClick={handleModalClose}>
-            Cancel
-          </Button>
-          <Button onClick={handleSubmit} disabled={!declaredAmount}>
-            Submit Declaration
-          </Button>
+        <div className="flex justify-between items-center w-full">
+           <div className="text-left">
+              <p className="text-xs font-bold text-charcoal-light uppercase tracking-tighter">Shift Summary</p>
+              <p className="text-lg font-black text-charcoal-dark dark:text-cream-light leading-none">
+                Total: <span className="text-emerald">${totalDeclared.toFixed(2)}</span>
+              </p>
+           </div>
+           <div className="flex space-x-2">
+            <Button variant="ghost" onClick={handleModalClose}>
+              Cancel
+            </Button>
+            <Button onClick={handleSubmit} variant="primary" className="shadow-lg shadow-emerald/20">
+              Confirm & Submit
+            </Button>
+          </div>
         </div>
       }
     >
-      <div className="space-y-4">
-        <p className="text-sm text-gray-600 dark:text-gray-400">
-          Please count the total cash in your drawer and enter the amount below. This is for the operational day of <strong>{new Date().toLocaleDateString()}</strong>.
-        </p>
-        <Input
-          label="Declared Cash Amount (USD)"
-          id="declaredAmount"
-          type="number"
-          value={declaredAmount}
-          onChange={(e) => setDeclaredAmount(e.target.value)}
-          placeholder="e.g., 350.75"
-          min="0"
-          step="0.01"
-          autoFocus
-          required
-        />
-        <Textarea
-          id="cashierNotes"
-          label="Notes (Optional)"
-          rows={3}
-          value={cashierNotes}
-          onChange={(e) => setCashierNotes(e.target.value)}
-          placeholder="e.g., Float was $50, large bill received, etc."
-        />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Denomination Counting Section */}
+        <div className="lg:col-span-2 space-y-4">
+          {USD_DENOMINATIONS.map((group) => (
+            <div key={group.label} className="bg-cream/50 dark:bg-charcoal-dark/30 p-4 rounded-xl border border-charcoal/5 dark:border-cream/5">
+              <h3 className="text-sm font-black text-charcoal-light uppercase mb-3 flex items-center gap-2">
+                {group.label === 'Bills' ? <FaMoneyBillWave className="text-emerald" /> : <FaCoins className="text-amber-500" />}
+                {group.label}
+              </h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {group.items.map((denom) => (
+                  <div key={denom.label} className="flex flex-col gap-1">
+                    <label className="text-xs font-bold text-charcoal-light flex justify-between px-1">
+                      <span>{denom.label}</span>
+                      <span className="text-emerald/70">${((parseFloat(counts[denom.value.toString()] || '0') || 0) * denom.value).toFixed(2)}</span>
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      className="w-full p-2 bg-white dark:bg-charcoal text-center font-black rounded-lg border border-charcoal/10 dark:border-cream/10 focus:ring-2 focus:ring-emerald outline-none transition-all"
+                      value={counts[denom.value.toString()] || ''}
+                      onChange={(e) => handleCountChange(denom.value, e.target.value)}
+                      placeholder="0"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+          
+          <div className="pt-2">
+             <Textarea
+              id="cashierNotes"
+              label="Declaration Notes"
+              rows={2}
+              value={cashierNotes}
+              onChange={(e) => setCashierNotes(e.target.value)}
+              placeholder="Explain any large discrepancies or adjustments..."
+            />
+          </div>
+        </div>
 
-        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+        {/* Business Logic Summary Section */}
+        <div className="space-y-4">
+          <div className="bg-white dark:bg-charcoal border border-charcoal/5 dark:border-cream/5 rounded-xl p-5 shadow-inner">
+            <h3 className="text-sm font-black text-charcoal-light uppercase mb-4 flex items-center gap-2">
+              <FaHistory className="text-emerald" /> Business Summary
+            </h3>
+            
+            <div className="space-y-4">
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-charcoal-light font-bold">Expected Cash Sales:</span>
+                <span className="font-black text-charcoal-dark dark:text-cream-light">${expectedAmount.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-charcoal-light font-bold">Total Counted:</span>
+                <span className="font-black text-emerald">${totalDeclared.toFixed(2)}</span>
+              </div>
+              
+              <div className="border-t border-charcoal/5 dark:border-cream/5 pt-4">
+                <div className={`p-4 rounded-xl flex flex-col items-center justify-center text-center ${
+                  Math.abs(discrepancy) < 0.01 ? 'bg-emerald/10 text-emerald' : 
+                  discrepancy > 0 ? 'bg-amber-500/10 text-amber-600' : 'bg-terracotta/10 text-terracotta'
+                }`}>
+                  <p className="text-[10px] font-black uppercase tracking-widest mb-1">Drawer Variance</p>
+                  <div className="text-2xl font-black flex items-center gap-2">
+                    {Math.abs(discrepancy) < 0.01 ? (
+                      <><FaCheckCircle /> Balanced</>
+                    ) : (
+                      <>${Math.abs(discrepancy).toFixed(2)} {discrepancy > 0 ? 'Over' : 'Short'}</>
+                    )}
+                  </div>
+                  {Math.abs(discrepancy) >= 0.01 && (
+                    <div className="mt-2 flex items-center gap-1 text-[10px] font-bold">
+                      <FaExclamationTriangle /> 
+                      {discrepancy > 0 ? 'More cash than sales' : 'Missing cash from drawer'}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="text-[10px] text-charcoal-light/60 mt-4 leading-relaxed italic">
+                * Expected cash is based on recorded Cash sales during your current active shift.
+              </div>
+            </div>
+          </div>
+          
+          {error && (
+            <div className="p-3 bg-terracotta/10 text-terracotta text-xs font-bold rounded-lg flex items-center gap-2 border border-terracotta/20">
+              <FaExclamationTriangle /> {error}
+            </div>
+          )}
+        </div>
       </div>
     </Modal>
   );
