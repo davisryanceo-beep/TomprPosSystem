@@ -210,26 +210,9 @@ app.get("/", (req, res) => {
 
 // DEBUG: Health Check Endpoint
 app.get("/api/health-check", async (req, res) => {
-  const tables = ["users", "stores", "products", "orders", "announcements", "staff_rewards", "time_logs", "leave_requests", "store_tasks"];
-  const results = {};
-  
-  for (const table of tables) {
-    try {
-      const { data, error } = await db.from(table).select("*").limit(1);
-      if (error) {
-        results[table] = { status: "ERROR", message: error.message, details: error.details };
-      } else {
-        const columns = data.length > 0 ? Object.keys(data[0]) : "No data to check columns";
-        results[table] = { status: "OK", count: data.length, columns };
-      }
-    } catch (err) {
-      results[table] = { status: "CRASH", message: err.message };
-    }
-  }
-  
   res.json({
+    status: "OK",
     timestamp: new Date().toISOString(),
-    database: results,
     env: {
       hasUrl: !!process.env.SUPABASE_URL,
       hasKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY
