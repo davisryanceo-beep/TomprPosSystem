@@ -307,7 +307,7 @@ router.get('/history/:userId', async (req, res) => {
         const [rewardsRes, logsRes, leaveRes, userRes] = await Promise.all([
             db.from('staff_rewards').select('*').eq('userId', userId),
             db.from('time_logs').select('*').eq('userId', userId),
-            db.from('leave_requests').select('*').eq('userId', userId),
+            db.from('leave_requests').select('*').eq('userid', userId),
             db.from('users').select('*').eq('id', userId).single()
         ]);
 
@@ -377,7 +377,7 @@ router.post('/leave-request', async (req, res) => {
         const requestId = uuidv4();
         const request = {
             id: requestId,
-            userId,
+            userid: userId,
             userName: `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || userData.username,
             storeId: userData.storeId,
             startDate,
