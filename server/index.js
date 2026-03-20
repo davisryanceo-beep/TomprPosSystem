@@ -208,6 +208,34 @@ app.get("/", (req, res) => {
   res.send("Pos Cafe API Running (Firestore)");
 });
 
+// DEBUG: Health Check Endpoint
+app.get("/api/health-check", async (req, res) => {
+  const tables = ["users", "stores", "products", "orders", "announcements", "staff_rewards", "time_logs", "leave_requests", "store_tasks"];
+  const results = {};
+  
+  for (const table of tables) {
+    try {
+      const { data, error } = await db.from(table).select("*").limit(1);
+      if (error) {
+        results[table] = { status: "ERROR", message: error.message, details: error.details };
+      } else {
+        results[table] = { status: "OK", count: data.length };
+      }
+    } catch (err) {
+      results[table] = { status: "CRASH", message: err.message };
+    }
+  }
+  
+  res.json({
+    timestamp: new Date().toISOString(),
+    database: results,
+    env: {
+      hasUrl: !!process.env.SUPABASE_URL,
+      hasKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY
+    }
+  });
+});
+
 // --- PUBLIC MENU API (No Auth) ---
 
 app.get("/api/public/menu/:storeId", publicApiLimiter, async (req, res) => {

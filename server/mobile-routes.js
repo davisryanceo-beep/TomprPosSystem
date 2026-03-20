@@ -349,7 +349,12 @@ router.get('/history/:userId', async (req, res) => {
         res.json({ rewards, logs, leaveRequests, estimatedEarnings: estimatedEarnings.toFixed(2) });
     } catch (err) {
         console.error("History Error:", err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ 
+            error: "Internal Server Error in History", 
+            message: err.message, 
+            details: err.details || "No further details",
+            hint: err.hint || "No hint available"
+        });
     }
 });
 
@@ -412,7 +417,12 @@ router.get('/announcements/:storeId', async (req, res) => {
         res.json(all);
     } catch (err) {
         console.error("Announcements Error:", err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ 
+            error: "Internal Server Error in Announcements", 
+            message: err.message, 
+            details: err.details || "No further details",
+            hint: err.hint || "No hint available"
+        });
     }
 });
 
