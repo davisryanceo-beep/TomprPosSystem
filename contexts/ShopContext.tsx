@@ -416,7 +416,13 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setShiftsState(shiftsRes.data || []);
       setWastageLogsState(wastageRes.data || []);
       setTimeLogsState(timeLogsRes.data || []);
-      setCashDrawerLogsState(cashLogsRes.data || []);
+      setCashDrawerLogsState((cashLogsRes.data || []).map((l: any) => ({
+        ...l,
+        cashierId: l.reportedBy,
+        cashierNotes: l.notes,
+        // Ensure cashierName is at least a string if missing
+        cashierName: l.cashierName || l.reportedBy || 'Unknown' 
+      })));
       setAnnouncementsState(announcementsRes.data || []);
       setFeedbackListState(feedbackRes.data || []);
       setLeaveRequestsState(leaveRes.data || []);
@@ -1810,11 +1816,41 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     
     const expectedAmount = getExpectedCash(logData.cashierId, logData.type);
     const discrepancy = logData.declaredAmount - expectedAmount;
-    const newLog: CashDrawerLog = { ...logData, id: `cdl-${Date.now()}`, expectedAmount, discrepancy, logTimestamp: new Date().toISOString(), storeId: currentStoreId };
+    
+    // Use local date string (YYYY-MM-DD)
+    const todayStr = new Date().toLocaleDateString('en-CA');
+
+    // Create a plain object for the DB to avoid unknown column errors
+    const dbLog: any = {
+      id: `cdl-${Date.now()}`,
+      shiftDate: todayStr,
+      declaredAmount: logData.declaredAmount,
+      expectedAmount,
+      discrepancy,
+      type: logData.type,
+      notes: logData.cashierNotes,
+      reportedBy: logData.cashierId, // Map cashierId to reportedBy
+      logTimestamp: new Date().toISOString(),
+      storeId: currentStoreId
+    };
+
     try {
-      await createCashDrawerLog(newLog);
-      setCashDrawerLogsState(prev => [...prev, newLog]);
-    } catch (e) { console.error("Failed to add cash drawer log", e); }
+      await createCashDrawerLog(dbLog);
+      
+      // Update local state with frontend-friendly interface
+      const frontendLog: CashDrawerLog = {
+        ...logData,
+        id: dbLog.id,
+        expectedAmount,
+        discrepancy,
+        logTimestamp: dbLog.logTimestamp,
+        storeId: currentStoreId
+      };
+      setCashDrawerLogsState(prev => [...prev, frontendLog]);
+    } catch (e: any) { 
+      console.error("Failed to add cash drawer log", e);
+      if (e.response?.data) console.error("Error Details:", e.response.data);
+    }
   }, [currentStoreId, ordersState, getActiveTimeLogForUser, getShiftOrders]);
   const updateCashDrawerLogAdminNotes = useCallback(async (logId: string, adminNotes: string) => {
     const log = cashDrawerLogsState.find(l => l.id === logId);
