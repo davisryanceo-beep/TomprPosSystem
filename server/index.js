@@ -298,11 +298,6 @@ app.post("/api/public/orders", publicApiLimiter, async (req, res) => {
 
 app.use("/api/mobile", authenticateToken, mobileRoutes);
 
-// Helper to get all docs from a collection query
-async function dl(query) {
-  const snapshot = await query.get();
-  return snapshot.docs.map((doc) => doc.data());
-}
 
 // USERS
 
