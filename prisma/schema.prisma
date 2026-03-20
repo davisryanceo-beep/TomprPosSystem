@@ -44,6 +44,7 @@ model cash_drawer_logs {
   declaredAmount Float   @db.Real
   expectedAmount Float?  @db.Real
   discrepancy    Float?  @db.Real
+  type           String  @default("CLOSE")
   notes          String?
   adminNotes     String?
   reportedBy     String?

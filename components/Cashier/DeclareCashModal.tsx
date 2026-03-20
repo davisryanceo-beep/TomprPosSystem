@@ -4,7 +4,10 @@ import Input from '../Shared/Input';
 import Button from '../Shared/Button';
 import Textarea from '../Shared/Textarea';
 import { useShop } from '../../contexts/ShopContext';
-import { FaMoneyBillWave, FaCoins, FaCalculator, FaHistory, FaExclamationTriangle, FaCheckCircle } from 'react-icons/fa';
+import { 
+  FaMoneyBillWave, FaCoins, FaCalculator, FaHistory, 
+  FaExclamationTriangle, FaCheckCircle, FaSun, FaMoon, FaArrowLeft 
+} from 'react-icons/fa';
 
 interface DeclareCashModalProps {
   isOpen: boolean;
@@ -25,12 +28,25 @@ const KHR_DENOMINATIONS = [
 ];
 
 const DeclareCashModal: React.FC<DeclareCashModalProps> = ({ isOpen, onClose, cashierId, cashierName }) => {
-  const { addCashDrawerLog, getExpectedCash } = useShop();
+  const { addCashDrawerLog, getExpectedCash, cashDrawerLogs } = useShop();
+  const [declarationType, setDeclarationType] = useState<'OPEN' | 'CLOSE' | null>(null);
   const [counts, setCounts] = useState<Record<string, string>>({});
   const [cashierNotes, setCashierNotes] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
 
-  const expectedAmount = useMemo(() => getExpectedCash(cashierId), [cashierId, isOpen, getExpectedCash]);
+  const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
+
+  // Find the opening log for today if it exists
+  const openingLog = useMemo(() => {
+    return [...cashDrawerLogs]
+      .reverse()
+      .find(l => l.cashierId === cashierId && l.type === 'OPEN' && l.shiftDate === todayStr);
+  }, [cashDrawerLogs, cashierId, todayStr]);
+
+  const expectedAmount = useMemo(() => {
+    if (!declarationType) return 0;
+    return getExpectedCash(cashierId, declarationType);
+  }, [cashierId, isOpen, getExpectedCash, declarationType]);
 
   const totalDeclared = useMemo(() => {
     return Object.entries(counts).reduce((sum, [valStr, countStr]) => {
@@ -50,20 +66,19 @@ const DeclareCashModal: React.FC<DeclareCashModalProps> = ({ isOpen, onClose, ca
   };
 
   const handleSubmit = () => {
+    if (!declarationType) return;
     if (totalDeclared < 0) {
       setError('Declared amount cannot be negative.');
       return;
     }
     setError(null);
 
-    const today = new Date();
-    const shiftDate = today.toISOString().split('T')[0];
-
     addCashDrawerLog({
       cashierId,
       cashierName,
-      shiftDate,
+      shiftDate: todayStr,
       declaredAmount: totalDeclared,
+      type: declarationType,
       cashierNotes: cashierNotes.trim() || undefined,
     });
 
@@ -73,6 +88,7 @@ const DeclareCashModal: React.FC<DeclareCashModalProps> = ({ isOpen, onClose, ca
   const handleModalClose = () => {
     setCounts({});
     setCashierNotes('');
+    setDeclarationType(null);
     setError(null);
     onClose();
   };
@@ -81,23 +97,66 @@ const DeclareCashModal: React.FC<DeclareCashModalProps> = ({ isOpen, onClose, ca
     return val.toLocaleString() + '៛';
   };
 
+  const renderTypeSelection = () => (
+    <div className="py-10 flex flex-col items-center justify-center space-y-8 animate-fade-in">
+      <div className="text-center space-y-2">
+        <h2 className="text-2xl font-black text-charcoal-dark dark:text-cream-light">Choose Declaration Phase</h2>
+        <p className="text-charcoal-light font-bold">Are you starting your shift or closing for the day?</p>
+      </div>
+      
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-lg px-4">
+        <button
+          onClick={() => setDeclarationType('OPEN')}
+          className="group flex flex-col items-center justify-center p-8 bg-amber-50 dark:bg-amber-900/10 border-2 border-amber-200 dark:border-amber-900/30 rounded-2xl hover:border-amber-500 transition-all hover:scale-[1.02] shadow-sm hover:shadow-xl"
+        >
+          <div className="w-16 h-16 bg-amber-500/10 rounded-full flex items-center justify-center mb-4 group-hover:bg-amber-500/20 transition-colors">
+            <FaSun className="text-3xl text-amber-500" />
+          </div>
+          <span className="text-xl font-black text-amber-600">Open Drawer</span>
+          <span className="text-xs font-bold text-amber-700/60 mt-2 uppercase tracking-widest leading-tight">Start of Shift</span>
+        </button>
+
+        <button
+          onClick={() => setDeclarationType('CLOSE')}
+          className="group flex flex-col items-center justify-center p-8 bg-indigo-50 dark:bg-indigo-900/10 border-2 border-indigo-200 dark:border-indigo-900/30 rounded-2xl hover:border-indigo-500 transition-all hover:scale-[1.02] shadow-sm hover:shadow-xl"
+        >
+          <div className="w-16 h-16 bg-indigo-500/10 rounded-full flex items-center justify-center mb-4 group-hover:bg-indigo-500/20 transition-colors">
+            <FaMoon className="text-3xl text-indigo-500" />
+          </div>
+          <span className="text-xl font-black text-indigo-600">Close Drawer</span>
+          <span className="text-xs font-bold text-indigo-700/60 mt-2 uppercase tracking-widest leading-tight">End of Day</span>
+        </button>
+      </div>
+    </div>
+  );
+
   return (
     <Modal
       isOpen={isOpen}
       onClose={handleModalClose}
       title={
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          {declarationType && (
+            <button 
+              onClick={() => { setDeclarationType(null); setCounts({}); }}
+              className="p-1.5 hover:bg-charcoal/5 dark:hover:bg-cream/10 rounded-lg transition-colors"
+            >
+              <FaArrowLeft className="text-sm" />
+            </button>
+          )}
           <FaCalculator className="text-emerald" />
-          <span>Cash Drawer Declaration (KHR)</span>
+          <span>
+            {declarationType ? `${declarationType === 'OPEN' ? 'Morning' : 'Evening'} Declaration` : 'Cash Drawer Management'}
+          </span>
         </div>
       }
-      size="xl"
-      footer={
+      size={declarationType ? "xl" : "lg"}
+      footer={declarationType ? (
         <div className="flex justify-between items-center w-full">
            <div className="text-left">
               <p className="text-xs font-bold text-charcoal-light uppercase tracking-tighter">Shift Summary</p>
               <p className="text-lg font-black text-charcoal-dark dark:text-cream-light leading-none">
-                Total: <span className="text-emerald">{formatCurrency(totalDeclared)}</span>
+                Counted: <span className="text-emerald">{formatCurrency(totalDeclared)}</span>
               </p>
            </div>
            <div className="flex space-x-2">
@@ -109,102 +168,127 @@ const DeclareCashModal: React.FC<DeclareCashModalProps> = ({ isOpen, onClose, ca
             </Button>
           </div>
         </div>
-      }
+      ) : null}
     >
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Denomination Counting Section */}
-        <div className="lg:col-span-2 space-y-4">
-          {KHR_DENOMINATIONS.map((group) => (
-            <div key={group.label} className="bg-cream/50 dark:bg-charcoal-dark/30 p-4 rounded-xl border border-charcoal/5 dark:border-cream/5">
-              <h3 className="text-sm font-black text-charcoal-light uppercase mb-3 flex items-center gap-2">
-                <FaMoneyBillWave className="text-emerald" />
-                KHR {group.label}
-              </h3>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {group.items.map((denom) => (
-                  <div key={denom.label} className="flex flex-col gap-1">
-                    <label className="text-xs font-bold text-charcoal-light flex justify-between px-1">
-                      <span>{denom.label}</span>
-                      <span className="text-emerald/70">{formatCurrency(((parseFloat(counts[denom.value.toString()] || '0') || 0) * denom.value))}</span>
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      className="w-full p-2 bg-white dark:bg-charcoal text-center font-black rounded-lg border border-charcoal/10 dark:border-cream/10 focus:ring-2 focus:ring-emerald outline-none transition-all"
-                      value={counts[denom.value.toString()] || ''}
-                      onChange={(e) => handleCountChange(denom.value, e.target.value)}
-                      placeholder="0"
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-          
-          <div className="pt-2">
-             <Textarea
-              id="cashierNotes"
-              label="Declaration Notes"
-              rows={2}
-              value={cashierNotes}
-              onChange={(e) => setCashierNotes(e.target.value)}
-              placeholder="Explain any large discrepancies or adjustments..."
-            />
-          </div>
-        </div>
-
-        {/* Business Logic Summary Section */}
-        <div className="space-y-4">
-          <div className="bg-white dark:bg-charcoal border border-charcoal/5 dark:border-cream/5 rounded-xl p-5 shadow-inner">
-            <h3 className="text-sm font-black text-charcoal-light uppercase mb-4 flex items-center gap-2">
-              <FaHistory className="text-emerald" /> Business Summary
-            </h3>
-            
-            <div className="space-y-4">
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-charcoal-light font-bold">Expected Cash Sales:</span>
-                <span className="font-black text-charcoal-dark dark:text-cream-light">{formatCurrency(expectedAmount)}</span>
-              </div>
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-charcoal-light font-bold">Total Counted:</span>
-                <span className="font-black text-emerald">{formatCurrency(totalDeclared)}</span>
-              </div>
-              
-              <div className="border-t border-charcoal/5 dark:border-cream/5 pt-4">
-                <div className={`p-4 rounded-xl flex flex-col items-center justify-center text-center ${
-                  Math.abs(discrepancy) < 1 ? 'bg-emerald/10 text-emerald' : 
-                  discrepancy > 0 ? 'bg-amber-500/10 text-amber-600' : 'bg-terracotta/10 text-terracotta'
-                }`}>
-                  <p className="text-[10px] font-black uppercase tracking-widest mb-1">Drawer Variance</p>
-                  <div className="text-2xl font-black flex items-center gap-2">
-                    {Math.abs(discrepancy) < 1 ? (
-                      <><FaCheckCircle /> Balanced</>
-                    ) : (
-                      <>{formatCurrency(Math.abs(discrepancy))} {discrepancy > 0 ? 'Over' : 'Short'}</>
-                    )}
-                  </div>
-                  {Math.abs(discrepancy) >= 1 && (
-                    <div className="mt-2 flex items-center gap-1 text-[10px] font-bold">
-                      <FaExclamationTriangle /> 
-                      {discrepancy > 0 ? 'More cash than sales' : 'Missing cash from drawer'}
+      {!declarationType ? renderTypeSelection() : (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-in">
+          {/* Denomination Counting Section */}
+          <div className="lg:col-span-2 space-y-4">
+            {KHR_DENOMINATIONS.map((group) => (
+              <div key={group.label} className="bg-cream/50 dark:bg-charcoal-dark/30 p-4 rounded-xl border border-charcoal/5 dark:border-cream/5">
+                <h3 className="text-sm font-black text-charcoal-light uppercase mb-3 flex items-center gap-2">
+                  <FaMoneyBillWave className="text-emerald" />
+                  Count {group.label}
+                </h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {group.items.map((denom) => (
+                    <div key={denom.label} className="flex flex-col gap-1">
+                      <label className="text-xs font-bold text-charcoal-light flex justify-between px-1">
+                        <span>{denom.label}</span>
+                        <span className="text-emerald/70">{formatCurrency(((parseFloat(counts[denom.value.toString()] || '0') || 0) * denom.value))}</span>
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        className="w-full p-2 bg-white dark:bg-charcoal text-center font-black rounded-lg border border-charcoal/10 dark:border-cream/10 focus:ring-2 focus:ring-emerald outline-none transition-all"
+                        value={counts[denom.value.toString()] || ''}
+                        onChange={(e) => handleCountChange(denom.value, e.target.value)}
+                        placeholder="0"
+                      />
                     </div>
-                  )}
+                  ))}
                 </div>
               </div>
-
-              <div className="text-[10px] text-charcoal-light/60 mt-4 leading-relaxed italic">
-                * Expected cash is based on recorded Cash sales during your current active shift.
-              </div>
+            ))}
+            
+            <div className="pt-2">
+               <Textarea
+                id="cashierNotes"
+                label="Declaration Notes"
+                rows={2}
+                value={cashierNotes}
+                onChange={(e) => setCashierNotes(e.target.value)}
+                placeholder="Explain any large discrepancies or adjustments..."
+              />
             </div>
           </div>
-          
-          {error && (
-            <div className="p-3 bg-terracotta/10 text-terracotta text-xs font-bold rounded-lg flex items-center gap-2 border border-terracotta/20">
-              <FaExclamationTriangle /> {error}
+
+          {/* Business Logic Summary Section */}
+          <div className="space-y-4">
+            <div className="bg-white dark:bg-charcoal border border-charcoal/5 dark:border-cream/5 rounded-xl p-5 shadow-inner">
+              <h3 className="text-sm font-black text-charcoal-light uppercase mb-4 flex items-center gap-2">
+                <FaHistory className="text-emerald" /> 
+                {declarationType === 'CLOSE' ? 'Shift Recapitulation' : 'Opening Summary'}
+              </h3>
+              
+              <div className="space-y-4">
+                {declarationType === 'CLOSE' ? (
+                  <>
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-charcoal-light font-bold">☀️ Opening Balance:</span>
+                      <span className="font-black text-charcoal-dark dark:text-cream-light">{formatCurrency(openingLog?.declaredAmount || 0)}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-charcoal-light font-bold">📈 Cash Sales:</span>
+                      <span className="font-black text-charcoal-dark dark:text-cream-light">{formatCurrency(expectedAmount - (openingLog?.declaredAmount || 0))}</span>
+                    </div>
+                    <div className="pt-2 border-t border-charcoal/5 dark:border-cream/5 flex justify-between items-center text-sm">
+                      <span className="text-charcoal-dark dark:text-cream-light font-black uppercase">🛒 Total Expected:</span>
+                      <span className="font-black text-charcoal-dark dark:text-cream-light">{formatCurrency(expectedAmount)}</span>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-charcoal-light font-bold">Planned Opening:</span>
+                    <span className="font-black text-charcoal-dark dark:text-cream-light">{formatCurrency(0)}</span>
+                  </div>
+                )}
+
+                <div className="flex justify-between items-center text-sm pt-2 border-t border-charcoal/5 dark:border-cream/5">
+                  <span className="text-charcoal-light font-bold">Total Counted:</span>
+                  <span className="font-black text-emerald font-lg font-black">{formatCurrency(totalDeclared)}</span>
+                </div>
+                
+                <div className="pt-4">
+                  <div className={`p-4 rounded-xl flex flex-col items-center justify-center text-center ${
+                    Math.abs(discrepancy) < 1 ? 'bg-emerald/10 text-emerald' : 
+                    discrepancy > 0 ? 'bg-amber-500/10 text-amber-600' : 'bg-terracotta/10 text-terracotta'
+                  }`}>
+                    <p className="text-[10px] font-black uppercase tracking-widest mb-1">
+                      {declarationType === 'OPEN' ? 'Initial Deviation' : 'Final Variance'}
+                    </p>
+                    <div className="text-2xl font-black flex items-center gap-2">
+                      {Math.abs(discrepancy) < 1 ? (
+                        <><FaCheckCircle /> Balanced</>
+                      ) : (
+                        <>{formatCurrency(Math.abs(discrepancy))} {discrepancy > 0 ? 'Over' : 'Short'}</>
+                      )}
+                    </div>
+                    {Math.abs(discrepancy) >= 1 && (
+                      <div className="mt-2 flex items-center gap-1 text-[10px] font-bold">
+                        <FaExclamationTriangle /> 
+                        {declarationType === 'OPEN' ? 'Starting amount differs' : (discrepancy > 0 ? 'Surplus cash detected' : 'Missing cash from drawer')}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="text-[10px] text-charcoal-light/60 mt-4 leading-relaxed italic">
+                  {declarationType === 'CLOSE' 
+                    ? `* Closing expectation is computed as: Opening Cash (${formatCurrency(openingLog?.declaredAmount || 0)}) + Cash Sales today.`
+                    : "* Perform an opening declaration to establish the 'Starting Balance' for your shift."}
+                </div>
+              </div>
             </div>
-          )}
+            
+            {error && (
+              <div className="p-3 bg-terracotta/10 text-terracotta text-xs font-bold rounded-lg flex items-center gap-2 border border-terracotta/20">
+                <FaExclamationTriangle /> {error}
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </Modal>
   );
 };
