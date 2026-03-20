@@ -37,6 +37,9 @@ CREATE TABLE IF NOT EXISTS users (
     storeId TEXT,
     email TEXT,
     phoneNumber TEXT,
+    "hourlyRate" REAL DEFAULT 0,
+    loyalty_points INTEGER DEFAULT 0,
+    tier TEXT DEFAULT 'Silver',
     FOREIGN KEY (storeId) REFERENCES stores(id) ON DELETE CASCADE
 );
 
@@ -121,6 +124,7 @@ CREATE TABLE IF NOT EXISTS orders (
     customerId TEXT,
     customerPhone TEXT,
     storeId TEXT NOT NULL,
+    orderType TEXT DEFAULT 'POS',
     qrPaymentState TEXT,
     FOREIGN KEY (storeId) REFERENCES stores(id) ON DELETE CASCADE
 );
@@ -282,8 +286,42 @@ CREATE TABLE IF NOT EXISTS announcements(
     timestamp TIMESTAMPTZ DEFAULT NOW(),
     isArchived BOOLEAN DEFAULT false,
     targetRoles JSONB, 
-    storeId TEXT NOT NULL,
+    storeId TEXT,
     FOREIGN KEY(storeId) REFERENCES stores(id) ON DELETE CASCADE
+);
+
+-- Staff Rewards Table
+CREATE TABLE IF NOT EXISTS staff_rewards (
+    id TEXT PRIMARY KEY,
+    userId TEXT NOT NULL,
+    userName TEXT,
+    storeId TEXT NOT NULL,
+    date DATE,
+    shiftId TEXT,
+    status TEXT DEFAULT 'Available',
+    timestamp TIMESTAMPTZ DEFAULT NOW(),
+    claimedOrderId TEXT,
+    claimedProductId TEXT,
+    claimedProductName TEXT,
+    claimedAt TIMESTAMPTZ,
+    FOREIGN KEY (storeId) REFERENCES stores(id) ON DELETE CASCADE,
+    FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Store Tasks Table
+CREATE TABLE IF NOT EXISTS store_tasks (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    description TEXT,
+    priority TEXT,
+    status TEXT DEFAULT 'Pending',
+    storeId TEXT NOT NULL,
+    assignedTo TEXT,
+    createdBy TEXT,
+    createdAt TIMESTAMPTZ DEFAULT NOW(),
+    completedBy TEXT,
+    completedAt TIMESTAMPTZ,
+    FOREIGN KEY (storeId) REFERENCES stores(id) ON DELETE CASCADE
 );
 
 -- Feedback Table
