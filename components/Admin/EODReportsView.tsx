@@ -6,7 +6,7 @@ import Modal from '../Shared/Modal';
 import Input from '../Shared/Input';
 import Select from '../Shared/Select';
 import Textarea from '../Shared/Textarea';
-import { FaCalculator, FaEdit, FaFilePdf } from 'react-icons/fa';
+import { FaCalculator, FaEdit, FaFilePdf, FaSun, FaMoon, FaCheckCircle, FaExclamationTriangle, FaArrowDown, FaArrowUp } from 'react-icons/fa';
 import { generateEODReportPDF } from '../../services/pdfService';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -39,7 +39,7 @@ const EODReportsView: React.FC = () => {
 
   const cashierOptions = useMemo(() => 
     [{ value: '', label: 'All Cashiers' }, 
-     ...contextUsers.filter(u => u.role === 'Cashier').map(user => ({ value: user.id, label: `${user.firstName || ''} ${user.lastName || ''} (${user.username})`.trim() }))]
+     ...contextUsers.filter(u => u.role === 'Cashier' || u.role === 'Admin' || u.role === 'Store Admin').map(user => ({ value: user.id, label: `${user.firstName || ''} ${user.lastName || ''} (${user.username})`.trim() }))]
   , [contextUsers]);
 
   const filteredLogs = useMemo(() => {
@@ -51,6 +51,22 @@ const EODReportsView: React.FC = () => {
       })
       .sort((a, b) => new Date(b.logTimestamp).getTime() - new Date(a.logTimestamp).getTime());
   }, [cashDrawerLogs, filters]);
+
+  // Daily Summary Statistics
+  const summary = useMemo(() => {
+    const totalExpected = filteredLogs.reduce((sum, l) => sum + (l.expectedAmount || 0), 0);
+    const totalDeclared = filteredLogs.reduce((sum, l) => sum + (l.declaredAmount || 0), 0);
+    const totalDiscrepancy = totalDeclared - totalExpected;
+    const shortCount = filteredLogs.filter(l => (l.discrepancy || 0) < -1).length;
+    const overCount = filteredLogs.filter(l => (l.discrepancy || 0) > 1).length;
+    const balancedCount = filteredLogs.filter(l => Math.abs(l.discrepancy || 0) <= 1).length;
+
+    return { totalExpected, totalDeclared, totalDiscrepancy, shortCount, overCount, balancedCount };
+  }, [filteredLogs]);
+
+  const formatCurrency = (val: number) => {
+    return val.toLocaleString() + '៛';
+  };
 
   const openNotesModal = (log: CashDrawerLog) => {
     setSelectedLog(log);
@@ -83,64 +99,128 @@ const EODReportsView: React.FC = () => {
     setIsGeneratingPDF(false);
   };
 
+  const getStatusBadge = (discrepancy: number) => {
+    if (Math.abs(discrepancy) <= 1) {
+      return (
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-black bg-emerald/10 text-emerald">
+          <FaCheckCircle className="mr-1" /> Balanced
+        </span>
+      );
+    }
+    if (discrepancy > 0) {
+      return (
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-black bg-amber-500/10 text-amber-600">
+          <FaArrowUp className="mr-1" /> Over
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-black bg-terracotta/10 text-terracotta">
+        <FaArrowDown className="mr-1" /> Short
+      </span>
+    );
+  };
+
   return (
-    <div className="space-y-6 fade-in">
+    <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row justify-between items-center gap-2">
-        <h2 className="text-2xl font-bold text-charcoal-dark dark:text-cream-light flex items-center">
-          <FaCalculator className="mr-2 text-emerald" />End-of-Day Cash Reports
+        <h2 className="text-2xl font-black text-charcoal-dark dark:text-cream-light flex items-center">
+          <FaCalculator className="mr-3 text-emerald" /> End-of-Day Cash Reports
         </h2>
         <Button 
             onClick={handleDownloadReport} 
             disabled={isGeneratingPDF || filteredLogs.length === 0} 
             leftIcon={<FaFilePdf/>}
             variant="secondary"
+            className="shadow-lg shadow-charcoal/5"
         >
-            {isGeneratingPDF ? 'Generating PDF...' : "EOD Report PDF"}
+            {isGeneratingPDF ? 'Generating...' : "Download EOD PDF"}
         </Button>
       </div>
 
+      {/* Statistics Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-white dark:bg-charcoal p-4 rounded-2xl border border-charcoal/5 shadow-sm">
+          <p className="text-[10px] font-black text-charcoal-light uppercase tracking-widest mb-1">Total Expected</p>
+          <p className="text-lg font-black text-charcoal-dark dark:text-cream-light">{formatCurrency(summary.totalExpected)}</p>
+        </div>
+        <div className="bg-white dark:bg-charcoal p-4 rounded-2xl border border-charcoal/5 shadow-sm">
+          <p className="text-[10px] font-black text-charcoal-light uppercase tracking-widest mb-1">Total Counted</p>
+          <p className="text-lg font-black text-emerald">{formatCurrency(summary.totalDeclared)}</p>
+        </div>
+        <div className="bg-white dark:bg-charcoal p-4 rounded-2xl border border-charcoal/5 shadow-sm">
+          <p className="text-[10px] font-black text-charcoal-light uppercase tracking-widest mb-1">Total Variance</p>
+          <p className={`text-lg font-black ${summary.totalDiscrepancy >= 0 ? 'text-emerald' : 'text-terracotta'}`}>
+            {summary.totalDiscrepancy > 0 ? '+' : ''}{formatCurrency(summary.totalDiscrepancy)}
+          </p>
+        </div>
+        <div className="bg-white dark:bg-charcoal p-4 rounded-2xl border border-charcoal/5 shadow-sm flex flex-col justify-center">
+          <div className="flex gap-2">
+             <span className="text-[10px] font-black text-emerald bg-emerald/10 px-1.5 rounded">{summary.balancedCount} OK</span>
+             <span className="text-[10px] font-black text-terracotta bg-terracotta/10 px-1.5 rounded">{summary.shortCount + summary.overCount} ERR</span>
+          </div>
+        </div>
+      </div>
+
       {/* Filters */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-cream dark:bg-charcoal-900/50 rounded-lg shadow">
-        <Select label="Cashier" name="cashierId" options={cashierOptions} value={filters.cashierId} onChange={handleFilterChange} />
-        <Input type="date" label="Shift Date" name="date" value={filters.date} onChange={handleFilterChange} />
+      <div className="flex flex-col md:flex-row gap-4 p-5 bg-cream/50 dark:bg-charcoal-dark/30 rounded-2xl border border-charcoal/5">
+        <div className="flex-1">
+          <Select label="Filter Cashier" name="cashierId" options={cashierOptions} value={filters.cashierId} onChange={handleFilterChange} />
+        </div>
+        <div className="flex-1">
+          <Input type="date" label="Filter Date" name="date" value={filters.date} onChange={handleFilterChange} />
+        </div>
       </div>
       
-      <div className="overflow-x-auto bg-cream dark:bg-charcoal-dark/50 p-3 rounded-lg">
-        <table className="min-w-full divide-y divide-charcoal/10 dark:divide-cream-light/10">
-          <thead className="bg-cream-light dark:bg-charcoal-dark/30">
+      <div className="overflow-hidden bg-white dark:bg-charcoal border border-charcoal/5 rounded-2xl shadow-sm">
+        <table className="min-w-full divide-y divide-charcoal/5">
+          <thead className="bg-cream/30 dark:bg-charcoal-dark/50">
             <tr>
-              <th className="px-3 py-3 text-left text-xs font-bold text-charcoal-light uppercase tracking-wider">Date</th>
-              <th className="px-3 py-3 text-left text-xs font-bold text-charcoal-light uppercase tracking-wider">Cashier</th>
-              <th className="px-3 py-3 text-right text-xs font-bold text-charcoal-light uppercase tracking-wider">Expected (USD)</th>
-              <th className="px-3 py-3 text-right text-xs font-bold text-charcoal-light uppercase tracking-wider">Declared (USD)</th>
-              <th className="px-3 py-3 text-right text-xs font-bold text-charcoal-light uppercase tracking-wider">Discrepancy</th>
-              <th className="px-3 py-3 text-left text-xs font-bold text-charcoal-light uppercase tracking-wider">Cashier Notes</th>
-              <th className="px-3 py-3 text-left text-xs font-bold text-charcoal-light uppercase tracking-wider">Admin Notes</th>
-              <th className="px-3 py-3 text-left text-xs font-bold text-charcoal-light uppercase tracking-wider">Actions</th>
+              <th className="px-4 py-3 text-left text-[10px] font-black text-charcoal-light uppercase tracking-widest">Type</th>
+              <th className="px-4 py-3 text-left text-[10px] font-black text-charcoal-light uppercase tracking-widest">Date / Time</th>
+              <th className="px-4 py-3 text-left text-[10px] font-black text-charcoal-light uppercase tracking-widest">Cashier</th>
+              <th className="px-4 py-3 text-right text-[10px] font-black text-charcoal-light uppercase tracking-widest">Expected</th>
+              <th className="px-4 py-3 text-right text-[10px] font-black text-charcoal-light uppercase tracking-widest">Declared</th>
+              <th className="px-4 py-3 text-center text-[10px] font-black text-charcoal-light uppercase tracking-widest">Status</th>
+              <th className="px-4 py-3 text-left text-[10px] font-black text-charcoal-light uppercase tracking-widest">Actions</th>
             </tr>
           </thead>
-          <tbody className="bg-cream-light dark:bg-charcoal-dark divide-y divide-charcoal/10 dark:divide-cream-light/10">
+          <tbody className="divide-y divide-charcoal/5">
             {filteredLogs.map(log => (
-              <tr key={log.id} className={log.discrepancy !== 0 ? (log.discrepancy > 0 ? 'bg-emerald/10' : 'bg-terracotta/10') : ''}>
-                <td className="px-3 py-4 whitespace-nowrap text-sm text-charcoal-light">{log.shiftDate}</td>
-                <td className="px-3 py-4 whitespace-nowrap text-sm text-charcoal dark:text-cream-light">{log.cashierName}</td>
-                <td className="px-3 py-4 whitespace-nowrap text-sm text-charcoal-light text-right">${log.expectedAmount.toFixed(2)}</td>
-                <td className="px-3 py-4 whitespace-nowrap text-sm text-charcoal-light text-right">${log.declaredAmount.toFixed(2)}</td>
-                <td className={`px-3 py-4 whitespace-nowrap text-sm font-semibold text-right ${
-                  log.discrepancy === 0 ? 'text-charcoal-light' : 
-                  log.discrepancy > 0 ? 'text-emerald' : 'text-terracotta'
-                }`}>
-                  {log.discrepancy > 0 ? '+' : ''}${log.discrepancy.toFixed(2)}
+              <tr key={log.id} className="hover:bg-cream/10 transition-colors">
+                <td className="px-4 py-4 whitespace-nowrap">
+                   {log.type === 'OPEN' ? (
+                     <span className="flex items-center gap-1.5 text-amber-500 font-bold text-xs">
+                       <FaSun /> OPEN
+                     </span>
+                   ) : (
+                     <span className="flex items-center gap-1.5 text-indigo-500 font-bold text-xs">
+                       <FaMoon /> CLOSE
+                     </span>
+                   )}
                 </td>
-                <td className="px-3 py-4 text-xs text-charcoal-light max-w-xs truncate" title={log.cashierNotes}>{log.cashierNotes || '-'}</td>
-                <td className="px-3 py-4 text-xs text-charcoal-light max-w-xs truncate" title={log.adminNotes}>{log.adminNotes || '-'}</td>
-                <td className="px-3 py-4 whitespace-nowrap text-sm font-medium">
-                  <Button variant="ghost" size="sm" onClick={() => openNotesModal(log)} leftIcon={<FaEdit/>}>Notes</Button>
+                <td className="px-4 py-4 whitespace-nowrap">
+                  <div className="text-xs font-bold text-charcoal-dark dark:text-cream-light">{log.shiftDate}</div>
+                  <div className="text-[10px] text-charcoal-light">{new Date(log.logTimestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                </td>
+                <td className="px-4 py-4 whitespace-nowrap text-xs font-bold text-charcoal dark:text-cream-light">{log.cashierName}</td>
+                <td className="px-4 py-4 whitespace-nowrap text-xs font-bold text-charcoal-light text-right">{formatCurrency(log.expectedAmount || 0)}</td>
+                <td className="px-4 py-4 whitespace-nowrap text-xs font-black text-charcoal-dark dark:text-cream-light text-right">{formatCurrency(log.declaredAmount)}</td>
+                <td className="px-4 py-4 whitespace-nowrap text-center">
+                  {getStatusBadge(log.discrepancy || 0)}
+                  {Math.abs(log.discrepancy || 0) > 1 && (
+                    <div className="text-[9px] font-bold text-charcoal-light mt-1">
+                      {log.discrepancy > 0 ? '+' : ''}{formatCurrency(log.discrepancy)}
+                    </div>
+                  )}
+                </td>
+                <td className="px-4 py-4 whitespace-nowrap">
+                  <Button variant="ghost" size="sm" onClick={() => openNotesModal(log)} iconOnly><FaEdit/></Button>
                 </td>
               </tr>
             ))}
             {filteredLogs.length === 0 && (
-              <tr><td colSpan={8} className="text-center py-4 text-charcoal-light">No EOD logs match your filters.</td></tr>
+              <tr><td colSpan={7} className="text-center py-10 text-charcoal-light font-bold">No EOD logs match your filters.</td></tr>
             )}
           </tbody>
         </table>
@@ -150,33 +230,47 @@ const EODReportsView: React.FC = () => {
       <Modal
         isOpen={isNotesModalOpen}
         onClose={() => setIsNotesModalOpen(false)}
-        title={`Admin Notes for Log - ${selectedLog?.cashierName} (${selectedLog?.shiftDate})`}
+        title={`Review Log - ${selectedLog?.cashierName}`}
         size="md"
         footer={
           <div className="flex justify-end space-x-2">
             <Button variant="ghost" onClick={() => setIsNotesModalOpen(false)}>Cancel</Button>
-            <Button onClick={handleSaveAdminNotes}>Save Notes</Button>
+            <Button onClick={handleSaveAdminNotes}>Update Review</Button>
           </div>
         }
       >
-        <div className="space-y-4">
-          <p className="text-sm">
-            Expected: <span className="font-semibold">${selectedLog?.expectedAmount.toFixed(2)}</span> | 
-            Declared: <span className="font-semibold">${selectedLog?.declaredAmount.toFixed(2)}</span> | 
-            Discrepancy: <span className={`font-semibold ${selectedLog && selectedLog.discrepancy !== 0 ? (selectedLog.discrepancy > 0 ? 'text-emerald' : 'text-terracotta') : ''}`}>
-              {selectedLog && selectedLog.discrepancy > 0 ? '+' : ''}{selectedLog?.discrepancy.toFixed(2)}
-            </span>
-          </p>
-          <p className="text-sm text-charcoal-light">
-            <span className="font-medium">Cashier Notes:</span> {selectedLog?.cashierNotes || 'None'}
-          </p>
+        <div className="space-y-6">
+          <div className="p-4 bg-charcoal/5 dark:bg-white/5 rounded-2xl grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-[10px] font-black text-charcoal-light uppercase tracking-widest">Expected</p>
+              <p className="text-sm font-bold">{formatCurrency(selectedLog?.expectedAmount || 0)}</p>
+            </div>
+            <div>
+              <p className="text-[10px] font-black text-charcoal-light uppercase tracking-widest">Declared</p>
+              <p className="text-sm font-bold">{formatCurrency(selectedLog?.declaredAmount || 0)}</p>
+            </div>
+            <div className="col-span-2 pt-2 border-t border-charcoal/10">
+              <p className="text-[10px] font-black text-charcoal-light uppercase tracking-widest">Variance</p>
+              <p className={`text-lg font-black ${selectedLog && selectedLog.discrepancy >= 0 ? 'text-emerald' : 'text-terracotta'}`}>
+                {selectedLog && selectedLog.discrepancy > 0 ? '+' : ''}{formatCurrency(selectedLog?.discrepancy || 0)}
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <p className="text-[10px] font-black text-charcoal-light uppercase tracking-widest">Cashier Notes</p>
+            <div className="p-3 bg-cream/30 dark:bg-charcoal-dark border border-charcoal/5 rounded-xl text-xs italic">
+              {selectedLog?.cashierNotes || 'No notes provided by cashier.'}
+            </div>
+          </div>
+
           <Textarea
-            label="Administrator Notes"
+            label="Internal Admin Review"
             id="adminNotes"
-            rows={4}
+            rows={3}
             value={adminNotes}
             onChange={(e) => setAdminNotes(e.target.value)}
-            placeholder="Explain discrepancy, reconciliation steps, etc."
+            placeholder="Add internal reconciliation notes..."
           />
         </div>
       </Modal>
