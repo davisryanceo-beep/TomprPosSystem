@@ -219,7 +219,8 @@ app.get("/api/health-check", async (req, res) => {
       if (error) {
         results[table] = { status: "ERROR", message: error.message, details: error.details };
       } else {
-        results[table] = { status: "OK", count: data.length };
+        const columns = data.length > 0 ? Object.keys(data[0]) : "No data to check columns";
+        results[table] = { status: "OK", count: data.length, columns };
       }
     } catch (err) {
       results[table] = { status: "CRASH", message: err.message };
