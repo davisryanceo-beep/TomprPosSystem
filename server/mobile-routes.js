@@ -57,9 +57,9 @@ router.post('/clock-in', async (req, res) => {
         const { data: shifts, error: shiftErr } = await db
             .from('shifts')
             .select('*')
-            .eq('userid', userId)
+            .eq('userId', userId)
             .eq('date', dateStr)
-            .eq('storeid', storeId)
+            .eq('storeId', storeId)
             .limit(1);
 
         if (shiftErr) throw shiftErr;
@@ -286,7 +286,7 @@ router.get('/rewards/:userId', async (req, res) => {
         const { data: rewards, error } = await db
             .from('staff_rewards')
             .select('*')
-            .eq('userid', userId);
+            .eq('userId', userId);
 
         if (error) throw error;
         res.json(rewards);
@@ -305,9 +305,9 @@ router.get('/history/:userId', async (req, res) => {
     try {
         // Run queries in parallel
         const [rewardsRes, logsRes, leaveRes, userRes] = await Promise.all([
-            db.from('staff_rewards').select('*').eq('userid', userId),
-            db.from('time_logs').select('*').eq('userid', userId),
-            db.from('leave_requests').select('*').eq('userid', userId),
+            db.from('staff_rewards').select('*').eq('userId', userId),
+            db.from('time_logs').select('*').eq('userId', userId),
+            db.from('leave_requests').select('*').eq('userId', userId),
             db.from('users').select('*').eq('id', userId).single()
         ]);
 
@@ -406,7 +406,7 @@ router.get('/announcements/:storeId', async (req, res) => {
             .from('announcements')
             .select('*')
             .eq('isArchived', 0)
-            .or(`storeid.eq.${storeId},storeid.is.null`);
+            .or(`storeId.eq.${storeId},storeId.is.null`);
 
         if (error) throw error;
 
@@ -459,7 +459,7 @@ router.get('/shifts/upcoming/:userId', async (req, res) => {
         const { data: shifts, error } = await db
             .from('shifts')
             .select('*')
-            .eq('userid', userId)
+            .eq('userId', userId)
             .gte('date', today)
             .order('date', { ascending: true })
             .limit(10);
