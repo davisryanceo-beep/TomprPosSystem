@@ -340,11 +340,6 @@ app.post("/api/public/orders", publicApiLimiter, async (req, res) => {
 
 app.use("/api/mobile", authenticateToken, mobileRoutes);
 
-// Helper to get all docs from a collection query
-async function dl(query) {
-  const snapshot = await query.get();
-  return snapshot.docs.map((doc) => doc.data());
-}
 
 // USERS
 
@@ -1389,7 +1384,8 @@ app.put("/api/cash-drawer-logs/:id", authenticateToken, verifyOwnership('cash_dr
   const updates = req.body;
   try {
     delete updates.id;
-    await db.collection("cash_drawer_logs").doc(id).update(updates);
+    const { error } = await db.from("cash_drawer_logs").update(updates).eq("id", id);
+    if (error) throw error;
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });

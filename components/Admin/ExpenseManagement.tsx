@@ -42,7 +42,7 @@ const ExpenseManagement: React.FC = () => {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
       const data = await response.json();
-      setExpenses(data);
+      setExpenses(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Failed to fetch expenses:", error);
     } finally {

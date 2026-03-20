@@ -399,3 +399,16 @@ model wastage_logs {
   storeId    String
   stores     stores  @relation(fields: [storeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
+
+model expenses {
+  id             String    @id
+  date           DateTime? @default(dbgenerated("CURRENT_DATE")) @db.Date
+  category       String
+  amount         Float     @db.Real
+  description    String?
+  reportedBy     String?
+  reportedByName String?
+  storeId        String
+  timestamp      DateTime? @default(now()) @db.Timestamptz(6)
+  stores         stores    @relation(fields: [storeId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
