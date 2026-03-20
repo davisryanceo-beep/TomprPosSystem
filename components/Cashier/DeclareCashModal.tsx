@@ -13,20 +13,14 @@ interface DeclareCashModalProps {
   cashierName: string;
 }
 
-const USD_DENOMINATIONS = [
+const KHR_DENOMINATIONS = [
   { label: 'Bills', items: [
-    { label: '$100', value: 100 },
-    { label: '$50', value: 50 },
-    { label: '$20', value: 20 },
-    { label: '$10', value: 10 },
-    { label: '$5', value: 5 },
-    { label: '$1', value: 1 },
-  ]},
-  { label: 'Coins', items: [
-    { label: '25¢', value: 0.25 },
-    { label: '10¢', value: 0.10 },
-    { label: '5¢', value: 0.05 },
-    { label: '1¢', value: 0.01 },
+    { label: '50,000៛', value: 50000 },
+    { label: '10,000៛', value: 10000 },
+    { label: '5,000៛', value: 5000 },
+    { label: '1,000៛', value: 1000 },
+    { label: '500៛', value: 500 },
+    { label: '100៛', value: 100 },
   ]}
 ];
 
@@ -83,6 +77,10 @@ const DeclareCashModal: React.FC<DeclareCashModalProps> = ({ isOpen, onClose, ca
     onClose();
   };
 
+  const formatCurrency = (val: number) => {
+    return val.toLocaleString() + '៛';
+  };
+
   return (
     <Modal
       isOpen={isOpen}
@@ -90,7 +88,7 @@ const DeclareCashModal: React.FC<DeclareCashModalProps> = ({ isOpen, onClose, ca
       title={
         <div className="flex items-center gap-2">
           <FaCalculator className="text-emerald" />
-          <span>Cash Drawer Declaration</span>
+          <span>Cash Drawer Declaration (KHR)</span>
         </div>
       }
       size="xl"
@@ -99,7 +97,7 @@ const DeclareCashModal: React.FC<DeclareCashModalProps> = ({ isOpen, onClose, ca
            <div className="text-left">
               <p className="text-xs font-bold text-charcoal-light uppercase tracking-tighter">Shift Summary</p>
               <p className="text-lg font-black text-charcoal-dark dark:text-cream-light leading-none">
-                Total: <span className="text-emerald">${totalDeclared.toFixed(2)}</span>
+                Total: <span className="text-emerald">{formatCurrency(totalDeclared)}</span>
               </p>
            </div>
            <div className="flex space-x-2">
@@ -116,18 +114,18 @@ const DeclareCashModal: React.FC<DeclareCashModalProps> = ({ isOpen, onClose, ca
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Denomination Counting Section */}
         <div className="lg:col-span-2 space-y-4">
-          {USD_DENOMINATIONS.map((group) => (
+          {KHR_DENOMINATIONS.map((group) => (
             <div key={group.label} className="bg-cream/50 dark:bg-charcoal-dark/30 p-4 rounded-xl border border-charcoal/5 dark:border-cream/5">
               <h3 className="text-sm font-black text-charcoal-light uppercase mb-3 flex items-center gap-2">
-                {group.label === 'Bills' ? <FaMoneyBillWave className="text-emerald" /> : <FaCoins className="text-amber-500" />}
-                {group.label}
+                <FaMoneyBillWave className="text-emerald" />
+                KHR {group.label}
               </h3>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {group.items.map((denom) => (
                   <div key={denom.label} className="flex flex-col gap-1">
                     <label className="text-xs font-bold text-charcoal-light flex justify-between px-1">
                       <span>{denom.label}</span>
-                      <span className="text-emerald/70">${((parseFloat(counts[denom.value.toString()] || '0') || 0) * denom.value).toFixed(2)}</span>
+                      <span className="text-emerald/70">{formatCurrency(((parseFloat(counts[denom.value.toString()] || '0') || 0) * denom.value))}</span>
                     </label>
                     <input
                       type="number"
@@ -165,27 +163,27 @@ const DeclareCashModal: React.FC<DeclareCashModalProps> = ({ isOpen, onClose, ca
             <div className="space-y-4">
               <div className="flex justify-between items-center text-sm">
                 <span className="text-charcoal-light font-bold">Expected Cash Sales:</span>
-                <span className="font-black text-charcoal-dark dark:text-cream-light">${expectedAmount.toFixed(2)}</span>
+                <span className="font-black text-charcoal-dark dark:text-cream-light">{formatCurrency(expectedAmount)}</span>
               </div>
               <div className="flex justify-between items-center text-sm">
                 <span className="text-charcoal-light font-bold">Total Counted:</span>
-                <span className="font-black text-emerald">${totalDeclared.toFixed(2)}</span>
+                <span className="font-black text-emerald">{formatCurrency(totalDeclared)}</span>
               </div>
               
               <div className="border-t border-charcoal/5 dark:border-cream/5 pt-4">
                 <div className={`p-4 rounded-xl flex flex-col items-center justify-center text-center ${
-                  Math.abs(discrepancy) < 0.01 ? 'bg-emerald/10 text-emerald' : 
+                  Math.abs(discrepancy) < 1 ? 'bg-emerald/10 text-emerald' : 
                   discrepancy > 0 ? 'bg-amber-500/10 text-amber-600' : 'bg-terracotta/10 text-terracotta'
                 }`}>
                   <p className="text-[10px] font-black uppercase tracking-widest mb-1">Drawer Variance</p>
                   <div className="text-2xl font-black flex items-center gap-2">
-                    {Math.abs(discrepancy) < 0.01 ? (
+                    {Math.abs(discrepancy) < 1 ? (
                       <><FaCheckCircle /> Balanced</>
                     ) : (
-                      <>${Math.abs(discrepancy).toFixed(2)} {discrepancy > 0 ? 'Over' : 'Short'}</>
+                      <>{formatCurrency(Math.abs(discrepancy))} {discrepancy > 0 ? 'Over' : 'Short'}</>
                     )}
                   </div>
-                  {Math.abs(discrepancy) >= 0.01 && (
+                  {Math.abs(discrepancy) >= 1 && (
                     <div className="mt-2 flex items-center gap-1 text-[10px] font-bold">
                       <FaExclamationTriangle /> 
                       {discrepancy > 0 ? 'More cash than sales' : 'Missing cash from drawer'}
