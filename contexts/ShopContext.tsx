@@ -533,6 +533,15 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [currentOrder]);
 
+  // Sync selectedCustomer for Customer Display personalization
+  useEffect(() => {
+    if (selectedCustomer) {
+      localStorage.setItem('selectedCustomer', JSON.stringify(selectedCustomer));
+    } else {
+      localStorage.removeItem('selectedCustomer');
+    }
+  }, [selectedCustomer]);
+
   const setCurrentStoreId = useCallback((storeId: string | null) => {
     setCurrentStoreIdState(storeId);
     setCurrentOrder(null);

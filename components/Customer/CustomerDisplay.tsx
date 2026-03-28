@@ -1,15 +1,16 @@
 
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Order, OrderItem, Store, QRPaymentState } from '../../types';
+import { Order, OrderItem, Store, QRPaymentState, Customer } from '../../types';
 import { useShop } from '../../contexts/ShopContext';
 import { BakongKHQR, khqrData, IndividualInfo } from 'bakong-khqr';
 import { QRCodeCanvas } from 'qrcode.react';
 import { getStampClaimStatus } from '../../services/api';
-import { FaCoffee, FaCheck, FaQrcode, FaCheckCircle } from 'react-icons/fa';
+import { FaCoffee, FaCheck, FaQrcode, FaCheckCircle, FaStar, FaGift } from 'react-icons/fa';
+import { USD_TO_KHR_RATE, SECONDARY_CURRENCY } from '../../constants';
 
 const CustomerDisplay: React.FC = () => {
-  const { getPromotionById, getStoreById } = useShop();
+  const { getPromotionById, getStoreById, promotions } = useShop();
   const [order, setOrder] = useState<Order | null>(() => {
     const savedOrder = localStorage.getItem('currentOrder');
     if (savedOrder) {
@@ -20,6 +21,10 @@ const CustomerDisplay: React.FC = () => {
   });
   const [store, setStore] = useState<Store | null>(null);
   const [claimed, setClaimed] = useState(false);
+  const [customer, setCustomer] = useState<Customer | null>(() => {
+    const saved = localStorage.getItem('selectedCustomer');
+    return saved ? JSON.parse(saved) : null;
+  });
 
   const storeId = useMemo(() => {
     const hash = window.location.hash;
@@ -50,6 +55,10 @@ const CustomerDisplay: React.FC = () => {
         } else {
           setOrder(null);
         }
+      }
+      if (event.key === 'selectedCustomer') {
+        const newCustomerData = event.newValue;
+        setCustomer(newCustomerData ? JSON.parse(newCustomerData) : null);
       }
     };
 
@@ -132,6 +141,11 @@ const CustomerDisplay: React.FC = () => {
     return parts.length > 0 ? `(${parts.join(', ')})` : '';
   };
 
+  const khrAmount = useMemo(() => {
+    if (!order) return 0;
+    return Math.round(order.finalAmount * USD_TO_KHR_RATE);
+  }, [order?.finalAmount]);
+
   const appliedPromotion = order?.appliedPromotionId ? getPromotionById(order.appliedPromotionId) : null;
 
   // Destructure settings with defaults
@@ -176,6 +190,21 @@ const CustomerDisplay: React.FC = () => {
       return () => clearInterval(interval);
     }
   }, [displayLayout, slideshowImageUrls]);
+
+  // Active Promotions Logic
+  const activePromoIdx = useMemo(() => {
+    return promotions.filter(p => p.isActive);
+  }, [promotions]);
+
+  const [currentPromoIndex, setCurrentPromoIndex] = useState(0);
+  useEffect(() => {
+    if (activePromoIdx.length > 1) {
+      const interval = setInterval(() => {
+        setCurrentPromoIndex(prev => (prev + 1) % activePromoIdx.length);
+      }, 7000);
+      return () => clearInterval(interval);
+    }
+  }, [activePromoIdx]);
 
   // KHQR Generator
   const khqrString = useMemo(() => {
@@ -227,6 +256,23 @@ const CustomerDisplay: React.FC = () => {
           </div>
           <h1 className="text-6xl font-extrabold" style={{ color: headerColor }}>Payment Successful!</h1>
           <p className="text-3xl mt-4" style={{ color: bodyTextColor }}>Thank you for your purchase.</p>
+
+          {/* New Celebration Animation (Confetti placeholder via CSS) */}
+          <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
+            {[...Array(20)].map((_, i) => (
+              <div
+                key={i}
+                className="absolute w-3 h-3 rounded-full animate-confetti"
+                style={{
+                  backgroundColor: ['#10b981', '#f59e0b', '#3b82f6', '#ec4899', '#8b5cf6'][i % 5],
+                  left: `${Math.random() * 100}%`,
+                  top: `-20px`,
+                  animationDelay: `${Math.random() * 3}s`,
+                  animationDuration: `${2 + Math.random() * 2}s`
+                }}
+              />
+            ))}
+          </div>
 
           {order.pendingStampClaimId && (
             <div className="mt-12 p-8 bg-white/10 backdrop-blur-md rounded-3xl border border-white/20 shadow-2xl flex flex-col items-center animate-in fade-in zoom-in duration-500 overflow-hidden relative">
@@ -328,6 +374,21 @@ const CustomerDisplay: React.FC = () => {
                   <img src={logoUrl} alt="Logo" className="h-16 w-auto object-contain" />
                 </div>
               )}
+
+              {/* Promo Banner Overlay */}
+              {activePromoIdx.length > 0 && (
+                <div className="absolute bottom-16 right-8 left-8 z-20 animate-in slide-in-from-bottom-8 duration-700">
+                  <div className="bg-emerald/90 backdrop-blur-md p-6 rounded-2xl shadow-2xl border border-white/20 flex items-center justify-between">
+                    <div>
+                      <h3 className="text-white text-3xl font-black uppercase tracking-wider">{activePromoIdx[currentPromoIndex].name}</h3>
+                      <p className="text-white/90 text-xl font-medium">{activePromoIdx[currentPromoIndex].description}</p>
+                    </div>
+                    <div className="bg-white/20 px-6 py-2 rounded-full border border-white/30">
+                      <span className="text-white text-2xl font-black">SAVE NOW</span>
+                    </div>
+                  </div>
+                </div>
+              )}
             </>
           ) : (
             // Fallback if split screen on but no images
@@ -364,9 +425,17 @@ const CustomerDisplay: React.FC = () => {
 
           <header className="text-center mb-4" style={{ color: headerColor }}>
             <h1 className="text-3xl font-extrabold">{store?.name || 'Cafe'}</h1>
-            <p className="text-lg opacity-70 mt-2">
-              {new Date().getHours() < 12 ? 'Good Morning!' : new Date().getHours() < 18 ? 'Good Afternoon!' : 'Good Evening!'}
-            </p>
+            {customer ? (
+              <div className="mt-2 flex items-center justify-center gap-2 animate-in slide-in-from-top-4 duration-500">
+                <div className="px-3 py-1 bg-emerald/20 rounded-full border border-emerald/30 flex items-center">
+                  <span className="text-emerald font-bold text-sm">Welcome back, {customer.name || customer.phoneNumber}!</span>
+                </div>
+              </div>
+            ) : (
+              <p className="text-lg opacity-70 mt-2">
+                {new Date().getHours() < 12 ? 'Good Morning!' : new Date().getHours() < 18 ? 'Good Afternoon!' : 'Good Evening!'}
+              </p>
+            )}
           </header>
 
           <main className={`flex-grow rounded-xl p-6 flex flex-col justify-between ${displayTheme === 'dark' ? 'bg-charcoal-dark/80 text-cream-light' : 'bg-cream-light/80 text-charcoal-dark'}`}>
@@ -413,8 +482,14 @@ const CustomerDisplay: React.FC = () => {
                       <p className="flex justify-between"><span>Tax ({store?.taxRate ? Math.round(store.taxRate * 100) : 0}%):</span> <span>${order.taxAmount.toFixed(2)}</span></p>
                     </div>
                     <div className="flex justify-between font-extrabold text-5xl pt-4 border-t-2" style={{ color: accentColor, borderColor: 'rgba(128,128,128,0.5)' }}>
-                      <span>Total:</span>
-                      <span>${order.finalAmount.toFixed(2)}</span>
+                      <div className="flex flex-col">
+                        <span>Total:</span>
+                        <span className="text-xl font-bold opacity-60 mt-[-4px]">សរុប (KHR):</span>
+                      </div>
+                      <div className="flex flex-col items-end">
+                        <span>${order.finalAmount.toFixed(2)}</span>
+                        <span className="text-2xl font-bold opacity-70">{khrAmount.toLocaleString()}៛</span>
+                      </div>
                     </div>
 
                     {/* QR Code / Status */}
@@ -470,12 +545,39 @@ const CustomerDisplay: React.FC = () => {
           <h1 className="text-5xl font-extrabold tracking-tight">
             {store?.name || 'Amble Specialty Cafe'}
           </h1>
+          {customer && (
+            <div className="mt-4 flex flex-col items-center gap-2 animate-in fade-in zoom-in duration-700">
+              <div className="flex items-center gap-3 px-6 py-2 bg-white/20 backdrop-blur-md rounded-full border border-white/30 shadow-lg">
+                <FaStar className="text-yellow-400" />
+                <span className="text-2xl font-bold" style={{ color: headerColor }}>Welcome back, {customer.name || 'Friend'}!</span>
+                <div className="h-6 w-px bg-white/30" />
+                <div className="flex items-center gap-2 text-emerald">
+                  <FaGift />
+                  <span className="text-xl font-black">{customer.currentStamps || 0} Stamps</span>
+                </div>
+              </div>
+            </div>
+          )}
         </header>
 
         <main className={`flex-grow shadow-2xl rounded-2xl p-8 flex flex-col justify-between ${contentBoxClasses}`}>
           {!order || !order.items || order.items.length === 0 ? (
-            <div className="flex-grow flex items-center justify-center">
+            <div className="flex-grow flex flex-col items-center justify-center gap-12">
               <p className="text-4xl text-center" style={{ color: bodyTextColor, opacity: 0.7 }}>{welcomeMessage}</p>
+              
+              {activePromoIdx.length > 0 && (
+                <div className="w-full max-w-2xl p-8 bg-emerald text-white rounded-3xl shadow-2xl animate-pulse-slow">
+                  <div className="flex items-center gap-6">
+                    <div className="p-4 bg-white/20 rounded-2xl">
+                      <FaGift size={48} />
+                    </div>
+                    <div>
+                      <h2 className="text-4xl font-black uppercase tracking-tight">{activePromoIdx[currentPromoIndex].name}</h2>
+                      <p className="text-2xl opacity-90 font-medium mt-1">{activePromoIdx[currentPromoIndex].description}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <>
@@ -513,8 +615,14 @@ const CustomerDisplay: React.FC = () => {
                       <p className="flex justify-between"><span>Tax ({store?.taxRate ? Math.round(store.taxRate * 100) : 0}%):</span> <span>${order.taxAmount.toFixed(2)}</span></p>
                     </div>
                     <div className="flex justify-between font-extrabold text-6xl mt-6 pt-6 border-t-2" style={{ color: accentColor, borderColor: 'rgba(128,128,128,0.5)' }}>
-                      <span>Total:</span>
-                      <span>${order.finalAmount.toFixed(2)}</span>
+                      <div className="flex flex-col">
+                        <span>Total:</span>
+                        <span className="text-2xl font-bold opacity-60 mt-[-4px]">សរុប (KHR):</span>
+                      </div>
+                      <div className="flex flex-col items-end">
+                        <span>${order.finalAmount.toFixed(2)}</span>
+                        <span className="text-4xl font-bold opacity-70 tracking-tight">{khrAmount.toLocaleString()}៛</span>
+                      </div>
                     </div>
                   </div>
 
