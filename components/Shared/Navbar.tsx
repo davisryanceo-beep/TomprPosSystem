@@ -3,7 +3,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useShop } from '../../contexts/ShopContext';
 import Button from './Button';
 import ThemeToggle from './ThemeToggle';
-import { FaSignOutAlt, FaCoffee, FaUserCircle, FaUserEdit, FaStore, FaClock, FaSignInAlt, FaBars, FaCalculator, FaChevronDown } from 'react-icons/fa';
+import { FaSignOutAlt, FaCoffee, FaUserCircle, FaUserEdit, FaStore, FaClock, FaSignInAlt, FaBars, FaCalculator, FaChevronDown, FaCheckCircle } from 'react-icons/fa';
 import UserProfileModal from './UserProfileModal';
 import PinEntryModal from './PinEntryModal';
 import { ROLES } from '../../constants';
@@ -42,6 +42,7 @@ const Navbar: React.FC = () => {
   const [pinError, setPinError] = useState<string | null>(null);
   const [clockAction, setClockAction] = useState<'in' | 'out' | null>(null);
   const [showDeclareCashModal, setShowDeclareCashModal] = useState(false);
+  const [forcedDeclareType, setForcedDeclareType] = useState<'OPEN' | 'CLOSE' | null>(null);
   const [showEndOfDayModal, setShowEndOfDayModal] = useState(false);
   const [showAccessibilitySettings, setShowAccessibilitySettings] = useState(false);
 
@@ -158,25 +159,62 @@ const Navbar: React.FC = () => {
                     <div className="absolute right-0 mt-2 w-64 bg-cream-light dark:bg-charcoal-dark rounded-xl shadow-2xl p-2 space-y-1 fade-in">
                       {isOperationalRole && !STAMP_ONLY && (
                         <>
-                          <div className="px-2 py-1 text-xs font-bold text-charcoal-light">Time Clock</div>
+                          <div className="px-2 py-1 text-xs font-bold text-charcoal-light uppercase tracking-widest mt-2">Time & Cash</div>
+                          
                           <button onClick={() => { handleClockInOut(); setIsMenuOpen(false); }} className={`w-full text-left flex items-center gap-3 p-2 rounded-lg hover:bg-cream dark:hover:bg-charcoal ${activeTimeLog ? 'text-terracotta' : 'text-emerald'}`}>
                             {activeTimeLog ? <FaSignOutAlt /> : <FaSignInAlt />}
-                            <span>{activeTimeLog ? "Clock Out" : "Clock In"}</span>
+                            <span className="font-bold">{activeTimeLog ? "Clock Out" : "Clock In"}</span>
                           </button>
-                          {activeTimeLog && (
-                            <div className="text-xs px-2 text-emerald-dark">Clocked in since: {new Date(activeTimeLog.clockInTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
-                          )}
+
                           {currentUser.role === ROLES.CASHIER && (
                             <>
-                              <button onClick={() => { setShowEndOfDayModal(true); setIsMenuOpen(false); }} disabled={!activeTimeLog} className="w-full text-left flex items-center gap-3 p-2 rounded-lg hover:bg-cream dark:hover:bg-charcoal disabled:opacity-50">
-                                <FaFileInvoiceDollar /><span>End of Day Report</span>
-                              </button>
-                              <button onClick={() => { setShowDeclareCashModal(true); setIsMenuOpen(false); }} disabled={!activeTimeLog} className="w-full text-left flex items-center gap-3 p-2 rounded-lg hover:bg-cream dark:hover:bg-charcoal disabled:opacity-50">
-                                <FaCalculator /><span>Declare Cash</span>
-                              </button>
+                              {(() => {
+                                const todayStr = new Date().toLocaleDateString('en-CA');
+                                const dailyLogs = (useShop().cashDrawerLogs || []).filter(l => 
+                                  l.cashierId === currentUser.id && l.shiftDate === todayStr
+                                );
+                                const hasOpened = dailyLogs.some(l => l.type === 'OPEN');
+                                const hasClosed = dailyLogs.some(l => l.type === 'CLOSE');
+
+                                if (!hasOpened) {
+                                  return (
+                                    <button 
+                                      onClick={() => { setForcedDeclareType('OPEN'); setShowDeclareCashModal(true); setIsMenuOpen(false); }} 
+                                      disabled={!activeTimeLog}
+                                      className="w-full text-left flex items-center gap-3 p-2 rounded-lg bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 disabled:opacity-50 transition-all font-bold mt-1"
+                                    >
+                                      <FaCalculator /><span>Open Cash Drawer</span>
+                                    </button>
+                                  );
+                                } else if (!hasClosed) {
+                                  return (
+                                    <>
+                                      <button 
+                                        onClick={() => { setShowEndOfDayModal(true); setIsMenuOpen(false); }} 
+                                        disabled={!activeTimeLog}
+                                        className="w-full text-left flex items-center gap-3 p-2 rounded-lg hover:bg-cream dark:hover:bg-charcoal disabled:opacity-50 text-xs text-charcoal-light font-bold"
+                                      >
+                                        <FaFileInvoiceDollar /><span>View Shift Summary</span>
+                                      </button>
+                                      <button 
+                                        onClick={() => { setForcedDeclareType('CLOSE'); setShowDeclareCashModal(true); setIsMenuOpen(false); }} 
+                                        disabled={!activeTimeLog}
+                                        className="w-full text-left flex items-center gap-3 p-2 rounded-lg bg-indigo-500/10 text-indigo-600 hover:bg-indigo-500/20 disabled:opacity-50 transition-all font-bold mt-1"
+                                      >
+                                        <FaCalculator /><span>Close Cash Drawer</span>
+                                      </button>
+                                    </>
+                                  );
+                                }
+                                return (
+                                  <div className="p-2 text-[10px] font-bold text-emerald bg-emerald/10 rounded-lg text-center mt-1">
+                                    <FaCheckCircle className="inline mr-1" /> Shift Completed & Reconciled
+                                  </div>
+                                );
+                              })()}
                             </>
                           )}
-                          <hr className="my-1 border-charcoal/10 dark:border-cream-light/10" />
+                          <hr className="my-2 border-charcoal/10 dark:border-cream-light/10" />
                         </>
                       )}
                       <div className="px-2 py-1 text-xs font-bold text-charcoal-light">Account</div>
@@ -228,7 +266,13 @@ const Navbar: React.FC = () => {
 
       {currentUser && (
         <>
-          <DeclareCashModal isOpen={showDeclareCashModal} onClose={() => setShowDeclareCashModal(false)} cashierId={currentUser.id} cashierName={currentUser.username} />
+          <DeclareCashModal 
+            isOpen={showDeclareCashModal} 
+            onClose={() => setShowDeclareCashModal(false)} 
+            cashierId={currentUser.id} 
+            cashierName={currentUser.username} 
+            forcedType={forcedDeclareType}
+          />
           {activeTimeLog && (
             <EndOfDayReportModal
               isOpen={showEndOfDayModal}

@@ -14,6 +14,7 @@ interface DeclareCashModalProps {
   onClose: () => void;
   cashierId: string;
   cashierName: string;
+  forcedType?: 'OPEN' | 'CLOSE' | null;
 }
 
 const KHR_DENOMINATIONS = [
@@ -27,12 +28,19 @@ const KHR_DENOMINATIONS = [
   ]}
 ];
 
-const DeclareCashModal: React.FC<DeclareCashModalProps> = ({ isOpen, onClose, cashierId, cashierName }) => {
+const DeclareCashModal: React.FC<DeclareCashModalProps> = ({ isOpen, onClose, cashierId, cashierName, forcedType }) => {
   const { addCashDrawerLog, getExpectedCash, cashDrawerLogs, orders, currentStoreId } = useShop();
   const [declarationType, setDeclarationType] = useState<'OPEN' | 'CLOSE' | null>(null);
   const [counts, setCounts] = useState<Record<string, string>>({});
   const [cashierNotes, setCashierNotes] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
+
+  // Sync forcedType to internal state when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setDeclarationType(forcedType || null);
+    }
+  }, [isOpen, forcedType]);
 
   // Use local date string (YYYY-MM-DD) for consistency with ShopContext fix
   const todayStr = useMemo(() => new Date().toLocaleDateString('en-CA'), []);
@@ -159,7 +167,9 @@ const DeclareCashModal: React.FC<DeclareCashModalProps> = ({ isOpen, onClose, ca
           )}
           <FaCalculator className="text-emerald" />
           <span>
-            {declarationType ? `${declarationType === 'OPEN' ? 'Morning' : 'Evening'} Declaration` : 'Cash Drawer Management'}
+            {declarationType ? (
+                declarationType === 'OPEN' ? 'Open Drawer (Starting Float)' : 'Close Drawer (End of Shift)'
+            ) : 'Cash Drawer Management'}
           </span>
         </div>
       }
@@ -298,6 +308,22 @@ const DeclareCashModal: React.FC<DeclareCashModalProps> = ({ isOpen, onClose, ca
                       </div>
                     )}
                   </div>
+                </div>
+
+                {/* Business Logic Tip */}
+                <div className="bg-emerald/5 dark:bg-emerald-900/10 p-4 rounded-xl border border-emerald/20">
+                   <p className="text-[10px] font-black text-emerald uppercase tracking-widest mb-2 flex items-center gap-2">
+                     <FaCalculator className="text-xs" /> Easy Understand Tip
+                   </p>
+                   {declarationType === 'OPEN' ? (
+                     <p className="text-[11px] leading-relaxed italic">
+                       "Count all cash you are starting with. This sets your <b>Starting Float</b>. The system will track your sales from this point onwards."
+                     </p>
+                   ) : (
+                     <p className="text-[11px] leading-relaxed italic">
+                       "Total Expected = your <b>Starting Float</b> ({formatCurrency(openingLog?.declaredAmount || 0)}) + <b>Current Cash Sales</b> ({formatCurrency(expectedAmount - (openingLog?.declaredAmount || 0))})."
+                     </p>
+                   )}
                 </div>
 
                 <div className="text-[10px] text-charcoal-light/60 mt-4 leading-relaxed italic">

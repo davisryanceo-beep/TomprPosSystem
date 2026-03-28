@@ -178,7 +178,7 @@ const AdminDashboard: React.FC = () => {
             <TabButton tabName="promotions" label="Promos" icon={<FaTags />} />
             <TabButton tabName="attendance" label="Attendance" icon={<FaClock />} />
             <TabButton tabName="leave" label="Leave" icon={<FaCalendarTimes />} />
-            <TabButton tabName="eod" label="EOD" icon={<FaCalculator />} />
+            <TabButton tabName="eod" label="Cash Drawer" icon={<FaMoneyBillWave />} />
             <TabButton tabName="display" label="Display" icon={<FaDesktop />} />
             <TabButton tabName="settings" label="Settings" icon={<FaCogs />} />
             <TabButton tabName="feedback" label="Feedback" icon={<FaStar />} />
