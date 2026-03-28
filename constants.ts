@@ -117,7 +117,7 @@ export const TABLE_NUMBERS: string[] = [
 export const TAX_RATE = 0.00; // Original value
 export const DEFAULT_CURRENCY = 'KHR';
 export const SECONDARY_CURRENCY = 'USD';
-export const USD_TO_KHR_RATE = 4100; // $1 = 4,100៛
+export const USD_TO_KHR_RATE = 4000; // $1 = 4,000៛
 export const EXCHANGE_RATE = USD_TO_KHR_RATE; // Alias for modal compatibility
 export const MAX_VARIANCE_WARNING = 1000; // 1000៛ threshold for Manager PIN
 export const LOW_STOCK_THRESHOLD = 10;
