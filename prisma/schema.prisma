@@ -41,8 +41,9 @@ model app_settings {
 model cash_drawer_logs {
   id             String  @id
   shiftDate      String?
-  declaredAmount Float   @db.Real
-  expectedAmount Float?  @db.Real
+  declaredAmount    Float   @db.Real
+  declaredAmountUSD Float?  @db.Real
+  expectedAmount    Float?  @db.Real
   discrepancy    Float?  @db.Real
   type           String  @default("CLOSE")
   notes          String?
@@ -337,6 +338,7 @@ model stores {
   time_logs                time_logs[]
   users                    users[]
   wastage_logs             wastage_logs[]
+  expenses                 expenses[]
 }
 
 model supply_items {

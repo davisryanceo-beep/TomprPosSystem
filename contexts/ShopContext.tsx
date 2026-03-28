@@ -147,7 +147,7 @@ interface ShopContextType {
   getOrdersByStatus: (status: OrderStatus) => Order[];
   getPaidOrders: () => Order[];
   getShiftOrders: (cashierId: string, since: Date) => Order[];
-  getExpectedCash: (cashierId: string, type?: 'OPEN' | 'CLOSE') => number;
+  getExpectedCash: (cashierId: string, type?: 'OPEN' | 'CLOSE' | 'DROP' | 'PAYOUT') => number;
 
   addUser: (userData: Omit<User, 'id'>, actingUser: User) => Promise<boolean>;
   updateUser: (updatedUser: User, actingUser: User) => Promise<boolean>;
@@ -155,6 +155,7 @@ interface ShopContextType {
   registerUser: (userData: Omit<User, 'id'>) => Promise<{ success: boolean; message: string; user?: User }>;
   getUserForAuth: (username: string) => User | undefined;
   verifyPinForAuth: (userId: string, pin: string) => User | undefined;
+  verifyManagerPin: (pin: string) => User | undefined;
   verifyCurrentUserPassword: (userId: string, passwordToCheck: string) => boolean;
 
   selectedCustomer: Customer | null;
@@ -214,7 +215,7 @@ interface ShopContextType {
   updateTimeLog: (updatedTimeLog: TimeLog) => void;
   deleteTimeLog: (timeLogId: string) => void;
 
-  addCashDrawerLog: (logData: Omit<CashDrawerLog, 'id' | 'expectedAmount' | 'discrepancy' | 'logTimestamp' | 'adminNotes' | 'storeId'>) => void;
+  addCashDrawerLog: (logData: Omit<CashDrawerLog, 'id' | 'expectedAmount' | 'discrepancy' | 'logTimestamp' | 'storeId'>) => Promise<CashDrawerLog | void>;
   updateCashDrawerLogAdminNotes: (logId: string, adminNotes: string) => void;
 
   // Announcement CRUD
@@ -670,6 +671,14 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const verifyPinForAuth = useCallback((userId: string, pin: string): User | undefined => {
     return usersDB.find(u => u.id === userId && u.pin === pin);
   }, [usersDB]);
+
+  const verifyManagerPin = useCallback((pin: string): User | undefined => {
+    return usersDB.find(u => 
+      u.pin === pin && 
+      (u.role === Role.ADMIN || u.role === Role.STORE_ADMIN) &&
+      (!currentStoreId || !u.storeId || u.storeId === currentStoreId)
+    );
+  }, [usersDB, currentStoreId]);
 
   const verifyCurrentUserPassword = useCallback((userId: string, passwordToCheck: string): boolean => {
     const user = usersDB.find(u => u.id === userId);
@@ -1776,7 +1785,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setTimeLogsState(prev => prev.filter(log => log.id !== timeLogId));
     } catch (e) { console.error("Failed to delete time log", e); }
   }, []);
-  const getExpectedCash = useCallback((cashierId: string, type: 'OPEN' | 'CLOSE' = 'CLOSE'): number => {
+  const getExpectedCash = useCallback((cashierId: string, type: 'OPEN' | 'CLOSE' | 'DROP' | 'PAYOUT' = 'CLOSE'): number => {
     if (!currentStoreId) return 0;
     
     if (type === 'OPEN') return 0;
@@ -1808,10 +1817,14 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     
     const openingBalance = openingLog ? openingLog.declaredAmount : 0;
 
-    return openingBalance + salesAmount;
+    const dropsAndPayouts = cashDrawerLogsState
+      .filter(l => l.cashierId === cashierId && (l.type === 'DROP' || l.type === 'PAYOUT') && l.shiftDate === todayStr)
+      .reduce((sum, log) => sum + log.declaredAmount, 0);
+
+    return openingBalance + salesAmount - dropsAndPayouts;
   }, [currentStoreId, ordersState, cashDrawerLogsState, getActiveTimeLogForUser, getShiftOrders]);
 
-  const addCashDrawerLog = useCallback(async (logData: Omit<CashDrawerLog, 'id' | 'expectedAmount' | 'discrepancy' | 'logTimestamp' | 'adminNotes' | 'storeId'>) => {
+  const addCashDrawerLog = useCallback(async (logData: Omit<CashDrawerLog, 'id' | 'expectedAmount' | 'discrepancy' | 'logTimestamp' | 'storeId'>): Promise<CashDrawerLog | undefined> => {
     if (!currentStoreId) return;
     
     const expectedAmount = getExpectedCash(logData.cashierId, logData.type);
@@ -1825,6 +1838,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       id: `cdl-${Date.now()}`,
       shiftDate: todayStr,
       declaredAmount: logData.declaredAmount,
+      declaredAmountUSD: logData.declaredAmountUSD,
       expectedAmount,
       discrepancy,
       type: logData.type,
@@ -1847,9 +1861,11 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         storeId: currentStoreId
       };
       setCashDrawerLogsState(prev => [...prev, frontendLog]);
+      return frontendLog;
     } catch (e: any) { 
       console.error("Failed to add cash drawer log", e);
       if (e.response?.data) console.error("Error Details:", e.response.data);
+      return undefined;
     }
   }, [currentStoreId, ordersState, getActiveTimeLogForUser, getShiftOrders]);
   const updateCashDrawerLogAdminNotes = useCallback(async (logId: string, adminNotes: string) => {
@@ -1990,7 +2006,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     leaveRequests: leaveRequestsState,
     addProduct, updateProduct, deleteProduct, getProductById, getProductsByCategory, addCategory, updateCategoryName, deleteCategory,
     addOrder, updateOrderStatus, updateOrder, deleteOrder, getOrdersByStatus, getPaidOrders, getShiftOrders,
-    addUser, updateUser, deleteUser, registerUser, getUserForAuth, verifyPinForAuth, verifyCurrentUserPassword,
+    addUser, updateUser, deleteUser, registerUser, getUserForAuth, verifyPinForAuth, verifyManagerPin, verifyCurrentUserPassword,
     currentOrder, createOrUpdateCurrentOrder, loadOrderAsCurrent, clearCurrentOrder: clearCurrentOrderLocal, saveOrderAsTab, finalizeCurrentOrder, updateCurrentOrder, setRushOrder, setTableNumberForCurrentOrder,
     selectedCustomer, setSelectedCustomer, lookupCustomer, registerCustomer, awardStamps,
     applyPromotionToCurrentOrder, removePromotionFromCurrentOrder, getActiveAndApplicablePromotions,

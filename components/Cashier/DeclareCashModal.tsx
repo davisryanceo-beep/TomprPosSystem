@@ -4,20 +4,26 @@ import Input from '../Shared/Input';
 import Button from '../Shared/Button';
 import Textarea from '../Shared/Textarea';
 import { useShop } from '../../contexts/ShopContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { 
-  FaMoneyBillWave, FaCoins, FaCalculator, FaHistory, 
-  FaExclamationTriangle, FaCheckCircle, FaSun, FaMoon, FaArrowLeft, FaStore
+  FaMoneyBillWave, FaCalculator, FaHistory, 
+  FaExclamationTriangle, FaCheckCircle, FaSun, FaMoon, FaArrowLeft, FaLevelDownAlt, FaHandHoldingUsd, FaLock
 } from 'react-icons/fa';
+import { EXCHANGE_RATE, MAX_VARIANCE_WARNING } from '../../constants';
+import { Role, CashDrawerLog } from '../../types';
+import { printShiftReceipt } from '../../services/pdfService';
 
 interface DeclareCashModalProps {
   isOpen: boolean;
   onClose: () => void;
   cashierId: string;
   cashierName: string;
+  forcedType?: 'OPEN' | 'CLOSE' | 'DROP' | 'PAYOUT' | null;
 }
 
 const KHR_DENOMINATIONS = [
   { label: 'Bills', items: [
+    { label: '100,000៛', value: 100000 },
     { label: '50,000៛', value: 50000 },
     { label: '10,000៛', value: 10000 },
     { label: '5,000៛', value: 5000 },
@@ -27,121 +33,246 @@ const KHR_DENOMINATIONS = [
   ]}
 ];
 
-const DeclareCashModal: React.FC<DeclareCashModalProps> = ({ isOpen, onClose, cashierId, cashierName }) => {
-  const { addCashDrawerLog, getExpectedCash, cashDrawerLogs, orders, currentStoreId } = useShop();
-  const [declarationType, setDeclarationType] = useState<'OPEN' | 'CLOSE' | null>(null);
-  const [counts, setCounts] = useState<Record<string, string>>({});
+const USD_DENOMINATIONS = [
+  { label: 'Bills', items: [
+    { label: '$100', value: 100 },
+    { label: '$50', value: 50 },
+    { label: '$20', value: 20 },
+    { label: '$10', value: 10 },
+    { label: '$5', value: 5 },
+    { label: '$1', value: 1 },
+  ]}
+];
+
+const DeclareCashModal: React.FC<DeclareCashModalProps> = ({ isOpen, onClose, cashierId, cashierName, forcedType }) => {
+  const { addCashDrawerLog, getExpectedCash, verifyManagerPin } = useShop();
+  const { currentUser } = useAuth();
+  
+  const [declarationType, setDeclarationType] = useState<'OPEN' | 'CLOSE' | 'DROP' | 'PAYOUT' | null>(null);
+  
+  const [currencyTab, setCurrencyTab] = useState<'KHR' | 'USD'>('KHR');
+  const [countsKHR, setCountsKHR] = useState<Record<string, string>>({});
+  const [countsUSD, setCountsUSD] = useState<Record<string, string>>({});
+  
   const [cashierNotes, setCashierNotes] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
 
-  // Use local date string (YYYY-MM-DD) for consistency with ShopContext fix
-  const todayStr = useMemo(() => new Date().toLocaleDateString('en-CA'), []);
+  // Manager PIN State
+  const [showManagerPin, setShowManagerPin] = useState(false);
+  const [managerPin, setManagerPin] = useState('');
+  const [managerPinError, setManagerPinError] = useState<string | null>(null);
+  const [isVerifyingPin, setIsVerifyingPin] = useState(false);
 
-  // Find the opening log for today if it exists
-  const openingLog = useMemo(() => {
-    return [...cashDrawerLogs]
-      .reverse()
-      .find(l => l.cashierId === cashierId && l.type === 'OPEN' && l.shiftDate === todayStr);
-  }, [cashDrawerLogs, cashierId, todayStr]);
-
-  // Store-wide cash sales for the day (all cashiers)
-  const storeTotalCashSales = useMemo(() => {
-    return orders
-      .filter(o => 
-        o.storeId === currentStoreId && 
-        (o.status === 'Paid' || o.status === 'Completed') && 
-        o.paymentMethod === 'Cash' &&
-        new Date(o.timestamp).toLocaleDateString('en-CA') === todayStr
-      )
-      .reduce((sum, order) => sum + (order.finalAmount || 0), 0);
-  }, [orders, currentStoreId, todayStr]);
+  useEffect(() => {
+    if (isOpen) {
+      setDeclarationType(forcedType || null);
+    }
+  }, [isOpen, forcedType]);
 
   const expectedAmount = useMemo(() => {
     if (!declarationType) return 0;
     return getExpectedCash(cashierId, declarationType);
   }, [cashierId, isOpen, getExpectedCash, declarationType]);
 
-  const totalDeclared = useMemo(() => {
-    return Object.entries(counts).reduce((sum, [valStr, countStr]) => {
-      const val = parseFloat(valStr);
-      const count = parseInt(countStr) || 0;
-      return sum + (val * count);
+  const totalDeclaredKHR = useMemo(() => {
+    return Object.entries(countsKHR).reduce((sum, [valStr, countStr]) => {
+      return sum + (parseFloat(valStr) * (parseInt(countStr) || 0));
     }, 0);
-  }, [counts]);
+  }, [countsKHR]);
 
-  const discrepancy = totalDeclared - expectedAmount;
+  const totalDeclaredUSDAsUSD = useMemo(() => {
+    return Object.entries(countsUSD).reduce((sum, [valStr, countStr]) => {
+      return sum + (parseFloat(valStr) * (parseInt(countStr) || 0));
+    }, 0);
+  }, [countsUSD]);
 
-  const handleCountChange = (val: number, count: string) => {
-    setCounts(prev => ({
-      ...prev,
-      [val.toString()]: count
-    }));
+  const totalDeclaredUSDInKHR = totalDeclaredUSDAsUSD * EXCHANGE_RATE;
+  const totalDeclaredCombined = totalDeclaredKHR + totalDeclaredUSDInKHR;
+
+  const discrepancy = totalDeclaredCombined - expectedAmount;
+
+  const handleCountChange = (val: number, count: string, currency: 'KHR' | 'USD') => {
+    if (currency === 'KHR') {
+      setCountsKHR(prev => ({ ...prev, [val.toString()]: count }));
+    } else {
+      setCountsUSD(prev => ({ ...prev, [val.toString()]: count }));
+    }
   };
 
-  const handleSubmit = () => {
+  const handleInitialSubmit = () => {
     if (!declarationType) return;
-    if (totalDeclared < 0) {
+    if (totalDeclaredCombined < 0) {
       setError('Declared amount cannot be negative.');
       return;
     }
     setError(null);
 
-    addCashDrawerLog({
+    // Blind closeout verification
+    if (declarationType === 'CLOSE') {
+      if (Math.abs(discrepancy) > MAX_VARIANCE_WARNING) {
+        setShowManagerPin(true);
+        return;
+      }
+    }
+
+    finalizeSubmission();
+  };
+
+  const finalizeSubmission = async () => {
+    if (!declarationType) return;
+    
+    let adminNotesToSave = '';
+    if (showManagerPin) {
+      adminNotesToSave = `Manager Approved Variance. Expected: ${expectedAmount}៛, Declared: ${totalDeclaredCombined}៛, Discrepancy: ${discrepancy}៛`;
+    }
+
+    const logToSave: Omit<CashDrawerLog, 'id' | 'expectedAmount' | 'discrepancy' | 'logTimestamp' | 'storeId'> = {
       cashierId,
       cashierName,
-      shiftDate: todayStr,
-      declaredAmount: totalDeclared,
+      shiftDate: new Date().toLocaleDateString('en-CA'),
+      declaredAmount: totalDeclaredCombined,
+      declaredAmountUSD: totalDeclaredUSDAsUSD > 0 ? totalDeclaredUSDAsUSD : undefined,
       type: declarationType,
       cashierNotes: cashierNotes.trim() || undefined,
-    });
+      adminNotes: adminNotesToSave || undefined,
+    };
+
+    const savedLog = await addCashDrawerLog(logToSave);
+    
+    // Automation: Print receipt after submission
+    if (savedLog) {
+      printShiftReceipt(savedLog);
+    }
 
     handleModalClose();
   };
 
+  const handleManagerPinSubmit = async () => {
+    if (!managerPin) return;
+    setIsVerifyingPin(true);
+    setManagerPinError(null);
+
+    // Verify if pin belongs to a manager
+    const manager = await verifyManagerPin(managerPin);
+    
+    if (manager && (manager.role === Role.ADMIN || manager.role === Role.STORE_ADMIN)) {
+      finalizeSubmission();
+    } else {
+      setManagerPinError('Invalid Manager PIN. Only Admins can approve large variances.');
+    }
+    setIsVerifyingPin(false);
+  };
+
   const handleModalClose = () => {
-    setCounts({});
+    setCountsKHR({});
+    setCountsUSD({});
     setCashierNotes('');
     setDeclarationType(null);
     setError(null);
+    setShowManagerPin(false);
+    setManagerPin('');
     onClose();
   };
 
-  const formatCurrency = (val: number) => {
-    return val.toLocaleString() + '៛';
+  const formatCurrency = (val: number, currency: 'KHR' | 'USD' = 'KHR') => {
+    return currency === 'KHR' ? val.toLocaleString() + '៛' : '$' + val.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
   };
 
   const renderTypeSelection = () => (
     <div className="py-10 flex flex-col items-center justify-center space-y-8 animate-fade-in">
       <div className="text-center space-y-2">
-        <h2 className="text-2xl font-black text-charcoal-dark dark:text-cream-light">Choose Declaration Phase</h2>
-        <p className="text-charcoal-light font-bold">Are you starting your shift or closing for the day?</p>
+        <h2 className="text-2xl font-black text-charcoal-dark dark:text-cream-light">Choose Declaration Action</h2>
+        <p className="text-charcoal-light font-bold">Select the type of cash log.</p>
       </div>
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-lg px-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-xl px-4">
         <button
           onClick={() => setDeclarationType('OPEN')}
-          className="group flex flex-col items-center justify-center p-8 bg-amber-50 dark:bg-amber-900/10 border-2 border-amber-200 dark:border-amber-900/30 rounded-2xl hover:border-amber-500 transition-all hover:scale-[1.02] shadow-sm hover:shadow-xl"
+          className="group flex flex-col items-center justify-center p-6 bg-amber-50 dark:bg-amber-900/10 border-2 border-amber-200 dark:border-amber-900/30 rounded-2xl hover:border-amber-500 transition-all hover:scale-[1.02]"
         >
-          <div className="w-16 h-16 bg-amber-500/10 rounded-full flex items-center justify-center mb-4 group-hover:bg-amber-500/20 transition-colors">
-            <FaSun className="text-3xl text-amber-500" />
+          <div className="w-12 h-12 bg-amber-500/10 rounded-full flex items-center justify-center mb-2 group-hover:bg-amber-500/20 transition-colors">
+            <FaSun className="text-2xl text-amber-500" />
           </div>
-          <span className="text-xl font-black text-amber-600">Open Drawer</span>
-          <span className="text-xs font-bold text-amber-700/60 mt-2 uppercase tracking-widest leading-tight">Start of Shift</span>
+          <span className="text-lg font-black text-amber-600">Open Drawer</span>
+          <span className="text-[10px] font-bold text-amber-700/60 uppercase tracking-widest mt-1">Starting Float</span>
         </button>
 
         <button
           onClick={() => setDeclarationType('CLOSE')}
-          className="group flex flex-col items-center justify-center p-8 bg-indigo-50 dark:bg-indigo-900/10 border-2 border-indigo-200 dark:border-indigo-900/30 rounded-2xl hover:border-indigo-500 transition-all hover:scale-[1.02] shadow-sm hover:shadow-xl"
+          className="group flex flex-col items-center justify-center p-6 bg-indigo-50 dark:bg-indigo-900/10 border-2 border-indigo-200 dark:border-indigo-900/30 rounded-2xl hover:border-indigo-500 transition-all hover:scale-[1.02]"
         >
-          <div className="w-16 h-16 bg-indigo-500/10 rounded-full flex items-center justify-center mb-4 group-hover:bg-indigo-500/20 transition-colors">
-            <FaMoon className="text-3xl text-indigo-500" />
+          <div className="w-12 h-12 bg-indigo-500/10 rounded-full flex items-center justify-center mb-2 group-hover:bg-indigo-500/20 transition-colors">
+            <FaMoon className="text-2xl text-indigo-500" />
           </div>
-          <span className="text-xl font-black text-indigo-600">Close Drawer</span>
-          <span className="text-xs font-bold text-indigo-700/60 mt-2 uppercase tracking-widest leading-tight">End of Day</span>
+          <span className="text-lg font-black text-indigo-600">Close Drawer</span>
+          <span className="text-[10px] font-bold text-indigo-700/60 uppercase tracking-widest mt-1">End of Shift (Blind)</span>
+        </button>
+
+        <button
+          onClick={() => setDeclarationType('DROP')}
+          className="group flex flex-col items-center justify-center p-6 bg-emerald/5 dark:bg-emerald-900/10 border-2 border-emerald/20 dark:border-emerald-900/30 rounded-2xl hover:border-emerald transition-all hover:scale-[1.02]"
+        >
+          <div className="w-12 h-12 bg-emerald/10 rounded-full flex items-center justify-center mb-2 group-hover:bg-emerald/20 transition-colors">
+            <FaLevelDownAlt className="text-2xl text-emerald" />
+          </div>
+          <span className="text-lg font-black text-emerald text-center">Cash Drop</span>
+          <span className="text-[10px] font-bold text-emerald/60 uppercase tracking-widest mt-1 text-center">Deposit to Safe</span>
+        </button>
+
+        <button
+          onClick={() => setDeclarationType('PAYOUT')}
+          className="group flex flex-col items-center justify-center p-6 bg-terracotta/5 dark:bg-terracotta-900/10 border-2 border-terracotta/20 dark:border-terracotta-900/30 rounded-2xl hover:border-terracotta transition-all hover:scale-[1.02]"
+        >
+          <div className="w-12 h-12 bg-terracotta/10 rounded-full flex items-center justify-center mb-2 group-hover:bg-terracotta/20 transition-colors">
+            <FaHandHoldingUsd className="text-2xl text-terracotta" />
+          </div>
+          <span className="text-lg font-black text-terracotta">Payout</span>
+          <span className="text-[10px] font-bold text-terracotta/60 uppercase tracking-widest mt-1 text-center">Vendor/Expense payment</span>
         </button>
       </div>
     </div>
   );
+
+  const getTitlePhrase = () => {
+    switch(declarationType) {
+      case 'OPEN': return 'Open Drawer (Starting Float)';
+      case 'CLOSE': return 'Close Drawer (Blind Closeout)';
+      case 'DROP': return 'Mid-Shift Cash Drop';
+      case 'PAYOUT': return 'Register Payout';
+      default: return 'Cash Drawer Management';
+    }
+  };
+
+  if (showManagerPin) {
+    return (
+      <Modal isOpen={isOpen} onClose={handleModalClose} title="Manager Authorization Required" size="sm">
+        <div className="p-4 space-y-4">
+          <div className="bg-terracotta/10 p-3 rounded-lg border border-terracotta/20 text-terracotta font-bold text-center text-sm">
+            <FaLock className="inline mr-2" />
+            Large Variance Detected!
+            <p className="mt-1 text-xs opacity-80">A manager must authorize this drawer closeout.</p>
+          </div>
+          
+          <Input 
+            label="Manager PIN" 
+            type="password" 
+            value={managerPin} 
+            onChange={e => setManagerPin(e.target.value)} 
+            placeholder="****"
+            error={managerPinError || undefined}
+            autoFocus
+          />
+
+          <div className="flex gap-2">
+            <Button variant="ghost" onClick={() => setShowManagerPin(false)} className="flex-1">Back</Button>
+            <Button variant="primary" onClick={handleManagerPinSubmit} disabled={isVerifyingPin} className="flex-1 bg-terracotta hover:bg-terracotta/90 border-transparent">Authorize</Button>
+          </div>
+        </div>
+      </Modal>
+    );
+  }
+
+  const isBlind = declarationType === 'CLOSE' || declarationType === 'DROP';
 
   return (
     <Modal
@@ -149,35 +280,33 @@ const DeclareCashModal: React.FC<DeclareCashModalProps> = ({ isOpen, onClose, ca
       onClose={handleModalClose}
       title={
         <div className="flex items-center gap-3">
-          {declarationType && (
+          {declarationType && !forcedType && (
             <button 
-              onClick={() => { setDeclarationType(null); setCounts({}); }}
+              onClick={() => { setDeclarationType(null); setCountsKHR({}); setCountsUSD({}); }}
               className="p-1.5 hover:bg-charcoal/5 dark:hover:bg-cream/10 rounded-lg transition-colors"
             >
               <FaArrowLeft className="text-sm" />
             </button>
           )}
           <FaCalculator className="text-emerald" />
-          <span>
-            {declarationType ? `${declarationType === 'OPEN' ? 'Morning' : 'Evening'} Declaration` : 'Cash Drawer Management'}
-          </span>
+          <span>{getTitlePhrase()}</span>
         </div>
       }
       size={declarationType ? "xl" : "lg"}
       footer={declarationType ? (
         <div className="flex justify-between items-center w-full">
-           <div className="text-left">
-              <p className="text-xs font-bold text-charcoal-light uppercase tracking-tighter">Shift Summary</p>
-              <p className="text-lg font-black text-charcoal-dark dark:text-cream-light leading-none">
-                Counted: <span className="text-emerald">{formatCurrency(totalDeclared)}</span>
-              </p>
+           <div className="text-left flex gap-4">
+              <div>
+                <p className="text-[10px] font-bold text-charcoal-light uppercase tracking-tighter">Counted</p>
+                <p className="text-lg font-black text-charcoal-dark dark:text-cream-light leading-none">
+                  <span className="text-emerald">{formatCurrency(totalDeclaredCombined)}</span>
+                </p>
+              </div>
            </div>
            <div className="flex space-x-2">
-            <Button variant="ghost" onClick={handleModalClose}>
-              Cancel
-            </Button>
-            <Button onClick={handleSubmit} variant="primary" className="shadow-lg shadow-emerald/20">
-              Confirm & Submit
+            <Button variant="ghost" onClick={handleModalClose}>Cancel</Button>
+            <Button onClick={handleInitialSubmit} variant="primary" className="shadow-lg shadow-emerald/20">
+              {isBlind ? 'Submit Blind Count' : 'Confirm & Submit'}
             </Button>
           </div>
         </div>
@@ -187,25 +316,60 @@ const DeclareCashModal: React.FC<DeclareCashModalProps> = ({ isOpen, onClose, ca
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-in">
           {/* Denomination Counting Section */}
           <div className="lg:col-span-2 space-y-4">
-            {KHR_DENOMINATIONS.map((group) => (
+            
+            <div className="flex gap-2 p-1 bg-charcoal/5 dark:bg-white/5 rounded-lg w-full">
+              <button 
+                className={`flex-1 py-2 font-black text-sm rounded-md transition-all ${currencyTab === 'KHR' ? 'bg-white dark:bg-charcoal shadow text-emerald' : 'text-charcoal-light hover:text-charcoal dark:hover:text-cream'}`}
+                onClick={() => setCurrencyTab('KHR')}
+              >
+                KHR (៛)
+              </button>
+              <button 
+                className={`flex-1 py-2 font-black text-sm rounded-md transition-all ${currencyTab === 'USD' ? 'bg-white dark:bg-charcoal shadow text-emerald' : 'text-charcoal-light hover:text-charcoal dark:hover:text-cream'}`}
+                onClick={() => setCurrencyTab('USD')}
+              >
+                USD ($)
+              </button>
+            </div>
+
+            {currencyTab === 'KHR' && KHR_DENOMINATIONS.map((group) => (
               <div key={group.label} className="bg-cream/50 dark:bg-charcoal-dark/30 p-4 rounded-xl border border-charcoal/5 dark:border-cream/5">
-                <h3 className="text-sm font-black text-charcoal-light uppercase mb-3 flex items-center gap-2">
-                  <FaMoneyBillWave className="text-emerald" />
-                  Count {group.label}
-                </h3>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                   {group.items.map((denom) => (
                     <div key={denom.label} className="flex flex-col gap-1">
                       <label className="text-xs font-bold text-charcoal-light flex justify-between px-1">
                         <span>{denom.label}</span>
-                        <span className="text-emerald/70">{formatCurrency(((parseFloat(counts[denom.value.toString()] || '0') || 0) * denom.value))}</span>
+                        <span className="text-emerald/70">{formatCurrency(((parseFloat(countsKHR[denom.value.toString()] || '0') || 0) * denom.value))}</span>
                       </label>
                       <input
                         type="number"
                         min="0"
                         className="w-full p-2 bg-white dark:bg-charcoal text-center font-black rounded-lg border border-charcoal/10 dark:border-cream/10 focus:ring-2 focus:ring-emerald outline-none transition-all"
-                        value={counts[denom.value.toString()] || ''}
-                        onChange={(e) => handleCountChange(denom.value, e.target.value)}
+                        value={countsKHR[denom.value.toString()] || ''}
+                        onChange={(e) => handleCountChange(denom.value, e.target.value, 'KHR')}
+                        placeholder="0"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+
+            {currencyTab === 'USD' && USD_DENOMINATIONS.map((group) => (
+              <div key={group.label} className="bg-cream/50 dark:bg-charcoal-dark/30 p-4 rounded-xl border border-charcoal/5 dark:border-cream/5">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                  {group.items.map((denom) => (
+                    <div key={denom.label} className="flex flex-col gap-1">
+                      <label className="text-xs font-bold text-charcoal-light flex justify-between px-1">
+                        <span>{denom.label}</span>
+                        <span className="text-emerald/70">{formatCurrency(((parseFloat(countsUSD[denom.value.toString()] || '0') || 0) * denom.value), 'USD')}</span>
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        className="w-full p-2 bg-white dark:bg-charcoal text-center font-black rounded-lg border border-charcoal/10 dark:border-cream/10 focus:ring-2 focus:ring-emerald outline-none transition-all"
+                        value={countsUSD[denom.value.toString()] || ''}
+                        onChange={(e) => handleCountChange(denom.value, e.target.value, 'USD')}
                         placeholder="0"
                       />
                     </div>
@@ -217,94 +381,74 @@ const DeclareCashModal: React.FC<DeclareCashModalProps> = ({ isOpen, onClose, ca
             <div className="pt-2">
                <Textarea
                 id="cashierNotes"
-                label="Declaration Notes"
+                label="Notes & Reason"
                 rows={2}
                 value={cashierNotes}
                 onChange={(e) => setCashierNotes(e.target.value)}
-                placeholder="Explain any large discrepancies or adjustments..."
+                placeholder={declarationType === 'PAYOUT' ? "Reason for payout (e.g. Ice delivery)..." : "Any observations or notes..."}
               />
             </div>
           </div>
 
-          {/* Business Logic Summary Section */}
           <div className="space-y-4">
             <div className="bg-white dark:bg-charcoal border border-charcoal/5 dark:border-cream/5 rounded-xl p-5 shadow-inner">
               <h3 className="text-sm font-black text-charcoal-light uppercase mb-4 flex items-center gap-2">
                 <FaHistory className="text-emerald" /> 
-                {declarationType === 'CLOSE' ? 'Shift Recapitulation' : 'Opening Summary'}
+                {isBlind ? 'Blind Audit Active' : 'Operation Summary'}
               </h3>
               
               <div className="space-y-4">
-                {declarationType === 'CLOSE' ? (
-                  <div className="bg-cream/30 dark:bg-charcoal-dark/50 p-4 rounded-xl border border-emerald/10 space-y-3">
-                    <div className="flex justify-between items-center text-xs">
-                      <span className="flex items-center gap-1.5 text-charcoal-light font-bold">
-                        <FaSun className="text-amber-500" /> Opening Balance:
-                      </span>
-                      <span className="font-black text-charcoal-dark dark:text-cream-light">{formatCurrency(openingLog?.declaredAmount || 0)}</span>
-                    </div>
-                    <div className="flex justify-between items-center text-xs">
-                      <span className="flex items-center gap-1.5 text-charcoal-light font-bold">
-                        <FaMoneyBillWave className="text-emerald" /> Your Cash Sales:
-                      </span>
-                      <span className="font-black text-charcoal-dark dark:text-cream-light">{formatCurrency(expectedAmount - (openingLog?.declaredAmount || 0))}</span>
-                    </div>
-                    <div className="pt-2 border-t border-charcoal/10 dark:border-cream/10 flex justify-between items-center">
-                      <span className="text-charcoal-dark dark:text-cream-light text-xs font-black uppercase">🛒 Total Expected:</span>
-                      <span className="font-black text-lg text-charcoal-dark dark:text-cream-light">{formatCurrency(expectedAmount)}</span>
+                {isBlind ? (
+                  <div className="bg-charcoal-dark text-white p-4 rounded-xl flex items-center gap-3">
+                    <FaLock className="text-3xl text-emerald" />
+                    <div>
+                      <p className="text-sm font-black">Secure Closeout</p>
+                      <p className="text-xs opacity-70">System totals are hidden to ensure unbiased cash auditing.</p>
                     </div>
                   </div>
                 ) : (
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-charcoal-light font-bold">Opening Target:</span>
-                    <span className="font-black text-charcoal-dark dark:text-cream-light">{formatCurrency(0)}</span>
+                  <div className="bg-cream/30 dark:bg-charcoal-dark/50 p-4 rounded-xl border border-emerald/10 space-y-3">
+                    <div className="pt-2 border-t border-charcoal/10 dark:border-cream/10 flex justify-between items-center">
+                      <span className="text-charcoal-dark dark:text-cream-light text-[10px] font-black uppercase">Operation Target:</span>
+                      <span className="font-black text-lg text-charcoal-dark dark:text-cream-light">{formatCurrency(expectedAmount > 0 ? expectedAmount : 0)}</span>
+                    </div>
                   </div>
                 )}
 
-                {/* Additional context for Store-wide sales - help user verify */}
                 <div className="bg-charcoal/5 dark:bg-white/5 p-3 rounded-lg border border-charcoal/5 space-y-2">
                   <div className="flex justify-between items-center text-[10px]">
-                    <span className="flex items-center gap-1 text-charcoal-light/70 font-bold">
-                      <FaStore className="text-charcoal-light/50" /> STORE TOTAL CASH TODAY:
-                    </span>
-                    <span className="font-black text-charcoal-dark/60 dark:text-cream-light/60">{formatCurrency(storeTotalCashSales)}</span>
+                    <span className="font-bold text-charcoal-light/70 uppercase">Combined Value:</span>
+                    <span className="font-black text-emerald text-lg">{formatCurrency(totalDeclaredCombined)}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-[10px]">
+                    <span className="text-charcoal-light/70">KHR Count</span>
+                    <span className="font-bold text-charcoal-dark/70 dark:text-cream-light/70">{formatCurrency(totalDeclaredKHR)}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-[10px]">
+                    <span className="text-charcoal-light/70">USD Equivalent ({formatCurrency(EXCHANGE_RATE)}/$)</span>
+                    <span className="font-bold text-charcoal-dark/70 dark:text-cream-light/70">{formatCurrency(totalDeclaredUSDInKHR)}</span>
                   </div>
                 </div>
 
-                <div className="flex justify-between items-center text-sm pt-2">
-                  <span className="text-charcoal-light font-bold">Total Counted:</span>
-                  <span className="font-black text-emerald text-lg">{formatCurrency(totalDeclared)}</span>
-                </div>
-                
-                <div className="pt-2">
-                  <div className={`p-4 rounded-xl flex flex-col items-center justify-center text-center shadow-sm border ${
-                    Math.abs(discrepancy) < 1 ? 'bg-emerald/10 text-emerald border-emerald/20' : 
-                    discrepancy > 0 ? 'bg-amber-500/10 text-amber-600 border-amber-500/20' : 'bg-terracotta/10 text-terracotta border-terracotta/20'
-                  }`}>
-                    <p className="text-[10px] font-black uppercase tracking-widest mb-1">
-                      {declarationType === 'OPEN' ? 'Initial Deviation' : 'Final Variance'}
-                    </p>
-                    <div className="text-2xl font-black flex items-center gap-2">
-                      {Math.abs(discrepancy) < 1 ? (
-                        <><FaCheckCircle /> Balanced</>
-                      ) : (
-                        <>{formatCurrency(Math.abs(discrepancy))} {discrepancy > 0 ? 'Over' : 'Short'}</>
-                      )}
-                    </div>
-                    {Math.abs(discrepancy) >= 1 && (
-                      <div className="mt-2 flex items-center gap-1 text-[10px] font-bold">
-                        <FaExclamationTriangle /> 
-                        {declarationType === 'OPEN' ? 'Starting amount differs' : (discrepancy > 0 ? 'Surplus cash detected' : 'Missing cash from drawer')}
+                {!isBlind && (
+                  <div className="pt-2">
+                    <div className={`p-4 rounded-xl flex flex-col items-center justify-center text-center shadow-sm border ${
+                      Math.abs(discrepancy) < 1 ? 'bg-emerald/10 text-emerald border-emerald/20' : 
+                      discrepancy > 0 ? 'bg-amber-500/10 text-amber-600 border-amber-500/20' : 'bg-terracotta/10 text-terracotta border-terracotta/20'
+                    }`}>
+                      <p className="text-[10px] font-black uppercase tracking-widest mb-1">
+                        Current Variance
+                      </p>
+                      <div className="text-2xl font-black flex items-center gap-2">
+                        {Math.abs(discrepancy) < 1 ? (
+                          <><FaCheckCircle /> Balanced</>
+                        ) : (
+                          <>{formatCurrency(Math.abs(discrepancy))} {discrepancy > 0 ? 'Over' : 'Short'}</>
+                        )}
                       </div>
-                    )}
+                    </div>
                   </div>
-                </div>
-
-                <div className="text-[10px] text-charcoal-light/60 mt-4 leading-relaxed italic">
-                  {declarationType === 'CLOSE' 
-                    ? `* Calculation: Opening Cash (${formatCurrency(openingLog?.declaredAmount || 0)}) + Your recorded sales.`
-                    : "* Establish your starting balance to begin shift tracking."}
-                </div>
+                )}
               </div>
             </div>
             

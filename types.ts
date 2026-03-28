@@ -324,9 +324,10 @@ export interface CashDrawerLog {
   cashierName: string;
   shiftDate: string;
   declaredAmount: number;
+  declaredAmountUSD?: number;
   expectedAmount: number;
   discrepancy: number;
-  type: 'OPEN' | 'CLOSE';
+  type: 'OPEN' | 'CLOSE' | 'DROP' | 'PAYOUT';
   cashierNotes?: string;
   adminNotes?: string;
   logTimestamp: string;

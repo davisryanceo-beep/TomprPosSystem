@@ -114,7 +114,11 @@ export const TABLE_NUMBERS: string[] = [
   'Patio 1', 'Patio 2', 'Patio 3', 'Patio 4', 'Custom Name'
 ];
 
-export const TAX_RATE = 0.00;
+export const TAX_RATE = 0.00; // Original value
+export const DEFAULT_CURRENCY = 'KHR';
+export const SECONDARY_CURRENCY = 'USD';
+export const USD_TO_KHR_RATE = 4100; // $1 = 4,100៛
+export const EXCHANGE_RATE = USD_TO_KHR_RATE; // Alias for modal compatibility
+export const MAX_VARIANCE_WARNING = 1000; // 1000៛ threshold for Manager PIN
 export const LOW_STOCK_THRESHOLD = 10;
 export const LOW_SUPPLY_THRESHOLD = 20;
-export const USD_TO_KHR_RATE = 4000;
