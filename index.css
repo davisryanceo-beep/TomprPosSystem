@@ -66,35 +66,75 @@
   0% { transform: translateY(0) rotate(0); opacity: 1; }
   100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
 }
-
-.animate-confetti {
-  animation: confetti linear infinite;
-}
+.animate-confetti { animation: confetti linear infinite; }
 
 @keyframes slideInTop {
-  from { transform: translateY(-20px); opacity: 0; }
+  from { transform: translateY(-30px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 }
+.animate-slide-in-top { animation: slideInTop 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 
-.animate-slide-in-top {
-  animation: slideInTop 0.5s ease-out forwards;
+@keyframes slideInRight {
+  from { transform: translateX(40px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
 }
+.animate-slide-in-right { animation: slideInRight 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 
 @keyframes kenBurns {
   0% { transform: scale(1); }
-  100% { transform: scale(1.1); }
+  100% { transform: scale(1.15); }
+}
+.animate-ken-burns { animation: kenBurns 8s ease-out forwards; }
+
+/* Blob Animation for Aurora Background */
+@keyframes blob {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(40px, -60px) scale(1.2); }
+  66% { transform: translate(-30px, 30px) scale(0.8); }
+}
+.animate-blob { animation: blob 10s infinite alternate cubic-bezier(0.45, 0, 0.55, 1); }
+
+@keyframes tilt {
+  0%, 100% { transform: rotate3d(0); }
+  25% { transform: rotate3d(0.5, 1, 0, 2deg); }
+  75% { transform: rotate3d(-0.5, -1, 0, 2deg); }
+}
+.animate-tilt { animation: tilt 8s infinite alternate ease-in-out; }
+
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(16, 185, 129, 0.2); }
+  50% { box-shadow: 0 0 40px rgba(16, 185, 129, 0.5); }
+}
+.animate-glow { animation: glow 4s infinite ease-in-out; }
+
+/* Utility Classes */
+.glass-morphism {
+  @apply backdrop-blur-xl border border-white/20 shadow-2xl;
+  background: rgba(255, 255, 255, 0.05);
 }
 
-.animate-ken-burns {
-  animation: kenBurns 5s ease-out forwards;
+.dark .glass-morphism {
+  background: rgba(15, 23, 42, 0.3);
 }
 
-/* Smooth entry for list items */
-.animate-slide-in {
-  animation: slideInRight 0.4s ease-out forwards;
+.text-glow {
+  text-shadow: 0 0 15px currentColor;
 }
 
-@keyframes slideInRight {
-  from { transform: translateX(20px); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
 }
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(16, 185, 129, 0.3);
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(16, 185, 129, 0.5);
+}
+
+.animation-delay-2000 { animation-delay: 2s; }
+.animation-delay-4000 { animation-delay: 4s; }
+.animate-pulse-slow { animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
