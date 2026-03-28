@@ -2089,6 +2089,27 @@ app.get("/api/public/loyalty/:storeId/:phoneNumber", async (req, res) => {
 
     if (storeError) throw storeError;
 
+// Auto-Tiering Logic Helper
+const calculateTier = (totalStamps) => {
+  if (totalStamps >= 100) return "GOLD";
+  if (totalStamps >= 50) return "SILVER";
+  if (totalStamps >= 10) return "BRONZE";
+  return "MEMBER";
+};
+
+    res.json({
+      success: true,
+      customer: {
+        ...customers[0],
+        tier: calculateTier(customers[0].totalEarnedStamps || 0)
+      },
+      store
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // STAFF PERFORMANCE (For Leaderboard)
 app.get("/api/staff-performance", authenticateToken, async (req, res) => {
   const { storeId } = req.query;
@@ -2158,27 +2179,6 @@ app.get("/api/staff-performance", authenticateToken, async (req, res) => {
   } catch (err) {
     console.error("Staff Performance API Error:", err);
     res.status(500).json({ error: err.message });
-  }
-});
-
-// Auto-Tiering Logic Helper
-const calculateTier = (totalStamps) => {
-  if (totalStamps >= 100) return "GOLD";
-  if (totalStamps >= 50) return "SILVER";
-  if (totalStamps >= 10) return "BRONZE";
-  return "MEMBER";
-};
-
-    res.json({
-      success: true,
-      customer: {
-        ...customers[0],
-        tier: calculateTier(customers[0].totalEarnedStamps || 0)
-      },
-      store
-    });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
   }
 });
 
