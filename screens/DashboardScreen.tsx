@@ -45,20 +45,27 @@ export default function DashboardScreen({ route, navigation }: any) {
     const [showRewardMenu, setShowRewardMenu] = useState(false);
     const [rewardProducts, setRewardProducts] = useState<any[]>([]);
     const [selectedRewardId, setSelectedRewardId] = useState<string | null>(null);
+    const [monthlyStats, setMonthlyStats] = useState<any>(null);
     const [loading, setLoading] = useState(false);
-
-    // Online Orders
-    const [pendingOrderCount, setPendingOrderCount] = useState(0);
-    const [lastOrderId, setLastOrderId] = useState<string | null>(null);
+    const [rewards, setRewards] = useState<any[]>([]);
 
     useEffect(() => {
-        let interval: any;
-        if (storeId) {
-            checkOnlineOrders(); // Check immediately
-            interval = setInterval(checkOnlineOrders, 30000); // Check every 30s
+        if (userId && userId !== 'LOAD_FROM_STORAGE_PLEASE') {
+            loadStats(userId);
+            loadRewards();
         }
-        return () => clearInterval(interval);
-    }, [storeId]);
+    }, [userId]);
+
+    const loadStats = async (uid: string) => {
+        try {
+            const data = await apiGetHistory(uid);
+            if (data.monthlyStats) {
+                setMonthlyStats(data.monthlyStats);
+            }
+        } catch (err) {
+            console.log("Error loading monthly stats:", err);
+        }
+    };
 
     const checkOnlineOrders = async () => {
         if (!storeId) return;
@@ -225,17 +232,55 @@ export default function DashboardScreen({ route, navigation }: any) {
                 {/* Announcements */}
                 {storeId && <AnnouncementsSection storeId={storeId} />}
 
-                {/* Quick Stats - Placeholder */}
+                {/* Quick Stats - Monthly Overview */}
                 <View style={styles.statsRow}>
                     <View style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                        <Text style={[styles.statLabel, { color: colors.textSecondary }]}>This Week</Text>
-                        <Text style={[styles.statValue, { color: colors.text }]}>0h</Text>
+                        <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Month Hours</Text>
+                        <Text style={[styles.statValue, { color: colors.text }]}>
+                            {monthlyStats?.totalHoursWorked || '0'}h
+                        </Text>
                     </View>
                     <View style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                        <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Credits</Text>
-                        <Text style={[styles.statValue, { color: colors.text }]}>{availableRewards.length}</Text>
+                        <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Day Offs</Text>
+                        <Text style={[styles.statValue, { color: colors.text }]}>
+                            {monthlyStats?.usedDayOffs || '0'} / {monthlyStats?.allowedDayOffs || '0'}
+                        </Text>
                     </View>
                 </View>
+
+                {/* Monthly Earnings Card */}
+                {monthlyStats && (
+                    <TouchableOpacity
+                        style={[styles.actionCardContainer, { width: '100%', marginBottom: 25 }]}
+                        onPress={() => navigation.navigate('History', { userId })}
+                    >
+                        <LinearGradient 
+                            colors={['#059669', '#10b981']} 
+                            style={[styles.actionCard, { height: 'auto', padding: 18, alignItems: 'stretch' }]}
+                        >
+                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                                    <Ionicons name="wallet-outline" size={24} color="#fff" />
+                                    <Text style={{ color: '#fff', fontSize: 16, fontWeight: 'bold' }}>Monthly Est. Payout</Text>
+                                </View>
+                                <Text style={{ color: '#fff', fontSize: 22, fontWeight: '900' }}>${monthlyStats.totalSalary}</Text>
+                            </View>
+                            
+                            <View style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.2)', marginBottom: 10 }} />
+                            
+                            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                                <View>
+                                    <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 11, fontWeight: 'bold' }}>BASE SALARY</Text>
+                                    <Text style={{ color: '#fff', fontSize: 14, fontWeight: 'bold' }}>${monthlyStats.baseSalary}</Text>
+                                </View>
+                                <View style={{ alignItems: 'flex-end' }}>
+                                    <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 11, fontWeight: 'bold' }}>OT PAY ({monthlyStats.totalOTHours}h)</Text>
+                                    <Text style={{ color: '#fff', fontSize: 14, fontWeight: 'bold' }}>+${monthlyStats.otPay}</Text>
+                                </View>
+                            </View>
+                        </LinearGradient>
+                    </TouchableOpacity>
+                )}
 
                 {/* Online Orders Alert - Native Version */}
                 <TouchableOpacity
