@@ -137,6 +137,12 @@ export const updateAppSettings = (settings: any) => api.put('/app-settings', set
 // Leave Requests
 export const getLeaveRequests = (storeId?: string) => api.get('/leave-requests', { params: { storeId } });
 export const updateLeaveRequest = (id: string, data: any) => api.put(`/leave-requests/${id}`, data);
+export const createLeaveRequest = (data: any) => api.post('/leave-requests', data);
+
+// Overtime Requests
+export const getOvertimeRequests = (storeId?: string) => api.get('/overtime-requests', { params: { storeId } });
+export const createOvertimeRequest = (data: any) => api.post('/overtime-requests', data);
+export const updateOvertimeRequest = (id: string, data: any) => api.put(`/overtime-requests/${id}`, data);
 
 // Current Orders
 export const getCurrentOrder = (storeId: string, terminalId?: string) =>

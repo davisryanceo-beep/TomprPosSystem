@@ -303,33 +303,15 @@ router.get('/history/:userId', async (req, res) => {
     }
 
     try {
-        // Run queries in parallel
-        const [rewardsRes, logsRes, leaveRes, userRes] = await Promise.all([
-            db.from('staff_rewards').select('*').eq('userId', userId),
-            db.from('time_logs').select('*').eq('userId', userId),
-            db.from('leave_requests').select('*').eq('userid', userId),
-            db.from('users').select('*').eq('id', userId).single()
-        ]);
-
-        if (rewardsRes.error) throw rewardsRes.error;
-        if (logsRes.error) throw logsRes.error;
-        if (leaveRes.error) throw leaveRes.error;
-        // User might not exist or error, handled below
-
-        // Process Rewards
-        const rewards = (rewardsRes.data || [])
-            .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-            .slice(0, 20);
-
-        // Process Logs
-        const logs = (logsRes.data || [])
-            .sort((a, b) => new Date(b.clockInTime).getTime() - new Date(a.clockInTime).getTime())
-            .slice(0, 20);
-
-        // Process Leave
-        const leaveRequests = (leaveRes.data || [])
-            .sort((a, b) => new Date(b.requestedAt).getTime() - new Date(a.requestedAt).getTime())
-            .slice(0, 20);
+        // 3. Process Overtime
+        const { data: otData, error: otErr } = await db
+            .from('overtime_requests')
+            .select('*')
+            .eq('userId', userId)
+            .order('requestedAt', { ascending: false })
+            .limit(20);
+        
+        if (otErr) throw otErr;
 
         // Calculate Payroll
         let estimatedEarnings = 0;
@@ -337,6 +319,7 @@ router.get('/history/:userId', async (req, res) => {
         if (user) {
             const hourlyRate = user.hourlyRate || 0;
 
+            // Base pay for hours worked
             logs.forEach(log => {
                 if (log.clockInTime && log.clockOutTime) {
                     const diff = new Date(log.clockOutTime).getTime() - new Date(log.clockInTime).getTime();
@@ -344,9 +327,22 @@ router.get('/history/:userId', async (req, res) => {
                     estimatedEarnings += hours * hourlyRate;
                 }
             });
+
+            // Add approved OT pay (assuming 1.5x rate)
+            const approvedOTHours = (otData || [])
+                .filter(ot => ot.status === 'Approved')
+                .reduce((sum, ot) => sum + (ot.approvedHours || 0), 0);
+            
+            estimatedEarnings += approvedOTHours * hourlyRate * 1.5;
         }
 
-        res.json({ rewards, logs, leaveRequests, estimatedEarnings: estimatedEarnings.toFixed(2) });
+        res.json({ 
+            rewards, 
+            logs, 
+            leaveRequests, 
+            overtimeRequests: otData || [],
+            estimatedEarnings: estimatedEarnings.toFixed(2) 
+        });
     } catch (err) {
         console.error("History Error:", err);
         res.status(500).json({ 
@@ -393,6 +389,45 @@ router.post('/leave-request', async (req, res) => {
         res.json({ message: "Leave request submitted successfully", requestId });
     } catch (err) {
         console.error("Leave Request Error:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// POST /overtime-request
+router.post('/overtime-request', async (req, res) => {
+    const { date, reason, requestedHours } = req.body;
+    const userId = req.user.id;
+
+    try {
+        const { data: userData, error: userErr } = await db
+            .from('users')
+            .select('*')
+            .eq('id', userId)
+            .single();
+
+        if (userErr || !userData) {
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        const requestId = uuidv4();
+        const request = {
+            id: requestId,
+            userId: userId,
+            userName: `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || userData.username,
+            storeId: userData.storeId,
+            date,
+            reason,
+            requestedHours: parseFloat(requestedHours) || 0,
+            status: 'Pending',
+            requestedAt: new Date().toISOString()
+        };
+
+        const { error: insertErr } = await db.from('overtime_requests').insert(request);
+        if (insertErr) throw insertErr;
+
+        res.json({ message: "Overtime request submitted successfully", requestId });
+    } catch (err) {
+        console.error("Overtime Request Error:", err);
         res.status(500).json({ error: err.message });
     }
 });

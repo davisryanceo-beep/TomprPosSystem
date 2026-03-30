@@ -282,6 +282,13 @@ export default function DashboardScreen({ route, navigation }: any) {
                         </LinearGradient>
                     </TouchableOpacity>
 
+                    <TouchableOpacity style={styles.actionCardContainer} onPress={() => navigation.navigate('OvertimeRequest')}>
+                        <LinearGradient colors={['#10b981', '#34d399']} style={styles.actionCard}>
+                            <Ionicons name="time-outline" size={32} color="#fff" />
+                            <Text style={styles.actionText}>Request OT</Text>
+                        </LinearGradient>
+                    </TouchableOpacity>
+
                     <TouchableOpacity
                         style={styles.actionCardContainer}
                         onPress={() => storeId && navigation.navigate('Tasks', { storeId })}

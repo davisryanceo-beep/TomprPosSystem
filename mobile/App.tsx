@@ -7,6 +7,7 @@ import LoginScreen from './screens/LoginScreen';
 import DashboardScreen from './screens/DashboardScreen';
 import HistoryScreen from './screens/HistoryScreen';
 import LeaveRequestScreen from './screens/LeaveRequestScreen';
+import OvertimeRequestScreen from './screens/OvertimeRequestScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import TasksScreen from './screens/TasksScreen';
 import OnlineOrdersScreen from './screens/OnlineOrdersScreen';
@@ -65,6 +66,11 @@ export default function App() {
                     <Stack.Screen
                         name="LeaveRequest"
                         component={LeaveRequestScreen}
+                        options={{ headerShown: false }}
+                    />
+                    <Stack.Screen
+                        name="OvertimeRequest"
+                        component={OvertimeRequestScreen}
                         options={{ headerShown: false }}
                     />
                     <Stack.Screen

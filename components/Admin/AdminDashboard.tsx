@@ -21,7 +21,7 @@ import ComboManagement from './ComboManagement';
 import AddOnManagement from './AddOnManagement';
 import SeasonalItemsManagement from './SeasonalItemsManagement';
 import OrderManagement from './OrderManagement';
-import LeaveManagement from './LeaveManagement';
+import StaffManagement from './StaffManagement';
 import LoyaltyManagement from './LoyaltyManagement';
 import ExpenseManagement from './ExpenseManagement';
 import StaffLeaderboard from './StaffLeaderboard';
@@ -29,7 +29,7 @@ import {
   FaUsers, FaChartLine, FaBoxes, FaConciergeBell, FaArchive, FaBookOpen,
   FaCalendarAlt, FaTags, FaClock, FaCalculator, FaStore,
   FaCertificate, FaUserShield, FaBrain, FaDesktop, FaStar, FaCogs, FaReceipt,
-  FaCalendarTimes, FaStamp, FaMoneyBillWave, FaMedal
+  FaCalendarTimes, FaStamp, FaMoneyBillWave, FaMedal, FaUserTie
 } from 'react-icons/fa';
 import { useAuth } from '../../contexts/AuthContext';
 import { ROLES } from '../../constants';
@@ -39,7 +39,7 @@ const STAMP_ONLY = import.meta.env.VITE_STAMP_ONLY === 'true' || window.location
 
 // Define specific tab sets for each admin type
 type GlobalAdminTab = 'stores' | 'licenses' | 'users' | 'store-settings' | 'loyalty' | 'settings';
-type StoreAdminTab = 'users' | 'orders' | 'loyalty' | 'performance' | 'sales' | 'expenses' | 'inventory' | 'modifiers' | 'supplies' | 'recipes' | 'combos' | 'addons' | 'seasonal' | 'shifts' | 'promotions' | 'attendance' | 'leave' | 'eod' | 'display' | 'feedback' | 'settings';
+type StoreAdminTab = 'users' | 'orders' | 'loyalty' | 'performance' | 'sales' | 'expenses' | 'inventory' | 'modifiers' | 'supplies' | 'recipes' | 'combos' | 'addons' | 'seasonal' | 'shifts' | 'promotions' | 'attendance' | 'staff-mgmt' | 'eod' | 'display' | 'feedback' | 'settings';
 
 const AdminDashboard: React.FC = () => {
   const { currentUser } = useAuth();
@@ -106,7 +106,7 @@ const AdminDashboard: React.FC = () => {
         case 'shifts': return <ShiftManagement />;
         case 'promotions': return <PromotionManagement />;
         case 'attendance': return <AttendanceTracking />;
-        case 'leave': return <LeaveManagement />;
+        case 'staff-mgmt': return <StaffManagement />;
         case 'eod': return <EODReportsView />;
         case 'display': return <CustomerDisplayEditor />;
         case 'settings': return <StoreSettings />;
@@ -181,7 +181,7 @@ const AdminDashboard: React.FC = () => {
             <TabButton tabName="shifts" label="Shifts" icon={< FaCalendarAlt />} />
             <TabButton tabName="promotions" label="Promos" icon={<FaTags />} />
             <TabButton tabName="attendance" label="Attendance" icon={<FaClock />} />
-            <TabButton tabName="leave" label="Leave" icon={<FaCalendarTimes />} />
+            <TabButton tabName="staff-mgmt" label="Staff Mgmt" icon={<FaUserTie />} />
             <TabButton tabName="eod" label="Cash Drawer" icon={<FaMoneyBillWave />} />
             <TabButton tabName="display" label="Display" icon={<FaDesktop />} />
             <TabButton tabName="settings" label="Settings" icon={<FaCogs />} />

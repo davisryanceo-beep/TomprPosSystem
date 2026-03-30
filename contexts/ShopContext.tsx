@@ -3,7 +3,7 @@ import {
   Product, Order, User, OrderStatus, OrderItem, Role, ProductCategory, SupplyItem,
   SupplyCategory, PaymentMethod, PaymentCurrency, Recipe, Shift, Promotion,
   PromotionType, WastageLog, TimeLog, CashDrawerLog, Store,
-  Announcement, AnnouncementPriority, QRPaymentState, Feedback, Category, AppSettings, LeaveRequest, Customer
+  Announcement, AnnouncementPriority, QRPaymentState, Feedback, Category, AppSettings, LeaveRequest, OvertimeRequest, Customer
 } from '../types';
 import {
   INITIAL_PRODUCTS, INITIAL_ORDERS, DEFAULT_USERS, TAX_RATE,
@@ -26,6 +26,7 @@ import {
   getFeedback, createFeedback,
   getAppSettings, updateAppSettings as apiUpdateAppSettings,
   getLeaveRequests, updateLeaveRequest as apiUpdateLeaveRequest,
+  getOvertimeRequests, createOvertimeRequest as apiCreateOvertimeRequest, updateOvertimeRequest as apiUpdateOvertimeRequest,
   getCurrentOrder, saveCurrentOrder, clearCurrentOrder,
   createStampClaim,
   deleteAllOrders,
@@ -229,7 +230,14 @@ interface ShopContextType {
   reloadData: () => Promise<void>;
 
   leaveRequests: LeaveRequest[];
-  updateLeaveRequest: (requestId: string, status: 'Approved' | 'Rejected', managerNotes?: string) => Promise<boolean>;
+  updateLeaveRequest: (requestId: string, status: 'Approved' | 'Rejected', responseNote?: string) => Promise<boolean>;
+  
+  overtimeRequests: OvertimeRequest[];
+  addOvertimeRequest: (otData: Omit<OvertimeRequest, 'id' | 'requestedAt' | 'status'>) => Promise<boolean>;
+  updateOvertimeRequest: (otId: string, updates: Partial<OvertimeRequest>) => Promise<boolean>;
+  
+  // Salary Management
+  updateUserSalary: (userId: string, salary: number, hourlyRate: number) => Promise<boolean>;
   
   // Offline & Sync
   isOnline: boolean;
@@ -261,6 +269,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [announcementsState, setAnnouncementsState] = useState<Announcement[]>([]);
   const [feedbackListState, setFeedbackListState] = useState<Feedback[]>([]);
   const [leaveRequestsState, setLeaveRequestsState] = useState<LeaveRequest[]>([]);
+  const [overtimeRequestsState, setOvertimeRequestsState] = useState<OvertimeRequest[]>([]);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [pendingOrders, setPendingOrders] = useState<Order[]>([]);
 
@@ -392,7 +401,11 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     // Fetch remaining data to populate dashboards. Errors here won't block the UI load.
     try {
-      const [productsRes, ordersRes, supplyRes, promotionsRes, categoriesRes, recipesRes, shiftsRes, wastageRes, timeLogsRes, cashLogsRes, announcementsRes, feedbackRes, leaveRes] = await Promise.all([
+      const [
+        productsRes, ordersRes, supplyRes, promotionsRes, categoriesRes, 
+        recipesRes, shiftsRes, wastageRes, timeLogsRes, cashLogsRes, 
+        announcementsRes, appSettingsRes, feedbackRes, leaveRes, overtimeRes
+      ] = await Promise.all([
         getProducts(),
         getOrders(),
         getSupplyItems(),
@@ -404,8 +417,10 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         getTimeLogs(),
         getCashDrawerLogs(),
         getAnnouncements(),
+        getAppSettings(),
         getFeedback(),
-        getLeaveRequests()
+        getLeaveRequests(),
+        getOvertimeRequests()
       ]);
 
       setProductsState(productsRes.data || []);
@@ -421,12 +436,13 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         ...l,
         cashierId: l.reportedBy,
         cashierNotes: l.notes,
-        // Ensure cashierName is at least a string if missing
         cashierName: l.cashierName || l.reportedBy || 'Unknown' 
       })));
       setAnnouncementsState(announcementsRes.data || []);
       setFeedbackListState(feedbackRes.data || []);
       setLeaveRequestsState(leaveRes.data || []);
+      setOvertimeRequestsState(overtimeRes.data || []);
+      setAppSettings(appSettingsRes.data);
 
     } catch (err) {
       console.error("Failed to fetch secondary data", err);
@@ -1959,17 +1975,6 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [currentStoreId]);
 
-  const updateLeaveRequest = useCallback(async (requestId: string, status: 'Approved' | 'Rejected', managerNotes?: string): Promise<boolean> => {
-    try {
-      await apiUpdateLeaveRequest(requestId, { status, managerNotes });
-      setLeaveRequestsState(prev => prev.map(req => req.id === requestId ? { ...req, status, managerNotes } : req));
-      return true;
-    } catch (e) {
-      console.error("Failed to update leave request", e);
-      return false;
-    }
-  }, []);
-
   // --- ALERTS FOR ONLINE ORDERS ---
   const [newOnlineOrders, setNewOnlineOrders] = useState<Order[]>([]);
 
@@ -2008,11 +2013,59 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const updateLeaveRequest = async (requestId: string, status: 'Approved' | 'Rejected', responseNote?: string) => {
+    try {
+      await apiUpdateLeaveRequest(requestId, { status, responseNote });
+      setLeaveRequestsState(prev => prev.map(req => req.id === requestId ? { ...req, status, responseNote, respondedAt: new Date().toISOString() } : req));
+      return true;
+    } catch (e) {
+      console.error("Failed to update leave request", e);
+      return false;
+    }
+  };
+
+  const addOvertimeRequest = async (otData: Omit<OvertimeRequest, 'id' | 'requestedAt' | 'status'>) => {
+    try {
+      const response = await apiCreateOvertimeRequest(otData);
+      if (response.data) {
+        setOvertimeRequestsState(prev => [response.data.request, ...prev]);
+        return true;
+      }
+      return false;
+    } catch (e) {
+      console.error("Failed to add overtime request", e);
+      return false;
+    }
+  };
+
+  const updateOvertimeRequest = async (otId: string, updates: Partial<OvertimeRequest>) => {
+    try {
+      await apiUpdateOvertimeRequest(otId, updates);
+      setOvertimeRequestsState(prev => prev.map(req => req.id === otId ? { ...req, ...updates, respondedAt: new Date().toISOString() } : req));
+      return true;
+    } catch (e) {
+      console.error("Failed to update overtime request", e);
+      return false;
+    }
+  };
+
+  const updateUserSalary = async (userId: string, salary: number, hourlyRate: number) => {
+    try {
+      await apiUpdateUser(userId, { salary, hourlyRate });
+      setUsersDB(prev => prev.map(u => u.id === userId ? { ...u, salary, hourlyRate } : u));
+      return true;
+    } catch (e) {
+      console.error("Failed to update user salary", e);
+      return false;
+    }
+  };
+
   const contextValue: ShopContextType = {
     loading,
     stores: storesState, currentStoreId, setCurrentStoreId, addStore, updateStore, deleteStore, getStoreById, appSettings, updateAppSettings,
     products, orders, allUsers: usersState, knownCategories, supplyItems, recipes, shifts, promotions, wastageLogs, timeLogs, cashDrawerLogs, announcements, feedbackList,
     leaveRequests: leaveRequestsState,
+    overtimeRequests: overtimeRequestsState,
     addProduct, updateProduct, deleteProduct, getProductById, getProductsByCategory, addCategory, updateCategoryName, deleteCategory,
     addOrder, updateOrderStatus, updateOrder, deleteOrder, getOrdersByStatus, getPaidOrders, getShiftOrders,
     addUser, updateUser, deleteUser, registerUser, getUserForAuth, verifyPinForAuth, verifyManagerPin, verifyCurrentUserPassword,
@@ -2030,6 +2083,9 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     addAnnouncement, updateAnnouncement, archiveAnnouncement, deleteAnnouncement,
     addFeedback,
     updateLeaveRequest,
+    addOvertimeRequest,
+    updateOvertimeRequest,
+    updateUserSalary,
     reloadData,
     clearAllOrders,
     newOnlineOrders,

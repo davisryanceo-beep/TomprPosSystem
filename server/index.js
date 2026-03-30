@@ -2475,6 +2475,100 @@ app.delete("/api/expenses/:id", authenticateToken, verifyOwnership('expenses'), 
   }
 });
 
+// LEAVE REQUESTS
+app.get("/api/leave-requests", authenticateToken, async (req, res) => {
+  try {
+    const { storeId } = req.query;
+    let query = db.from("leave_requests").select("*");
+    if (storeId) {
+      query = query.eq("storeId", storeId);
+    } else if (req.user.storeId) {
+      query = query.eq("storeId", req.user.storeId);
+    }
+    
+    const { data, error } = await query.order("requestedAt", { ascending: false });
+    if (error) throw error;
+    res.json(data || []);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/api/leave-requests", authenticateToken, async (req, res) => {
+  try {
+    const request = req.body;
+    if (!request.id) request.id = `leave-${Date.now()}`;
+    if (!request.requestedAt) request.requestedAt = new Date().toISOString();
+    
+    const { error } = await db.from("leave_requests").insert(request);
+    if (error) throw error;
+    res.json({ success: true, request });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put("/api/leave-requests/:id", authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+    updates.respondedAt = new Date().toISOString();
+    
+    const { error } = await db.from("leave_requests").update(updates).eq("id", id);
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// OVERTIME REQUESTS
+app.get("/api/overtime-requests", authenticateToken, async (req, res) => {
+  try {
+    const { storeId } = req.query;
+    let query = db.from("overtime_requests").select("*");
+    if (storeId) {
+      query = query.eq("storeId", storeId);
+    } else if (req.user.storeId) {
+      query = query.eq("storeId", req.user.storeId);
+    }
+    
+    const { data, error } = await query.order("requestedAt", { ascending: false });
+    if (error) throw error;
+    res.json(data || []);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/api/overtime-requests", authenticateToken, async (req, res) => {
+  try {
+    const request = req.body;
+    if (!request.id) request.id = `ot-${Date.now()}`;
+    if (!request.requestedAt) request.requestedAt = new Date().toISOString();
+    
+    const { error } = await db.from("overtime_requests").insert(request);
+    if (error) throw error;
+    res.json({ success: true, request });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put("/api/overtime-requests/:id", authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+    updates.respondedAt = new Date().toISOString();
+    
+    const { error } = await db.from("overtime_requests").update(updates).eq("id", id);
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Sentry Error Handler must be before any other error middleware and after all controllers
 if (process.env.SENTRY_DSN) {
   app.use(Sentry.Handlers.errorHandler());

@@ -84,9 +84,11 @@ export interface User {
   firstName?: string;
   lastName?: string;
   profilePictureUrl?: string;
-  storeId?: string; // Global Admins have undefined storeId. Store Admins and other roles are tied to a store.
+  storeId?: string;
   email?: string;
   phoneNumber?: string;
+  salary?: number;       // Monthly base salary in USD
+  hourlyRate?: number;   // Hourly rate for OT calculation
 }
 
 export enum ProductCategory {
@@ -504,5 +506,20 @@ export interface LeaveRequest {
   status: 'Pending' | 'Approved' | 'Rejected';
   requestedAt: string; // ISO
   respondedAt?: string; // ISO
+  responseNote?: string;
+}
+
+export interface OvertimeRequest {
+  id: string;
+  userId: string;
+  userName: string;
+  storeId: string;
+  date: string;          // YYYY-MM-DD
+  reason?: string;
+  requestedHours: number;
+  approvedHours?: number;
+  status: 'Pending' | 'Approved' | 'Rejected';
+  requestedAt: string;   // ISO
+  respondedAt?: string;  // ISO
   responseNote?: string;
 }
