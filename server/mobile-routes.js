@@ -298,20 +298,32 @@ router.get('/rewards/:userId', async (req, res) => {
 // GET /history/:userId
 router.get('/history/:userId', async (req, res) => {
     const { userId } = req.params;
+    
+    // Auth Check
     if (req.user.id !== userId && req.user.role !== 'Admin') {
         return res.status(403).json({ error: "Access denied" });
     }
 
     try {
-        // 3. Process Overtime
-        const { data: otData, error: otErr } = await db
-            .from('overtime_requests')
-            .select('*')
-            .eq('userId', userId)
-            .order('requestedAt', { ascending: false })
-            .limit(20);
-        
-        if (otErr) throw otErr;
+        // Fetch all required data in parallel
+        const [userRes, logsRes, leaveRes, otRes, rewardsRes] = await Promise.all([
+            db.from('users').select('*').eq('id', userId).single(),
+            db.from('time_logs')
+                .select('*')
+                .eq('userId', userId)
+                .order('clockInTime', { ascending: false })
+                .limit(20),
+            db.from('leave_requests').select('*').eq('userid', userId),
+            db.from('overtime_requests').select('*').eq('userId', userId),
+            db.from('staff_rewards').select('*').eq('userId', userId)
+        ]);
+
+        if (userRes.error) throw userRes.error;
+        const user = userRes.data;
+        const logs = logsRes.data || [];
+        const leaveRequests = leaveRes.data || [];
+        const otRequests = otRes.data || [];
+        const rewards = rewardsRes.data || [];
 
         // --- MONTHLY STATISTICS CALCULATION ---
         const now = new Date();
@@ -338,64 +350,61 @@ router.get('/history/:userId', async (req, res) => {
         }
 
         // 2. Calculate monthly OT hours
-        const monthlyOT = (otData || []).filter(ot => {
+        const monthlyOT = otRequests.filter(ot => {
             const otDate = new Date(ot.date);
             return otDate >= startOfMonth && ot.status === 'Approved';
         });
         monthlyOTHours = monthlyOT.reduce((sum, ot) => sum + (ot.approvedHours || 0), 0);
 
         // 3. Calculate monthly used day-offs
-        const monthlyLeave = (leaveRequests || []).filter(req => {
+        const monthlyLeave = leaveRequests.filter(req => {
             const reqDate = new Date(req.startDate);
             return reqDate >= startOfMonth && req.status === 'Approved';
         });
-        monthlyUsedDayOffs = monthlyLeave.length; // Simple count of days for now
+        monthlyUsedDayOffs = monthlyLeave.length; // Count of approved leave entries for this month
 
         // 4. Calculate total monthly salary (Base + OT)
         let estimatedEarnings = 0;
-        const user = userRes.data;
         let monthlySalaryTotal = 0;
 
-        if (user) {
-            const hourlyRate = user.hourlyRate || 0;
-            const baseSalary = user.salary || 0;
-            const otPay = monthlyOTHours * hourlyRate * 1.5;
-            
-            monthlySalaryTotal = baseSalary + otPay;
+        const hourlyRate = user.hourlyRate || 0;
+        const baseSalary = user.salary || 0;
+        const otPay = monthlyOTHours * hourlyRate * 1.5;
+        
+        monthlySalaryTotal = baseSalary + otPay;
 
-            // Estimated earnings for the last 20 shifts (existing logic)
-            logs.forEach(log => {
-                if (log.clockInTime && log.clockOutTime) {
-                    const diff = new Date(log.clockOutTime).getTime() - new Date(log.clockInTime).getTime();
-                    const hours = diff / (1000 * 60 * 60);
-                    estimatedEarnings += hours * hourlyRate;
-                }
-            });
-        }
+        // Estimated earnings for the last 20 shifts (existing logic)
+        logs.forEach(log => {
+            if (log.clockInTime && log.clockOutTime) {
+                const diff = new Date(log.clockOutTime).getTime() - new Date(log.clockInTime).getTime();
+                const hours = diff / (1000 * 60 * 60);
+                estimatedEarnings += hours * hourlyRate;
+            }
+        });
 
         res.json({ 
             rewards, 
             logs, 
             leaveRequests, 
-            overtimeRequests: otData || [],
+            overtimeRequests: otRequests,
             estimatedEarnings: estimatedEarnings.toFixed(2),
             monthlyStats: {
                 totalHoursWorked: monthlyHoursWorked.toFixed(1),
                 totalOTHours: monthlyOTHours.toFixed(1),
                 usedDayOffs: monthlyUsedDayOffs,
-                allowedDayOffs: user?.monthlyDayOffAllowance || 0,
+                allowedDayOffs: user.monthlyDayOffAllowance || 0,
                 totalSalary: monthlySalaryTotal.toFixed(2),
-                baseSalary: (user?.salary || 0).toFixed(2),
-                otPay: (monthlyOTHours * (user?.hourlyRate || 0) * 1.5).toFixed(2)
+                baseSalary: baseSalary.toFixed(2),
+                otPay: otPay.toFixed(2)
             }
         });
+
     } catch (err) {
         console.error("History Error:", err);
         res.status(500).json({ 
             error: "Internal Server Error in History", 
             message: err.message, 
-            details: err.details || "No further details",
-            hint: err.hint || "No hint available"
+            details: err.details || "No further details"
         });
     }
 });
