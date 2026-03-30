@@ -89,6 +89,7 @@ export interface User {
   phoneNumber?: string;
   salary?: number;       // Monthly base salary in USD
   hourlyRate?: number;   // Hourly rate for OT calculation
+  monthlyDayOffAllowance?: number; // Allowed day-offs per month
 }
 
 export enum ProductCategory {

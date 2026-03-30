@@ -313,13 +313,57 @@ router.get('/history/:userId', async (req, res) => {
         
         if (otErr) throw otErr;
 
-        // Calculate Payroll
+        // --- MONTHLY STATISTICS CALCULATION ---
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        
+        let monthlyHoursWorked = 0;
+        let monthlyOTHours = 0;
+        let monthlyUsedDayOffs = 0;
+
+        // 1. Calculate monthly hours from logs
+        const { data: monthlyLogs, error: mlErr } = await db
+            .from('time_logs')
+            .select('*')
+            .eq('userId', userId)
+            .gte('clockInTime', startOfMonth.toISOString());
+        
+        if (!mlErr && monthlyLogs) {
+            monthlyLogs.forEach(log => {
+                if (log.clockInTime && log.clockOutTime) {
+                    const diff = new Date(log.clockOutTime).getTime() - new Date(log.clockInTime).getTime();
+                    monthlyHoursWorked += diff / (1000 * 60 * 60);
+                }
+            });
+        }
+
+        // 2. Calculate monthly OT hours
+        const monthlyOT = (otData || []).filter(ot => {
+            const otDate = new Date(ot.date);
+            return otDate >= startOfMonth && ot.status === 'Approved';
+        });
+        monthlyOTHours = monthlyOT.reduce((sum, ot) => sum + (ot.approvedHours || 0), 0);
+
+        // 3. Calculate monthly used day-offs
+        const monthlyLeave = (leaveRequests || []).filter(req => {
+            const reqDate = new Date(req.startDate);
+            return reqDate >= startOfMonth && req.status === 'Approved';
+        });
+        monthlyUsedDayOffs = monthlyLeave.length; // Simple count of days for now
+
+        // 4. Calculate total monthly salary (Base + OT)
         let estimatedEarnings = 0;
         const user = userRes.data;
+        let monthlySalaryTotal = 0;
+
         if (user) {
             const hourlyRate = user.hourlyRate || 0;
+            const baseSalary = user.salary || 0;
+            const otPay = monthlyOTHours * hourlyRate * 1.5;
+            
+            monthlySalaryTotal = baseSalary + otPay;
 
-            // Base pay for hours worked
+            // Estimated earnings for the last 20 shifts (existing logic)
             logs.forEach(log => {
                 if (log.clockInTime && log.clockOutTime) {
                     const diff = new Date(log.clockOutTime).getTime() - new Date(log.clockInTime).getTime();
@@ -327,13 +371,6 @@ router.get('/history/:userId', async (req, res) => {
                     estimatedEarnings += hours * hourlyRate;
                 }
             });
-
-            // Add approved OT pay (assuming 1.5x rate)
-            const approvedOTHours = (otData || [])
-                .filter(ot => ot.status === 'Approved')
-                .reduce((sum, ot) => sum + (ot.approvedHours || 0), 0);
-            
-            estimatedEarnings += approvedOTHours * hourlyRate * 1.5;
         }
 
         res.json({ 
@@ -341,7 +378,16 @@ router.get('/history/:userId', async (req, res) => {
             logs, 
             leaveRequests, 
             overtimeRequests: otData || [],
-            estimatedEarnings: estimatedEarnings.toFixed(2) 
+            estimatedEarnings: estimatedEarnings.toFixed(2),
+            monthlyStats: {
+                totalHoursWorked: monthlyHoursWorked.toFixed(1),
+                totalOTHours: monthlyOTHours.toFixed(1),
+                usedDayOffs: monthlyUsedDayOffs,
+                allowedDayOffs: user?.monthlyDayOffAllowance || 0,
+                totalSalary: monthlySalaryTotal.toFixed(2),
+                baseSalary: (user?.salary || 0).toFixed(2),
+                otPay: (monthlyOTHours * (user?.hourlyRate || 0) * 1.5).toFixed(2)
+            }
         });
     } catch (err) {
         console.error("History Error:", err);

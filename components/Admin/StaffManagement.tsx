@@ -18,6 +18,7 @@ const StaffManagement: React.FC = () => {
     const [editingUserId, setEditingUserId] = useState<string | null>(null);
     const [editSalary, setEditSalary] = useState<number>(0);
     const [editHourlyRate, setEditHourlyRate] = useState<number>(0);
+    const [editMonthlyDayOffAllowance, setEditMonthlyDayOffAllowance] = useState<number>(0);
 
     // Filters & Sorting
     const [leaveFilter, setLeaveFilter] = useState<'Pending' | 'Approved' | 'Rejected' | 'All'>('Pending');
@@ -47,10 +48,11 @@ const StaffManagement: React.FC = () => {
         setEditingUserId(user.id);
         setEditSalary(user.salary || 0);
         setEditHourlyRate(user.hourlyRate || 0);
+        setEditMonthlyDayOffAllowance(user.monthlyDayOffAllowance || 0);
     };
 
     const handleSaveSalary = async (userId: string) => {
-        const success = await updateUserSalary(userId, editSalary, editHourlyRate);
+        const success = await updateUserSalary(userId, editSalary, editHourlyRate, editMonthlyDayOffAllowance);
         if (success) {
             setEditingUserId(null);
         } else {
@@ -118,7 +120,8 @@ const StaffManagement: React.FC = () => {
                                 <tr>
                                     <th className="px-6 py-5 font-bold text-charcoal-light uppercase text-xs tracking-wider">Staff Details</th>
                                     <th className="px-6 py-5 font-bold text-charcoal-light uppercase text-xs tracking-wider text-right">Base Salary ($)</th>
-                                    <th className="px-6 py-5 font-bold text-charcoal-light uppercase text-xs tracking-wider text-right">OT Hourly Rate ($)</th>
+                                    <th className="px-6 py-5 font-bold text-charcoal-light uppercase text-xs tracking-wider text-right">OT Rate ($/hr)</th>
+                                    <th className="px-6 py-5 font-bold text-charcoal-light uppercase text-xs tracking-wider text-right">Day Offs/Mo</th>
                                     <th className="px-6 py-5 font-bold text-charcoal-light uppercase text-xs tracking-wider text-right">Actions</th>
                                 </tr>
                             </thead>
@@ -159,10 +162,22 @@ const StaffManagement: React.FC = () => {
                                                     type="number" 
                                                     value={editHourlyRate} 
                                                     onChange={(e) => setEditHourlyRate(parseFloat(e.target.value) || 0)}
-                                                    className="w-24 px-2 py-1 rounded bg-cream dark:bg-charcoal-dark border border-emerald text-right focus:ring-2 focus:ring-emerald outline-none"
+                                                    className="w-20 px-2 py-1 rounded bg-cream dark:bg-charcoal-dark border border-emerald text-right focus:ring-2 focus:ring-emerald outline-none"
                                                 />
                                             ) : (
                                                 <span className="font-mono text-charcoal-dark dark:text-cream-light">${(user.hourlyRate || 0).toFixed(2)}/hr</span>
+                                            )}
+                                        </td>
+                                        <td className="px-6 py-5 text-right">
+                                            {editingUserId === user.id ? (
+                                                <input 
+                                                    type="number" 
+                                                    value={editMonthlyDayOffAllowance} 
+                                                    onChange={(e) => setEditMonthlyDayOffAllowance(parseFloat(e.target.value) || 0)}
+                                                    className="w-16 px-2 py-1 rounded bg-cream dark:bg-charcoal-dark border border-emerald text-right focus:ring-2 focus:ring-emerald outline-none"
+                                                />
+                                            ) : (
+                                                <span className="font-mono text-charcoal-dark dark:text-cream-light">{user.monthlyDayOffAllowance || 0} days</span>
                                             )}
                                         </td>
                                         <td className="px-6 py-5 text-right">

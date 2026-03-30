@@ -237,7 +237,7 @@ interface ShopContextType {
   updateOvertimeRequest: (otId: string, updates: Partial<OvertimeRequest>) => Promise<boolean>;
   
   // Salary Management
-  updateUserSalary: (userId: string, salary: number, hourlyRate: number) => Promise<boolean>;
+  updateUserSalary: (userId: string, salary: number, hourlyRate: number, monthlyDayOffAllowance: number) => Promise<boolean>;
   
   // Offline & Sync
   isOnline: boolean;
@@ -2049,10 +2049,10 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const updateUserSalary = async (userId: string, salary: number, hourlyRate: number) => {
+  const updateUserSalary = async (userId: string, salary: number, hourlyRate: number, monthlyDayOffAllowance: number) => {
     try {
-      await apiUpdateUser(userId, { salary, hourlyRate });
-      setUsersDB(prev => prev.map(u => u.id === userId ? { ...u, salary, hourlyRate } : u));
+      await apiUpdateUser(userId, { salary, hourlyRate, monthlyDayOffAllowance });
+      setUsersDB(prev => prev.map(u => u.id === userId ? { ...u, salary, hourlyRate, monthlyDayOffAllowance } : u));
       return true;
     } catch (e) {
       console.error("Failed to update user salary", e);
