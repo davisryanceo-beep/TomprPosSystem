@@ -166,14 +166,46 @@ export default function HistoryScreen({ route, navigation }: any) {
                         renderItem={renderItem}
                         contentContainerStyle={styles.listContent}
                         ListHeaderComponent={
-                            activeTab === 'shifts' ? (
-                                <LinearGradient
-                                    colors={colors.primaryGradient}
-                                    style={styles.earningsCard}
-                                >
-                                    <Text style={styles.earningsLabel}>Estimated Earnings (Last 20 Shifts)</Text>
-                                    <Text style={styles.earningsValue}>${history.estimatedEarnings || '0.00'}</Text>
-                                </LinearGradient>
+                            activeTab === 'shifts' && history.monthlyStats ? (
+                                <View style={styles.statsHub}>
+                                    <LinearGradient
+                                        colors={colors.primaryGradient}
+                                        style={styles.mainStatsCard}
+                                    >
+                                        <View style={styles.statsHeader}>
+                                            <Text style={styles.statsTitle}>Monthly Overview</Text>
+                                            <Text style={styles.statsMonth}>{new Date().toLocaleString('default', { month: 'long' })}</Text>
+                                        </View>
+                                        
+                                        <View style={styles.statsGrid}>
+                                            <View style={styles.statBox}>
+                                                <Text style={styles.statLabel}>Hours Worked</Text>
+                                                <Text style={styles.statValue}>{history.monthlyStats.totalHoursWorked || '0'}h</Text>
+                                            </View>
+                                            <View style={styles.statBox}>
+                                                <Text style={styles.statLabel}>Day Offs</Text>
+                                                <Text style={styles.statValue}>
+                                                    {history.monthlyStats.usedDayOffs} / {history.monthlyStats.allowedDayOffs || '0'}
+                                                </Text>
+                                            </View>
+                                        </View>
+
+                                        <View style={styles.salaryDivider} />
+                                        
+                                        <View style={styles.salaryRow}>
+                                            <Text style={styles.salaryLabel}>Base Salary</Text>
+                                            <Text style={styles.salaryAmount}>${history.monthlyStats.baseSalary}</Text>
+                                        </View>
+                                        <View style={styles.salaryRow}>
+                                            <Text style={styles.salaryLabel}>OT Pay ({history.monthlyStats.totalOTHours}h)</Text>
+                                            <Text style={styles.salaryAmount}>+${history.monthlyStats.otPay}</Text>
+                                        </View>
+                                        <View style={[styles.salaryRow, styles.totalRow]}>
+                                            <Text style={styles.totalLabel}>Estimated Net</Text>
+                                            <Text style={styles.totalValue}>${history.monthlyStats.totalSalary}</Text>
+                                        </View>
+                                    </LinearGradient>
+                                </View>
                             ) : null
                         }
                         ListEmptyComponent={
@@ -297,26 +329,92 @@ const styles = StyleSheet.create({
         marginTop: 15,
         fontSize: 16,
     },
-    earningsCard: {
-        padding: 20,
-        borderRadius: 16,
+    statsHub: {
         marginBottom: 20,
-        alignItems: 'center',
+    },
+    mainStatsCard: {
+        padding: 20,
+        borderRadius: 24,
         shadowColor: "#000",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-        elevation: 3,
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.2,
+        shadowRadius: 15,
+        elevation: 8,
     },
-    earningsLabel: {
-        fontSize: 14,
-        color: '#d1fae5',
-        fontWeight: '600',
-        marginBottom: 5,
+    statsHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 20,
     },
-    earningsValue: {
-        fontSize: 32,
+    statsTitle: {
+        fontSize: 18,
         color: '#fff',
         fontWeight: '800',
+        letterSpacing: -0.5,
+    },
+    statsMonth: {
+        fontSize: 12,
+        color: 'rgba(255,255,255,0.8)',
+        fontWeight: 'bold',
+        textTransform: 'uppercase',
+        backgroundColor: 'rgba(255,255,255,0.1)',
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 10,
+    },
+    statsGrid: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: 20,
+    },
+    statBox: {
+        flex: 1,
+    },
+    statLabel: {
+        fontSize: 11,
+        color: 'rgba(255,255,255,0.7)',
+        fontWeight: '600',
+        marginBottom: 4,
+    },
+    statValue: {
+        fontSize: 24,
+        color: '#fff',
+        fontWeight: '800',
+    },
+    salaryDivider: {
+        height: 1,
+        backgroundColor: 'rgba(255,255,255,0.2)',
+        marginBottom: 15,
+    },
+    salaryRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: 8,
+    },
+    salaryLabel: {
+        fontSize: 13,
+        color: 'rgba(255,255,255,0.8)',
+    },
+    salaryAmount: {
+        fontSize: 13,
+        color: '#fff',
+        fontWeight: 'bold',
+    },
+    totalRow: {
+        marginTop: 10,
+        paddingTop: 10,
+        borderTopWidth: 1,
+        borderTopColor: 'rgba(255,255,255,0.2)',
+    },
+    totalLabel: {
+        fontSize: 15,
+        color: '#fff',
+        fontWeight: '800',
+    },
+    totalValue: {
+        fontSize: 20,
+        color: '#fff',
+        fontWeight: '900',
     },
 });
