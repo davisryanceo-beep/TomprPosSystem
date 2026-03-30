@@ -109,6 +109,11 @@ export const apiSubmitLeaveRequest = async (data: { startDate: string, endDate: 
     return response.data;
 };
 
+export const apiSubmitOvertimeRequest = async (data: { date: string, requestedHours: number, reason: string }) => {
+    const response = await api.post('/mobile/overtime-request', data);
+    return response.data;
+};
+
 export const apiGetAnnouncements = async (storeId: string) => {
     const response = await api.get(`/mobile/announcements/${storeId}`);
     return response.data;
