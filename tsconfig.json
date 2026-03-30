@@ -26,5 +26,11 @@
     },
     "allowImportingTsExtensions": true,
     "noEmit": true
-  }
+  },
+  "exclude": [
+    "mobile",
+    "TomprStamp",
+    "node_modules",
+    "dist"
+  ]
 }

@@ -1,0 +1,72 @@
+﻿[dotenv@17.2.3] injecting env (4) from ..\.env -- tip: ΓÜÖ∩╕Å  override existing env vars with { override: true }
+------------------------------------------------
+Initializing Supabase Postgres connection
+URL: https://pthpxqzisshrcnjwwzlu.supabase.co
+------------------------------------------------
+Raw Options column values: [
+  {
+    "options": [
+      {
+        "id": "mod-1772510841367",
+        "name": "0%",
+        "available": true,
+        "priceAdjustment": 0
+      },
+      {
+        "id": "mod-1772510848068",
+        "name": "25%",
+        "available": true,
+        "priceAdjustment": 0
+      },
+      {
+        "id": "mod-1772510853384",
+        "name": "50%",
+        "available": true,
+        "priceAdjustment": 0
+      },
+      {
+        "id": "mod-1772510860471",
+        "name": "75%",
+        "available": true,
+        "priceAdjustment": 0
+      },
+      {
+        "id": "mod-1772510864680",
+        "name": "100%",
+        "available": true,
+        "priceAdjustment": 0
+      }
+    ]
+  }
+]
+
+Attempting insert...
+node : Insert error: {
+At line:1 char:1
++ node 
+inspect_options.js > 
+out.txt 2>&1
++ ~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
+    + CategoryInfo     
+         : NotSpecifi  
+  ed: (Insert error:   
+  {:String) [], Rem    
+oteException
+    + FullyQualifiedEr 
+   rorId : NativeComm  
+  andError
+ 
+  code: '23503',
+  details: 'Key (storeI
+d)=(store-1769942186105
+5) is not present in 
+table "stores".',
+  hint: null,
+  message: 'insert or 
+update on table 
+"modifiergroups" 
+violates foreign key 
+constraint "modifiergro
+ups_storeId_fkey"'
+}

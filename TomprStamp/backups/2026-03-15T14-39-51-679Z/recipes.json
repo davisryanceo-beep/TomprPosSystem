@@ -1,0 +1,20 @@
+[
+  {
+    "id": "rec1",
+    "productId": "prod1",
+    "productName": "Espresso",
+    "ingredients": "[{\"id\":\"ring1\",\"name\":\"Coffee Beans\",\"quantity\":\"18\",\"unit\":\"g\",\"supplyItemId\":\"supp1\"}]",
+    "instructions": "[\"Grind beans fine.\",\"Tamp evenly.\",\"Pull shot for 25-30s.\"]",
+    "notes": "Standard double shot.",
+    "storeId": "store1-downtown"
+  },
+  {
+    "id": "rec2",
+    "productId": "prod2",
+    "productName": "Latte",
+    "ingredients": "[{\"id\":\"ring2\",\"name\":\"Espresso\",\"quantity\":\"1\",\"unit\":\"shot\",\"supplyItemId\":\"supp1\"},{\"id\":\"ring3\",\"name\":\"Milk\",\"quantity\":\"200\",\"unit\":\"ml\",\"supplyItemId\":\"supp2\"}]",
+    "instructions": "[\"Pull espresso shot.\",\"Steam milk to 65C.\",\"Pour milk over espresso with thin foam.\"]",
+    "notes": "Latte art optional.",
+    "storeId": "store1-downtown"
+  }
+]

@@ -1,0 +1,30 @@
+{
+    "name": "pos-cafe-server",
+    "version": "1.0.0",
+    "description": "Backend for PosCafeSystem",
+    "main": "index.js",
+    "type": "module",
+    "scripts": {
+        "start": "node index.js",
+        "dev": "nodemon index.js",
+        "seed": "node seed.js"
+    },
+    "dependencies": {
+        "@supabase/supabase-js": "^2.97.0",
+        "bcryptjs": "^3.0.3",
+        "body-parser": "^1.20.2",
+        "cors": "^2.8.5",
+        "dotenv": "^17.2.3",
+        "express": "^4.19.2",
+        "express-rate-limit": "^8.3.1",
+        "firebase-admin": "^13.7.0",
+        "helmet": "^8.1.0",
+        "jsonwebtoken": "^9.0.3",
+        "undici": "^7.24.3",
+        "uuid": "^13.0.0",
+        "xss": "^1.0.15"
+    },
+    "devDependencies": {
+        "nodemon": "^3.1.0"
+    }
+}

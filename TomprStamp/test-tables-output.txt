@@ -1,0 +1,36 @@
+﻿[dotenv@17.2.3] injecting env (4) from .env -- tip: ΓÜÖ∩╕Å  override existing env vars with { override: true }
+Attempting to list tables via information_schema...
+node : run_sql error: 
+Could not find the 
+function 
+public.run_sql(sql) in 
+the schema cache
+At line:1 char:1
++ node 
+test-all-tables.js 
+2>&1 | Out-File 
+-FilePath 
+"test-tables-output ...
++ ~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~
+    + CategoryInfo     
+         : NotSpecifi  
+  ed: (run_sql error   
+ : ...he schema cac    
+he:String) [], Rem    
+oteException
+    + FullyQualifiedEr 
+   rorId : NativeComm  
+  andError
+ 
+
+Testing known tables:
+ stores: OK
+ users: OK
+ orders: OK
+ products: OK
+ categories: OK
+ modifiergroups: MISSING - Could not find the table 'public.modifiergroups' in the schema cache
+ addons: OK
+ combos: OK
+ current_orders: OK

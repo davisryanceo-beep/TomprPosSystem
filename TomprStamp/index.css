@@ -1,0 +1,33 @@
+@import "tailwindcss";
+@config "./tailwind.config.js";
+
+/* Custom styles for react-simple-keyboard */
+.simple-keyboard {
+    @apply bg-cream dark:bg-charcoal-900 border-t-2 border-charcoal/20 dark:border-cream-light/20;
+}
+
+.simple-keyboard .hg-button {
+    @apply bg-cream-light dark:bg-charcoal-dark text-charcoal-dark dark:text-white shadow-md rounded-md border-b-4 border-charcoal/20 dark:border-charcoal-900;
+    font-family: 'Nunito', sans-serif;
+    height: 50px;
+}
+
+.simple-keyboard .hg-button:active {
+    @apply transform scale-95 border-b-2;
+}
+
+.simple-keyboard .hg-button.hg-function_button {
+    @apply bg-charcoal-light/30 dark:bg-charcoal-dark/50;
+}
+
+.simple-keyboard .hg-button.hg-button-bksp,
+.simple-keyboard .hg-button.hg-button-tab,
+.simple-keyboard .hg-button.hg-button-caps,
+.simple-keyboard .hg-button.hg-button-shift,
+.simple-keyboard .hg-button.hg-button-space {
+    @apply bg-charcoal-light/50 dark:bg-charcoal-dark/80;
+}
+
+.simple-keyboard .hg-button.hg-button-enter {
+    @apply bg-emerald hover:bg-emerald-dark text-white;
+}

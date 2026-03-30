@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tompr Stamp</title>
+
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="/manifest.json" crossorigin="use-credentials">
+  <meta name="theme-color" content="#10b981">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Tompr Stamp">
+  <link rel="apple-touch-icon" href="/icon-192.png">
+
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/simple-keyboard@latest/build/css/index.css">
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Noto+Sans+Khmer:wght@400;500;600;700&display=swap');
+
+    body {
+      font-family: 'Nunito', 'Noto Sans Khmer', sans-serif;
+    }
+
+    .fade-in {
+      animation: fadeIn 0.5s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
+
+    /* Slideshow Ken Burns Effect */
+    @keyframes kenBurns {
+      0% {
+        transform: scale(1);
+      }
+
+      100% {
+        transform: scale(1.1);
+      }
+    }
+
+    /* Item Slide-In Animation */
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .animate-slide-in {
+      animation: slideIn 0.5s ease-out;
+    }
+
+    /* Slow Pulse Animation */
+    @keyframes pulseSlow {
+
+      0%,
+      100% {
+        transform: scale(1);
+      }
+
+      50% {
+        transform: scale(1.05);
+      }
+    }
+
+    .animate-pulse-slow {
+      animation: pulseSlow 2s ease-in-out infinite;
+    }
+
+    /* Blob Animation (Lava Lamp) */
+    @keyframes blob {
+      0% {
+        transform: translate(0px, 0px) scale(1);
+      }
+
+      33% {
+        transform: translate(30px, -50px) scale(1.1);
+      }
+
+      66% {
+        transform: translate(-20px, 20px) scale(0.9);
+      }
+
+      100% {
+        transform: translate(0px, 0px) scale(1);
+      }
+    }
+
+    .animate-blob {
+      animation: blob 7s infinite;
+    }
+
+    .animation-delay-2000 {
+      animation-delay: 2s;
+    }
+
+    .animation-delay-4000 {
+      animation-delay: 4s;
+    }
+
+    /* Screen Reader Only */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border-width: 0;
+    }
+
+    /* High Contrast Mode */
+    .high-contrast {
+      --tw-bg-opacity: 1;
+    }
+
+    .high-contrast body {
+      background-color: #000000 !important;
+      color: #FFFFFF !important;
+    }
+
+    .high-contrast .bg-cream,
+    .high-contrast .bg-cream-light {
+      background-color: #FFFFFF !important;
+      color: #000000 !important;
+    }
+
+    .high-contrast .bg-charcoal-dark,
+    .high-contrast .dark\:bg-charcoal-dark {
+      background-color: #000000 !important;
+      color: #FFFFFF !important;
+    }
+
+    .high-contrast .text-charcoal-dark {
+      color: #000000 !important;
+    }
+
+    .high-contrast .text-cream-light,
+    .high-contrast .dark\:text-cream-light {
+      color: #FFFFFF !important;
+    }
+
+    .high-contrast button,
+    .high-contrast .bg-emerald {
+      border: 2px solid #FFFFFF !important;
+    }
+
+
+
+    @media print {
+      body>*:not(#printable-area) {
+        display: none !important;
+      }
+
+      #printable-area {
+        display: block !important;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        background-color: white !important;
+        color: black !important;
+        padding: 20px;
+        margin: 0;
+      }
+
+      #printable-area * {
+        color: black !important;
+        background-color: transparent !important;
+        box-shadow: none !important;
+        text-shadow: none !important;
+      }
+
+      #printable-area button,
+      #printable-area a {
+        display: none !important;
+        /* Hide buttons/links in print */
+      }
+
+      /* Ensure modal itself is hidden during print */
+      .fixed.inset-0.z-50 {
+        display: none !important;
+      }
+    }
+  </style>
+
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.1.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.1.0/",
+    "react/": "https://esm.sh/react@^19.1.0/",
+    "@google/genai": "https://esm.sh/@google/genai@^1.4.0",
+    "react-icons/fa": "https://esm.sh/react-icons@^5.5.0/fa",
+    "recharts": "https://esm.sh/recharts@^2.15.3",
+    "react-icons/": "https://esm.sh/react-icons@^5.5.0/",
+    "react-dom": "https://esm.sh/react-dom@^19.1.0",
+    "jspdf": "https://esm.sh/jspdf@^2.5.1",
+    "jspdf-autotable": "https://esm.sh/jspdf-autotable@^3.8.2",
+    "react-simple-keyboard": "https://esm.sh/react-simple-keyboard@^3.7.108",
+    "simple-keyboard-layouts": "https://esm.sh/simple-keyboard-layouts@^3.4.155"
+  }
+}
+</script>
+  <link rel="stylesheet" href="/index.css">
+</head>
+
+<body
+  class="bg-cream dark:bg-charcoal-900 text-charcoal dark:text-cream-light transition-colors duration-300 antialiased">
+  <div id="root"></div>
+  <div id="printable-area" style="display: none;"></div> <!-- Hidden div for printing -->
+  <script type="module" src="/index.tsx"></script>
+
+  <!-- Service Worker Registration -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').then(registration => {
+          console.log('SW registered: ', registration);
+        }).catch(registrationError => {
+          console.log('SW registration failed: ', registrationError);
+        });
+      });
+    }
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,27 @@
+﻿[dotenv@17.2.3] injecting env (4) from ..\.env -- tip: ΓÜÖ∩╕Å  write to custom object with { processEnv: myObject }
+------------------------------------------------
+Initializing Supabase Postgres connection
+URL: https://pthpxqzisshrcnjwwzlu.supabase.co
+------------------------------------------------
+No current orders found
+node : Assertion failed: 
+!(handle->flags & 
+UV_HANDLE_CLOSING), file 
+src\win\async.c, line 76
+At line:1 char:1
++ node 
+check_current_orders.js > 
+check_current_out.txt 2>&1
++ ~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~
+    + CategoryInfo         
+     : NotSpecifi    ed: 
+(Assertion fai    
+le...sync.c, line     
+76:String) [], Rem    
+oteException
+    + FullyQualifiedEr    
+rorId : NativeComm    
+andError
+ 

@@ -32,7 +32,11 @@ const authenticateToken = (req, res, next) => {
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1]; // Bearer TOKEN
 
-  if (token == null) return res.sendStatus(401);
+  if (token == null) {
+    return res
+      .status(401)
+      .json({ error: "Unauthorized: No token provided" });
+  }
 
   jwt.verify(token, JWT_SECRET, (err, user) => {
     if (err) {
@@ -223,7 +227,7 @@ app.use((req, res, next) => {
 
 // Routes
 app.get("/", (req, res) => {
-  res.send("Pos Cafe API Running (Firestore)");
+  res.json({ message: "Pos Cafe API Running" });
 });
 
 // DEBUG: Health Check Endpoint
@@ -244,9 +248,9 @@ app.get("/api/debug-code", (req, res) => {
   try {
     const filePath = join(__dirname, 'mobile-routes.js');
     const content = readFileSync(filePath, 'utf8');
-    res.send(content);
+    res.json({ content });
   } catch (err) {
-    res.status(500).send(err.message);
+    res.status(500).json({ error: err.message });
   }
 });
 

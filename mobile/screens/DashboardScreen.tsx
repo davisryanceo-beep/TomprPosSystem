@@ -244,18 +244,38 @@ export default function DashboardScreen({ route, navigation }: any) {
                 {/* Announcements */}
                 {storeId && <AnnouncementsSection storeId={storeId} />}
 
-                {/* Quick Stats - Monthly Overview */}
+                {/* Quick Stats - Monthly Performance */}
+                <View style={[styles.sectionHeader, { marginTop: 10 }]}>
+                    <Text style={[styles.sectionTitle, { color: colors.text, marginBottom: 0 }]}>Performance</Text>
+                    <Text style={{ color: colors.textSecondary, fontSize: 12 }}>Current Month</Text>
+                </View>
+
                 <View style={styles.statsRow}>
                     <View style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                        <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Month Hours</Text>
+                        <View style={styles.statIconContainer}>
+                            <Ionicons name="time" size={18} color={colors.primary} />
+                        </View>
+                        <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Total Hours</Text>
                         <Text style={[styles.statValue, { color: colors.text }]}>
                             {monthlyStats?.totalHoursWorked || '0'}h
                         </Text>
                     </View>
                     <View style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                        <View style={[styles.statIconContainer, { backgroundColor: colors.secondary + '20' }]}>
+                            <Ionicons name="flash" size={18} color={colors.secondary} />
+                        </View>
+                        <Text style={[styles.statLabel, { color: colors.textSecondary }]}>OT Hours</Text>
+                        <Text style={[styles.statValue, { color: colors.text }]}>
+                            {monthlyStats?.totalOTHours || '0'}h
+                        </Text>
+                    </View>
+                    <View style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                        <View style={[styles.statIconContainer, { backgroundColor: colors.success + '20' }]}>
+                            <Ionicons name="calendar" size={18} color={colors.success} />
+                        </View>
                         <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Day Offs</Text>
                         <Text style={[styles.statValue, { color: colors.text }]}>
-                            {monthlyStats?.usedDayOffs || '0'} / {monthlyStats?.allowedDayOffs || '0'}
+                            {monthlyStats?.usedDayOffs || '0'}<Text style={{ fontSize: 12, fontWeight: '400', color: colors.textSecondary }}>/{monthlyStats?.allowedDayOffs || '0'}</Text>
                         </Text>
                     </View>
                 </View>
@@ -429,10 +449,12 @@ const styles = StyleSheet.create({
     container: { flex: 1 },
     scrollContent: { padding: 20, paddingBottom: 50, paddingTop: 60 },
     header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 25 },
+    sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 15, paddingHorizontal: 5 },
     avatarCircle: { width: 44, height: 44, borderRadius: 22, justifyContent: 'center', alignItems: 'center' },
     avatarText: { color: '#fff', fontSize: 20, fontWeight: 'bold' },
     greeting: { fontSize: 20, fontWeight: 'bold' },
     iconBtn: { width: 40, height: 40, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
+    statIconContainer: { width: 32, height: 32, borderRadius: 10, backgroundColor: 'rgba(5, 150, 105, 0.1)', justifyContent: 'center', alignItems: 'center', marginBottom: 8 },
 
     statsRow: { flexDirection: 'row', gap: 15, marginBottom: 30 },
     statCard: { flex: 1, padding: 15, borderRadius: 16, borderWidth: 1, alignItems: 'center' },

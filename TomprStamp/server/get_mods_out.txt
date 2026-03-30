@@ -1,0 +1,20 @@
+﻿node : Error: Request 
+failed with status 
+code 429
+At line:1 char:1
++ node 
+test_get_mods.js > 
+get_mods_out.txt 2>&1
++ ~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~
+    + CategoryInfo     
+         : NotSpecifi  
+  ed: (Error: Reques   
+ t ...status code 4    
+29:String) [], Rem    
+oteException
+    + FullyQualifiedEr 
+   rorId : NativeComm  
+  andError
+ 

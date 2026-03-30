@@ -1,0 +1,8 @@
+[
+  {
+    "code": "23503",
+    "details": "Key (storeId)=(store-1769421861055) is not present in table \"stores\".",
+    "hint": null,
+    "message": "insert or update on table \"categories\" violates foreign key constraint \"categories_storeId_fkey\""
+  }
+]

@@ -1,0 +1,16 @@
+﻿[dotenv@17.2.3] injecting env (4) from ..\.env -- tip: ≡ƒùé∩╕Å backup and recover secrets: https://dotenvx.com/ops
+------------------------------------------------
+Initializing Supabase Postgres connection
+URL: https://pthpxqzisshrcnjwwzlu.supabase.co
+------------------------------------------------
+Checking for orders in December 2025...
+Found 0 orders in Dec 2025.
+
+Checking for orders in December 2024...
+Found 0 orders in Dec 2024.
+
+Checking oldest order timestamp...
+Oldest order: [ { timestamp: '2026-01-30T04:35:28.841Z' } ]
+
+Checking newest order timestamp...
+Newest order: [ { timestamp: '2026-03-03T01:53:32.968Z' } ]

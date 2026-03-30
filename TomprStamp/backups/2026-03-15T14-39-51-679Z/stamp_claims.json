@@ -1,0 +1,46 @@
+[
+  {
+    "id": "2cd99e74-c70f-4ae5-bb88-84d9c944f8d7",
+    "store_id": "store-1769421861055",
+    "order_id": "order-1772518332682",
+    "stamps": 1,
+    "claimed": false,
+    "claimed_at": null,
+    "customer_id": null,
+    "created_at": "2026-03-03T06:12:11.87786+00:00",
+    "expires_at": "2026-03-03T07:12:11.743+00:00"
+  },
+  {
+    "id": "888b7d7c-b05d-4395-aba5-f4e729431a21",
+    "store_id": "store-1769421861055",
+    "order_id": "order-1772532678510",
+    "stamps": 1,
+    "claimed": false,
+    "claimed_at": null,
+    "customer_id": null,
+    "created_at": "2026-03-03T10:11:19.144314+00:00",
+    "expires_at": "2026-03-03T11:11:19.039+00:00"
+  },
+  {
+    "id": "b8e46705-d19d-4ff0-aa33-debd397a835d",
+    "store_id": "store-1769421861055",
+    "order_id": "order-1772533263733",
+    "stamps": 4,
+    "claimed": false,
+    "claimed_at": null,
+    "customer_id": null,
+    "created_at": "2026-03-03T10:21:04.51462+00:00",
+    "expires_at": "2026-03-03T11:21:04.381+00:00"
+  },
+  {
+    "id": "5b052272-fce9-437a-9112-44b617bfdc18",
+    "store_id": "store-1769421861055",
+    "order_id": "order-1772623120833",
+    "stamps": 2,
+    "claimed": false,
+    "claimed_at": null,
+    "customer_id": null,
+    "created_at": "2026-03-04T11:18:42.293323+00:00",
+    "expires_at": "2026-03-04T12:18:42.185+00:00"
+  }
+]
