@@ -126,6 +126,7 @@ CREATE TABLE IF NOT EXISTS orders (
     storeId TEXT NOT NULL,
     orderType TEXT DEFAULT 'POS',
     qrPaymentState TEXT,
+    dailyOrderNumber INTEGER,
     FOREIGN KEY (storeId) REFERENCES stores(id) ON DELETE CASCADE
 );
 

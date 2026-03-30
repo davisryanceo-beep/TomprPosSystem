@@ -857,7 +857,7 @@ app.post("/api/orders", authenticateToken, async (req, res) => {
       "id", "items", "tableNumber", "totalAmount", "taxAmount", "discountAmount",
       "finalAmount", "status", "timestamp", "cashierId", "baristaId", "isRushOrder",
       "paymentMethod", "paymentCurrency", "cashTendered", "changeGiven",
-      "appliedPromotionId", "storeId", "qrPaymentState"
+      "appliedPromotionId", "storeId", "qrPaymentState", "dailyOrderNumber"
     ];
     const safeOrder = {};
     for (const key of allowedKeys) {
@@ -907,7 +907,7 @@ app.put("/api/orders/:id", authenticateToken, async (req, res) => {
       "items", "tableNumber", "totalAmount", "taxAmount", "discountAmount",
       "finalAmount", "status", "cashierId", "baristaId", "isRushOrder",
       "paymentMethod", "paymentCurrency", "cashTendered", "changeGiven",
-      "appliedPromotionId", "qrPaymentState"
+      "appliedPromotionId", "qrPaymentState", "dailyOrderNumber"
     ];
     const safeUpdates = {};
     for (const key of allowedKeys) {
