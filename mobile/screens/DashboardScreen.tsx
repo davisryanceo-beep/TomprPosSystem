@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, Alert, Modal, ScrollView, Act
 import { Ionicons } from '@expo/vector-icons';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { storage } from '../utils/storage';
-import { apiClockIn, apiClockOut, apiGetStaffRewards, apiClaimReward, getProducts, apiGetUser, apiGetPendingOnlineOrders } from '../services/api';
+import { apiClockIn, apiClockOut, apiGetStaffRewards, apiClaimReward, getProducts, apiGetUser, apiGetPendingOnlineOrders, apiGetHistory } from '../services/api';
 import AnnouncementsSection from '../components/AnnouncementsSection';
 import { useTheme } from '../context/ThemeContext';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -47,7 +47,19 @@ export default function DashboardScreen({ route, navigation }: any) {
     const [selectedRewardId, setSelectedRewardId] = useState<string | null>(null);
     const [monthlyStats, setMonthlyStats] = useState<any>(null);
     const [loading, setLoading] = useState(false);
-    const [rewards, setRewards] = useState<any[]>([]);
+
+    // Online Orders
+    const [pendingOrderCount, setPendingOrderCount] = useState(0);
+    const [lastOrderId, setLastOrderId] = useState<string | null>(null);
+
+    useEffect(() => {
+        let interval: any;
+        if (storeId) {
+            checkOnlineOrders(); // Check immediately
+            interval = setInterval(checkOnlineOrders, 30000); // Check every 30s
+        }
+        return () => clearInterval(interval);
+    }, [storeId]);
 
     useEffect(() => {
         if (userId && userId !== 'LOAD_FROM_STORAGE_PLEASE') {
