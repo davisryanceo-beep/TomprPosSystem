@@ -45,10 +45,11 @@ const USD_DENOMINATIONS = [
 ];
 
 const DeclareCashModal: React.FC<DeclareCashModalProps> = ({ isOpen, onClose, cashierId, cashierName, forcedType }) => {
-  const { addCashDrawerLog, getExpectedCash, verifyManagerPin } = useShop();
+  const { addCashDrawerLog, getExpectedCash, verifyManagerPin, openCashDrawer } = useShop();
   const { currentUser } = useAuth();
   
   const [declarationType, setDeclarationType] = useState<'OPEN' | 'CLOSE' | 'DROP' | 'PAYOUT' | null>(null);
+  const [drawerPulse, setDrawerPulse] = useState(false);
   
   const [currencyTab, setCurrencyTab] = useState<'KHR' | 'USD'>('KHR');
   const [countsKHR, setCountsKHR] = useState<Record<string, string>>({});
@@ -68,6 +69,16 @@ const DeclareCashModal: React.FC<DeclareCashModalProps> = ({ isOpen, onClose, ca
       setDeclarationType(forcedType || null);
     }
   }, [isOpen, forcedType]);
+
+  // Trigger drawer open when type is selected
+  useEffect(() => {
+    if (declarationType) {
+      openCashDrawer();
+      setDrawerPulse(true);
+      const timer = setTimeout(() => setDrawerPulse(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [declarationType, openCashDrawer]);
 
   const expectedAmount = useMemo(() => {
     if (!declarationType) return 0;
@@ -313,7 +324,21 @@ const DeclareCashModal: React.FC<DeclareCashModalProps> = ({ isOpen, onClose, ca
       ) : null}
     >
       {!declarationType ? renderTypeSelection() : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-in">
+        <div className={`grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-in relative ${drawerPulse ? 'animate-shake' : ''}`}>
+          
+          {/* Visual Pulse for Drawer Opening */}
+          {drawerPulse && (
+            <div className="absolute inset-0 z-50 flex items-center justify-center pointer-events-none">
+              <div className="bg-emerald text-white px-10 py-6 rounded-full font-black text-3xl shadow-[0_0_50px_rgba(16,185,129,0.5)] animate-bounce border-[6px] border-white flex items-center gap-4">
+                <FaLock className="rotate-12" /> 
+                <div className="flex flex-col items-start leading-none">
+                  <span className="text-xs uppercase tracking-[0.2em] opacity-80 mb-1">Hardware Verified</span>
+                  <span>DRAWER OPEN</span>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Denomination Counting Section */}
           <div className="lg:col-span-2 space-y-4">
             

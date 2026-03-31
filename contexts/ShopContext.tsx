@@ -248,6 +248,8 @@ interface ShopContextType {
   // Alerts
   newOnlineOrders: Order[];
   acknowledgeOrder: (orderId: string) => Promise<void>;
+  hasDeclaredStartingCash: (userId: string) => boolean;
+  openCashDrawer: () => void;
 }
 
 const ShopContext = createContext<ShopContextType | undefined>(undefined);
@@ -1849,6 +1851,47 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return openingBalance + salesAmount - dropsAndPayouts;
   }, [currentStoreId, ordersState, cashDrawerLogsState, getActiveTimeLogForUser, getShiftOrders]);
 
+  const hasDeclaredStartingCash = useCallback((userId: string): boolean => {
+    if (!currentStoreId) return false;
+    const todayStr = new Date().toLocaleDateString('en-CA');
+    return cashDrawerLogsState.some(l => 
+        l.cashierId === userId && 
+        l.type === 'OPEN' && 
+        l.shiftDate === todayStr &&
+        l.storeId === currentStoreId
+    );
+  }, [cashDrawerLogsState, currentStoreId]);
+
+  const openCashDrawer = useCallback(() => {
+    console.log("CASH DRAWER OPENED - Requesting hardware pulse if available.");
+    
+    // Premium Audio Synthesis: Cash Register Chime
+    try {
+      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+
+      oscillator.type = 'triangle';
+      oscillator.frequency.setValueAtTime(800, audioCtx.currentTime);
+      oscillator.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+      
+      gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+
+      oscillator.start();
+      oscillator.stop(audioCtx.currentTime + 0.5);
+    } catch (e) {
+      console.warn("Web Audio API not supported or blocked", e);
+    }
+
+    // In a premium app, this could also trigger a message to a local utility
+    const event = new CustomEvent('cash-drawer-open', { detail: { timestamp: new Date().toISOString() } });
+    window.dispatchEvent(event);
+  }, []);
+
   const addCashDrawerLog = useCallback(async (logData: Omit<CashDrawerLog, 'id' | 'expectedAmount' | 'discrepancy' | 'logTimestamp' | 'storeId'>): Promise<CashDrawerLog | undefined> => {
     if (!currentStoreId) return;
     
@@ -2090,6 +2133,8 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     clearAllOrders,
     newOnlineOrders,
     acknowledgeOrder,
+    hasDeclaredStartingCash,
+    openCashDrawer,
     isOnline, pendingOrders, syncPendingOrders
   };
 

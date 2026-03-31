@@ -10,13 +10,14 @@ import { OrderItem, Order, ProductCategory, PaymentMethod, PaymentCurrency, QRPa
 import useKeyboardShortcuts from '../../hooks/useKeyboardShortcuts';
 import OnlineMenuModal from './OnlineMenuModal';
 import OnlineOrdersModal from './OnlineOrdersModal';
-import { FaReceipt, FaShoppingCart, FaCoffee, FaLeaf, FaCookieBite, FaShoppingBag, FaQuestionCircle, FaDesktop, FaStore, FaBell, FaFolderOpen, FaUserTag, FaWifi, FaCloudUploadAlt } from 'react-icons/fa';
+import { FaReceipt, FaShoppingCart, FaCoffee, FaLeaf, FaCookieBite, FaShoppingBag, FaQuestionCircle, FaDesktop, FaStore, FaBell, FaFolderOpen, FaUserTag, FaWifi, FaCloudUploadAlt, FaCalculator, FaMoneyBillWave, FaLock } from 'react-icons/fa';
 import PrintableReceipt from './PrintableReceipt';
 import CashPaymentModal from './CashPaymentModal';
 import TableSelectionModal from './TableSelectionModal';
 import ShortcutsHelp from '../Shared/ShortcutsHelp';
 import OpenTabsModal from './OpenTabsModal';
 import LoyaltyLookupModal from './LoyaltyLookupModal';
+import DeclareCashModal from './DeclareCashModal';
 
 const CashierInterface: React.FC = () => {
   const {
@@ -37,7 +38,15 @@ const CashierInterface: React.FC = () => {
   const [showOnlineOrdersModal, setShowOnlineOrdersModal] = useState(false);
   const [showOpenTabsModal, setShowOpenTabsModal] = useState(false);
   const [showLoyaltyModal, setShowLoyaltyModal] = useState(false);
+  const [showDeclareCashModal, setShowDeclareCashModal] = useState(false);
 
+
+  // Auto-open declaration if needed
+  useEffect(() => {
+    if (currentUser && !useShop().hasDeclaredStartingCash(currentUser.id)) {
+      setShowDeclareCashModal(true);
+    }
+  }, [currentUser]);
 
   // Calculate active online orders count for badge
   const activeOnlineOrdersCount = useShop().orders.filter(o =>
@@ -139,6 +148,13 @@ const CashierInterface: React.FC = () => {
         alert(`Error: ${product ? product.name : 'An item'} is out of stock or quantity exceeds available stock. Please review the order.`);
         return;
       }
+    }
+    
+    // Enforcement: Check for cash declaration
+    if (!useShop().hasDeclaredStartingCash(currentUser.id)) {
+      alert("Please declare starting cash before processing orders.");
+      setShowDeclareCashModal(true);
+      return;
     }
 
     if (method === 'Cash') {
@@ -300,8 +316,35 @@ const CashierInterface: React.FC = () => {
         </div>
       )}
       
-      <div className="fade-in grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 flex-grow p-2 sm:p-4 min-h-0 overflow-hidden">
-      {/* Product Panel */}
+      <div className="fade-in grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 flex-grow p-2 sm:p-4 min-h-0 overflow-hidden relative">
+        {/* Strict Enforcement Overlay */}
+        {!useShop().hasDeclaredStartingCash(currentUser?.id || '') && (
+          <div className="absolute inset-0 z-30 flex items-center justify-center backdrop-blur-md bg-white/30 dark:bg-charcoal/30 transition-all p-6 text-center">
+            <div className="max-w-md w-full bg-white dark:bg-charcoal-dark p-10 rounded-[2.5rem] shadow-2xl border-4 border-emerald/20 animate-fade-in space-y-6">
+              <div className="w-24 h-24 bg-emerald/10 rounded-full flex items-center justify-center mx-auto">
+                <FaCalculator className="text-4xl text-emerald animate-pulse" />
+              </div>
+              <div>
+                <h2 className="text-3xl font-black text-charcoal-dark dark:text-cream-light mb-2">Shift Setup Required</h2>
+                <p className="text-charcoal-light font-bold">Please declare your starting cash float to unlock the register and begin processing orders.</p>
+              </div>
+              <Button 
+                onClick={() => setShowDeclareCashModal(true)} 
+                variant="primary" 
+                size="xl" 
+                className="w-full shadow-lg shadow-emerald/30 !py-6 text-xl tracking-tight"
+                leftIcon={<FaMoneyBillWave />}
+              >
+                Open Cash Drawer
+              </Button>
+              <div className="flex items-center justify-center gap-2 text-[10px] font-black text-charcoal-light/40 uppercase tracking-widest">
+                <FaLock /> Secure Shift Management Protocol
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Product Panel */}
       <div className={`lg:col-span-2 bg-cream dark:bg-charcoal-dark/50 p-3 sm:p-4 rounded-xl shadow-lg flex flex-col transition-opacity duration-300 ${isQRPaymentInProgress ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
         <div className="flex-shrink-0">
           <div className="flex justify-between items-center mb-3 gap-2">
@@ -429,6 +472,14 @@ const CashierInterface: React.FC = () => {
       <LoyaltyLookupModal
         isOpen={showLoyaltyModal}
         onClose={() => setShowLoyaltyModal(false)}
+      />
+
+      <DeclareCashModal
+        isOpen={showDeclareCashModal}
+        onClose={() => setShowDeclareCashModal(false)}
+        cashierId={currentUser?.id || ''}
+        cashierName={currentUser?.firstName || currentUser?.username || ''}
+        forcedType="OPEN"
       />
       </div>
     </div>
