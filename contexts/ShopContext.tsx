@@ -340,7 +340,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Detect STAMP_ONLY mode
   const isStampOnly = useMemo(() => {
-    return import.meta.env.VITE_STAMP_ONLY === 'true' || window.location.hostname.includes('tompr-stamp');
+    return import.meta.env.VITE_STAMP_ONLY === 'true' || window.location.hostname.includes('stamp.flow') || window.location.hostname.includes('tompr-stamp');
   }, []);
 
   // --- RELOAD DATA (Exposed) ---

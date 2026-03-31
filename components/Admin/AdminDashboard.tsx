@@ -35,7 +35,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { ROLES } from '../../constants';
 import { useShop } from '../../contexts/ShopContext';
 
-const STAMP_ONLY = import.meta.env.VITE_STAMP_ONLY === 'true' || window.location.hostname.includes('tompr-stamp');
+const STAMP_ONLY = import.meta.env.VITE_STAMP_ONLY === 'true' || window.location.hostname.includes('stamp.flow') || window.location.hostname.includes('tompr-stamp');
 
 // Define specific tab sets for each admin type
 type GlobalAdminTab = 'stores' | 'licenses' | 'users' | 'store-settings' | 'loyalty' | 'settings';

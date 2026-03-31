@@ -53,7 +53,7 @@ const PaymentSuccessStampModal: React.FC<PaymentSuccessStampModalProps> = ({
     if (!order) return null;
 
     const claimUrl = order.pendingStampClaimId
-        ? `https://tompr-stamp.vercel.app/#/claim/${order.pendingStampClaimId}?storeId=${order.storeId}`
+        ? `https://stamp.flowspos.com/#/claim/${order.pendingStampClaimId}?storeId=${order.storeId}`
         : null;
 
     return (

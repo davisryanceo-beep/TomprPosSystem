@@ -11,7 +11,7 @@ describe('App Redirect Logic', () => {
   });
 
   it('should identify POS system on primary domain', async () => {
-    vi.stubGlobal('location', { hostname: 'poscafesystem.vercel.app' });
+    vi.stubGlobal('location', { hostname: 'flowspos.com' });
     vi.stubEnv('VITE_STAMP_ONLY', 'false');
 
     const { STAMP_ONLY } = await import('../../App');
@@ -22,7 +22,7 @@ describe('App Redirect Logic', () => {
     // We use a separate describe block or test to isolate dynamic imports if needed
     // But let's try just changing the stub and importing again
     vi.stubGlobal('location', { 
-        hostname: 'tompr-stamp.vercel.app',
+        hostname: 'stamp.flowspos.com',
         hash: '',
         search: ''
     });

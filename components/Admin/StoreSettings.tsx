@@ -262,7 +262,7 @@ const StoreSettings: React.FC = () => {
                         {settings.id && (
                             <div className="p-3 bg-white rounded-xl shadow-lg border border-gray-100 mb-4">
                                 <QRCode
-                                    value={`https://tompr-stamp.vercel.app/#/loyalty?storeId=${settings.id}`}
+                                    value={`https://stamp.flowspos.com/#/loyalty?storeId=${settings.id}`}
                                     size={140}
                                     viewBox={`0 0 256 256`}
                                 />
@@ -273,7 +273,7 @@ const StoreSettings: React.FC = () => {
                         </p>
                         <div className="mt-4 w-full">
                             <code className="block p-2 bg-gray-50 dark:bg-charcoal-900 rounded text-[10px] text-charcoal-light break-all select-all font-mono">
-                                https://tompr-stamp.vercel.app/#/loyalty?storeId={settings.id}
+                                https://stamp.flowspos.com/#/loyalty?storeId={settings.id}
                             </code>
                         </div>
                     </div>

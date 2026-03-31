@@ -103,7 +103,7 @@ const LoyaltyManagement: React.FC = () => {
                         <>
                             <div className="hidden sm:block">
                                 <QRCode
-                                    value={`https://tompr-stamp.vercel.app/#/loyalty?storeId=${currentStoreId}`}
+                                    value={`https://stamp.flowspos.com/#/loyalty?storeId=${currentStoreId}`}
                                     size={40}
                                     viewBox={`0 0 256 256`}
                                 />
@@ -112,10 +112,10 @@ const LoyaltyManagement: React.FC = () => {
                                 <p className="text-[10px] font-black uppercase text-emerald-700/60 dark:text-emerald-300/60 tracking-widest mb-1">Your Loyalty Link</p>
                                 <div className="flex items-center space-x-2">
                                     <code className="text-[10px] font-mono bg-white dark:bg-charcoal-dark px-2 py-1 rounded border border-emerald/20 select-all">
-                                        https://tompr-stamp.vercel.app/#/loyalty?storeId={currentStoreId}
+                                        https://stamp.flowspos.com/#/loyalty?storeId={currentStoreId}
                                     </code>
                                     <a
-                                        href={`https://tompr-stamp.vercel.app/#/loyalty?storeId=${currentStoreId}`}
+                                        href={`https://stamp.flowspos.com/#/loyalty?storeId=${currentStoreId}`}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="p-1.5 bg-emerald text-white rounded-lg hover:bg-emerald-dark transition-colors"
