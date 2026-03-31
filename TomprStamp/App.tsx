@@ -74,13 +74,13 @@ const App: React.FC = () => {
     const isLoyaltyRoute = locationHash.startsWith('#/loyalty') || locationHash.startsWith('#/claim');
 
     // 1. If we are on the PRIMARY domain and try to access LOYALTY routes, redirect to LOYALTY domain
-    if (hostname.includes(PRIMARY_DOMAIN) && isLoyaltyRoute) {
+    if ((hostname === PRIMARY_DOMAIN || hostname === `www.${PRIMARY_DOMAIN}`) && isLoyaltyRoute) {
       window.location.href = `${LOYALTY_URL}/${locationHash}`;
       return;
     }
 
     // 2. If we are on the LOYALTY domain, ensure we are in the portal
-    if (hostname.includes(LOYALTY_DOMAIN) && (window.location.hash === '' || window.location.hash === '#/')) {
+    if ((hostname === LOYALTY_DOMAIN || hostname === `www.${LOYALTY_DOMAIN}`) && (window.location.hash === '' || window.location.hash === '#/')) {
       const currentQuery = window.location.search || (window.location.hash.includes('?') ? '?' + window.location.hash.split('?')[1] : '');
       window.location.hash = `#/loyalty${currentQuery}`;
     }
