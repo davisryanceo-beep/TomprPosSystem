@@ -5,12 +5,12 @@ import { Store } from '../../types';
 import Button from '../Shared/Button';
 import Input from '../Shared/Input';
 import Textarea from '../Shared/Textarea';
-import { FaStore, FaSave, FaBell, FaExclamationTriangle, FaGift } from 'react-icons/fa';
+import { FaStore, FaSave, FaBell, FaExclamationTriangle, FaGift, FaPrint, FaUnlockAlt, FaCheckCircle } from 'react-icons/fa';
 import QRCode from "react-qr-code";
 
 const StoreSettings: React.FC = () => {
     const { currentUser } = useAuth();
-    const { currentStoreId, getStoreById, updateStore, clearAllOrders, knownCategories } = useShop();
+    const { currentStoreId, getStoreById, updateStore, clearAllOrders, knownCategories, serialPort, connectHardwarePrinter, openCashDrawer } = useShop();
 
     const [settings, setSettings] = useState<Partial<Store>>({});
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -307,6 +307,52 @@ const StoreSettings: React.FC = () => {
                             <p className="text-[10px] text-charcoal-light italic">Only products from these categories will be claimable as rewards.</p>
                         </div>
                     )}
+                </div>
+            </div>
+
+            {/* Hardware & Peripherals Section */}
+            <div className="space-y-4 bg-blue-500/5 border border-blue-500/20 p-4 rounded-lg">
+                <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400 flex items-center">
+                    <span className="mr-2"><FaPrint /></span>Hardware & Peripherals
+                </h3>
+                <div className="space-y-4">
+                    <div className="flex items-center justify-between p-4 bg-white dark:bg-charcoal-dark rounded-xl border border-charcoal-light/10 shadow-sm">
+                        <div className="flex items-center gap-4">
+                            <div className={`p-3 rounded-full ${serialPort ? 'bg-emerald/10 text-emerald' : 'bg-charcoal-light/10 text-charcoal-light'}`}>
+                                <FaPrint size={20} />
+                            </div>
+                            <div>
+                                <h4 className="font-bold text-charcoal-dark dark:text-cream-light">Receipt Printer / Cash Drawer</h4>
+                                <p className="text-xs text-charcoal-light">
+                                    {serialPort ? 'Hardware connected and ready.' : 'No printer connected via Web Serial.'}
+                                </p>
+                            </div>
+                        </div>
+                        <div className="flex gap-2">
+                            {serialPort && (
+                                <Button 
+                                    onClick={() => openCashDrawer()} 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="text-emerald"
+                                    leftIcon={<FaUnlockAlt />}
+                                >
+                                    Test Kick
+                                </Button>
+                            )}
+                            <Button 
+                                onClick={connectHardwarePrinter} 
+                                variant={serialPort ? 'ghost' : 'primary'}
+                                size="sm"
+                                leftIcon={serialPort ? <FaCheckCircle /> : <FaPrint />}
+                            >
+                                {serialPort ? 'Change Printer' : 'Connect Printer'}
+                            </Button>
+                        </div>
+                    </div>
+                    <div className="p-3 bg-blue-500/10 rounded-lg text-[10px] text-blue-600 font-bold leading-relaxed">
+                        <p>💡 PRO TIP: This uses the Web Serial API to send an ESC/POS pulse command directly to your printer. Ensure your printer is connected via USB/Serial and is ESC/POS compatible.</p>
+                    </div>
                 </div>
             </div>
         </div>

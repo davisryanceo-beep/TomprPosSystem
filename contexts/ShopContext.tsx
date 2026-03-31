@@ -249,6 +249,10 @@ interface ShopContextType {
   newOnlineOrders: Order[];
   acknowledgeOrder: (orderId: string) => Promise<void>;
   hasDeclaredStartingCash: (userId: string) => boolean;
+  
+  // Hardware Integration
+  serialPort: any | null;
+  connectHardwarePrinter: () => Promise<void>;
   openCashDrawer: () => void;
 }
 
@@ -1490,6 +1494,11 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         qrPaymentState: QRPaymentState.PAYMENT_SUCCESSFUL
       };
       localStorage.setItem('currentOrder', JSON.stringify(successDisplayOrder));
+      
+      // Hardware: Auto-open drawer for Cash payments
+      if (paymentMethod === 'Cash') {
+        openCashDrawer();
+      }
 
       clearCurrentOrderLocal();
       return globalSavedOrder;
@@ -1862,9 +1871,23 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     );
   }, [cashDrawerLogsState, currentStoreId]);
 
-  const openCashDrawer = useCallback(() => {
+  const openCashDrawer = useCallback(async () => {
     console.log("CASH DRAWER OPENED - Requesting hardware pulse if available.");
     
+    // Hardware Integration: Web Serial ESC/POS Pulse
+    if (serialPort && serialPort.writable) {
+      try {
+        const writer = serialPort.writable.getWriter();
+        // ESC p m t1 t2 (Standard ESC/POS Pulse command for Pin 2)
+        const pulseCommand = new Uint8Array([0x1B, 0x70, 0x00, 0x19, 0xFA]);
+        await writer.write(pulseCommand);
+        writer.releaseLock();
+        console.log("Hardware: ESC/POS Pulse command sent to printer.");
+      } catch (err) {
+        console.error("Hardware Error: Failed to send pulse to printer:", err);
+      }
+    }
+
     // Premium Audio Synthesis: Cash Register Chime
     try {
       const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -2020,6 +2043,26 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // --- ALERTS FOR ONLINE ORDERS ---
   const [newOnlineOrders, setNewOnlineOrders] = useState<Order[]>([]);
+  
+  // Hardware State
+  const [serialPort, setSerialPort] = useState<any>(null);
+
+  const connectHardwarePrinter = useCallback(async () => {
+    try {
+      if (!('serial' in navigator)) {
+        alert("Web Serial API is not supported in this browser. Please use Chrome or Edge.");
+        return;
+      }
+
+      const port = await (navigator as any).serial.requestPort();
+      await port.open({ baudRate: 9600 });
+      setSerialPort(port);
+      alert("Receipt Printer / Cash Drawer connected successfully!");
+    } catch (error) {
+      console.error("Failed to connect to hardware:", error);
+      alert("Could not connect to the printer. Please ensure it is plugged in and available.");
+    }
+  }, []);
 
   useEffect(() => {
     // Check for NEW 'Created' delivery orders that we haven't acknowledged
@@ -2134,6 +2177,8 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     newOnlineOrders,
     acknowledgeOrder,
     hasDeclaredStartingCash,
+    serialPort,
+    connectHardwarePrinter,
     openCashDrawer,
     isOnline, pendingOrders, syncPendingOrders
   };
