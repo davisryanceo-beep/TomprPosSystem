@@ -259,6 +259,17 @@ app.get("/api/debug-code", (req, res) => {
 app.get("/api/public/menu/:storeId", publicApiLimiter, async (req, res) => {
   const { storeId } = req.params;
   try {
+    // Check store settings first
+    const { data: store, error: storeErr } = await db
+      .from("stores")
+      .select("onlineMenuEnabled")
+      .eq("id", storeId)
+      .single();
+
+    if (store && store.onlineMenuEnabled === false) {
+       return res.status(403).json({ error: "MENU_CLOSED" });
+    }
+
     // Fetch Categories
     const { data: categories, error: catErr } = await db
       .from("categories")
@@ -715,7 +726,7 @@ app.put(
         "accentColor", "fontFamily", "headerColor", "bodyTextColor", "logoSize",
         "telegramBotToken", "telegramChatId", "displayLayout", "slideshowImageUrls",
         "loyaltyEnabled", "stampsPerItem", "stampsToRedeem", "loyaltyRewardDescription",
-        "stampDisplayTimeout"
+        "stampDisplayTimeout", "onlineMenuEnabled"
       ];
 
       const safeUpdates = {};

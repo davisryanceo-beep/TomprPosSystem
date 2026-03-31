@@ -21,7 +21,8 @@ CREATE TABLE IF NOT EXISTS stores (
     bodyTextColor TEXT,
     logoSize INTEGER,
     telegramBotToken TEXT,
-    telegramChatId TEXT
+    telegramChatId TEXT,
+    "onlineMenuEnabled" BOOLEAN DEFAULT true
 );
 
 -- Users Table

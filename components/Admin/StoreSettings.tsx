@@ -5,7 +5,7 @@ import { Store } from '../../types';
 import Button from '../Shared/Button';
 import Input from '../Shared/Input';
 import Textarea from '../Shared/Textarea';
-import { FaStore, FaSave, FaBell, FaExclamationTriangle, FaGift, FaPrint, FaUnlockAlt, FaCheckCircle } from 'react-icons/fa';
+import { FaStore, FaSave, FaBell, FaExclamationTriangle, FaGift, FaPrint, FaUnlockAlt, FaCheckCircle, FaGlobe } from 'react-icons/fa';
 import QRCode from "react-qr-code";
 
 const StoreSettings: React.FC = () => {
@@ -188,6 +188,41 @@ const StoreSettings: React.FC = () => {
                             </div>
                         </div>
                     )}
+                </div>
+
+                {/* Online Storefront Visibility Toggle */}
+                <div className="mt-6 p-4 bg-white dark:bg-charcoal-dark rounded-xl border border-emerald/20 shadow-sm transition-all hover:shadow-md">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className={`p-2 rounded-lg ${settings.onlineMenuEnabled ? 'bg-emerald/10 text-emerald' : 'bg-charcoal-light/10 text-charcoal-light'}`}>
+                                <FaGlobe size={20} />
+                            </div>
+                            <div>
+                                <h4 className="font-bold text-charcoal-dark dark:text-cream-light flex items-center gap-2">
+                                    Online storefront & Menu
+                                    {settings.onlineMenuEnabled ? (
+                                        <span className="text-[10px] px-2 py-0.5 bg-emerald text-white rounded-full uppercase tracking-widest font-black animate-pulse">Live</span>
+                                    ) : (
+                                        <span className="text-[10px] px-2 py-0.5 bg-charcoal-light text-white rounded-full uppercase tracking-widest font-black">Hidden</span>
+                                    )}
+                                </h4>
+                                <p className="text-xs text-charcoal-light max-w-md italic">
+                                    {settings.onlineMenuEnabled 
+                                        ? "Your product menu is visible to customers in the Stamp App. Customers can browse and see prices." 
+                                        : "Your menu is currently hidden from the public. Use this to pause online browsing while keeping the loyalty system active."}
+                                </p>
+                            </div>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                            <input
+                                type="checkbox"
+                                className="sr-only peer"
+                                checked={settings.onlineMenuEnabled || false}
+                                onChange={e => handleSettingChange('onlineMenuEnabled', e.target.checked)}
+                            />
+                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                        </label>
+                    </div>
                 </div>
             </div>
 

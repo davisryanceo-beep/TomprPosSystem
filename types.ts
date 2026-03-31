@@ -54,6 +54,7 @@ export interface Store {
   stampsToRedeem?: number;
   loyaltyRewardDescription?: string;
   stampDisplayTimeout?: number;
+  onlineMenuEnabled?: boolean;
 }
 
 export interface Customer {

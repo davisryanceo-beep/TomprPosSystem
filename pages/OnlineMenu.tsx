@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Category, Product, ModifierGroup, AddOn, OrderItem } from '../types';
-import { FaPlus, FaSpinner, FaExclamationTriangle } from 'react-icons/fa';
+import { FaPlus, FaSpinner, FaExclamationTriangle, FaClock } from 'react-icons/fa';
 import Button from '../components/Shared/Button';
 import { useCart } from '../contexts/CartContext';
 import OnlineProductModal from '../components/Public/OnlineProductModal';
@@ -43,9 +43,13 @@ const OnlineMenu: React.FC = () => {
                 setAvailableAddOns(res.data.addons || []);
                 console.log("[OnlineMenu] Fetched Modifiers:", res.data.modifierGroups);
                 console.log("[OnlineMenu] Fetched Products first item:", res.data.products[0]);
-            } catch (err) {
+            } catch (err: any) {
                 console.error("Failed to load menu", err);
-                setError("Failed to load menu. Please try again later or contact the store.");
+                if (err.response?.data?.error === "MENU_CLOSED") {
+                    setError("MENU_CLOSED");
+                } else {
+                    setError("Failed to load menu. Please try again later or contact the store.");
+                }
             } finally {
                 setLoading(false);
             }
@@ -92,6 +96,20 @@ const OnlineMenu: React.FC = () => {
     }
 
     if (error) {
+        if (error === "MENU_CLOSED") {
+            return (
+                <div className="flex flex-col justify-center items-center h-[60vh] text-center px-4 animate-fade-in">
+                    <div className="w-24 h-24 bg-gray-100 dark:bg-charcoal-dark rounded-full flex items-center justify-center mb-6 shadow-inner">
+                        <FaClock className="text-4xl text-gray-400 dark:text-gray-500" />
+                    </div>
+                    <h2 className="text-3xl font-black text-charcoal-dark dark:text-cream-light mb-4 tracking-tight">We're Currently Closed</h2>
+                    <p className="text-charcoal-light max-w-md leading-relaxed">
+                        Our online menu is currently paused. Please check back later or visit us in-store!
+                    </p>
+                </div>
+            );
+        }
+
         return (
             <div className="text-center p-8 bg-red-50 dark:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400">
                 <div className="mx-auto text-4xl mb-4"><FaExclamationTriangle /></div>
