@@ -25,7 +25,7 @@ const CashierInterface: React.FC = () => {
     finalizeCurrentOrder, setRushOrder, getProductById, currentStoreId,
     setTableNumberForCurrentOrder, updateCurrentOrder, knownCategories,
     saveOrderAsTab, loadOrderAsCurrent, selectedCustomer, isOnline, pendingOrders,
-    hasDeclaredStartingCash
+    hasDeclaredStartingCash, orders
   } = useShop();
   const { currentUser } = useAuth();
   const [showReceiptModal, setShowReceiptModal] = useState(false);
@@ -44,13 +44,13 @@ const CashierInterface: React.FC = () => {
 
   // Auto-open declaration if needed
   useEffect(() => {
-    if (currentUser && !useShop().hasDeclaredStartingCash(currentUser.id)) {
+    if (currentUser && !hasDeclaredStartingCash(currentUser.id)) {
       setShowDeclareCashModal(true);
     }
-  }, [currentUser]);
+  }, [currentUser, hasDeclaredStartingCash]);
 
   // Calculate active online orders count for badge
-  const activeOnlineOrdersCount = useShop().orders.filter(o =>
+  const activeOnlineOrdersCount = orders.filter(o =>
     o.orderType === 'DELIVERY' &&
     o.status !== 'Completed' &&
     o.status !== 'Cancelled' &&

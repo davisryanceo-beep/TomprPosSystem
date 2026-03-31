@@ -29,7 +29,8 @@ const Navbar: React.FC = () => {
   const { currentUser, logout, verifyPin } = useAuth();
   const {
     stores, currentStoreId, getStoreById,
-    clockIn, clockOut, getActiveTimeLogForUser, timeLogs
+    clockIn, clockOut, getActiveTimeLogForUser, timeLogs,
+    cashDrawerLogs
   } = useShop();
   const { t, i18n } = useTranslation();
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -170,7 +171,7 @@ const Navbar: React.FC = () => {
                             <>
                               {(() => {
                                 const todayStr = new Date().toLocaleDateString('en-CA');
-                                const dailyLogs = (useShop().cashDrawerLogs || []).filter(l => 
+                                const dailyLogs = (cashDrawerLogs || []).filter(l => 
                                   l.cashierId === currentUser.id && l.shiftDate === todayStr
                                 );
                                 const hasOpened = dailyLogs.some(l => l.type === 'OPEN');
