@@ -24,7 +24,8 @@ const CashierInterface: React.FC = () => {
     products, currentOrder, createOrUpdateCurrentOrder, clearCurrentOrder,
     finalizeCurrentOrder, setRushOrder, getProductById, currentStoreId,
     setTableNumberForCurrentOrder, updateCurrentOrder, knownCategories,
-    saveOrderAsTab, loadOrderAsCurrent, selectedCustomer, isOnline, pendingOrders
+    saveOrderAsTab, loadOrderAsCurrent, selectedCustomer, isOnline, pendingOrders,
+    hasDeclaredStartingCash
   } = useShop();
   const { currentUser } = useAuth();
   const [showReceiptModal, setShowReceiptModal] = useState(false);
@@ -151,7 +152,7 @@ const CashierInterface: React.FC = () => {
     }
     
     // Enforcement: Check for cash declaration
-    if (!useShop().hasDeclaredStartingCash(currentUser.id)) {
+    if (currentUser && !hasDeclaredStartingCash(currentUser.id)) {
       alert("Please declare starting cash before processing orders.");
       setShowDeclareCashModal(true);
       return;
@@ -318,7 +319,7 @@ const CashierInterface: React.FC = () => {
       
       <div className="fade-in grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 flex-grow p-2 sm:p-4 min-h-0 overflow-hidden relative">
         {/* Strict Enforcement Overlay */}
-        {!useShop().hasDeclaredStartingCash(currentUser?.id || '') && (
+        {currentUser && !hasDeclaredStartingCash(currentUser.id) && (
           <div className="absolute inset-0 z-30 flex items-center justify-center backdrop-blur-md bg-white/30 dark:bg-charcoal/30 transition-all p-6 text-center">
             <div className="max-w-md w-full bg-white dark:bg-charcoal-dark p-10 rounded-[2.5rem] shadow-2xl border-4 border-emerald/20 animate-fade-in space-y-6">
               <div className="w-24 h-24 bg-emerald/10 rounded-full flex items-center justify-center mx-auto">
