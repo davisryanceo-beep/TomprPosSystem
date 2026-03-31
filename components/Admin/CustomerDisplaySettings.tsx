@@ -12,7 +12,7 @@ type CustomerDisplaySettingsType = Pick<
     Store, 'logoUrl' | 'backgroundImageUrl' | 'accentColor' | 'welcomeMessage' |
     'displayTheme' | 'backgroundColor' | 'overlayOpacity' | 'logoSize' | 'fontFamily' |
     'headerColor' | 'bodyTextColor' | 'qrCodeUrl' | 'displayLayout' | 'slideshowImageUrls' |
-    'khqrEnabled' | 'khqrMerchantID' | 'khqrMerchantName' | 'khqrCity'
+    'khqrEnabled' | 'khqrMerchantID' | 'khqrMerchantName' | 'khqrCity' | 'stampDisplayTimeout'
 >;
 
 const fontOptions = [
@@ -57,6 +57,7 @@ const CustomerDisplayEditor: React.FC = () => {
                     khqrMerchantID: storeData.khqrMerchantID || '',
                     khqrMerchantName: storeData.khqrMerchantName || '',
                     khqrCity: storeData.khqrCity || '',
+                    stampDisplayTimeout: storeData.stampDisplayTimeout ?? 15,
                 });
             }
         }
@@ -171,7 +172,7 @@ const CustomerDisplayEditor: React.FC = () => {
     const {
         logoUrl, backgroundImageUrl, accentColor, welcomeMessage, displayTheme, backgroundColor,
         overlayOpacity, logoSize, fontFamily, headerColor, bodyTextColor, qrCodeUrl,
-        displayLayout, slideshowImageUrls
+        displayLayout, slideshowImageUrls, stampDisplayTimeout
     } = settings;
 
     return (
@@ -196,6 +197,14 @@ const CustomerDisplayEditor: React.FC = () => {
                         onChange={e => handleSettingChange('displayLayout', e.target.value)}
                     />
                     <Select label="Content Theme" options={themeOptions} value={displayTheme} onChange={e => handleSettingChange('displayTheme', e.target.value)} />
+                    <RangeControl 
+                        label="Stamp Display Timeout (sec)" 
+                        value={stampDisplayTimeout ?? 15} 
+                        onChange={v => handleSettingChange('stampDisplayTimeout', v)} 
+                        min={5} 
+                        max={60} 
+                        step={1} 
+                    />
                 </ControlSection>
 
                 {displayLayout === 'split-screen' && (

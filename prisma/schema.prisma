@@ -41,16 +41,15 @@ model app_settings {
 model cash_drawer_logs {
   id             String  @id
   shiftDate      String?
-  declaredAmount    Float   @db.Real
-  declaredAmountUSD Float?  @db.Real
-  expectedAmount    Float?  @db.Real
+  declaredAmount Float   @db.Real
+  expectedAmount Float?  @db.Real
   discrepancy    Float?  @db.Real
-  type           String  @default("CLOSE")
   notes          String?
   adminNotes     String?
   reportedBy     String?
   logTimestamp   String?
   storeId        String
+  type           String? @default("CLOSE")
   stores         stores  @relation(fields: [storeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
@@ -102,6 +101,7 @@ model customers {
   password          String?
   stores            stores?   @relation(fields: [storeId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
+  @@unique([phoneNumber, storeId], map: "unique_customer_phone_store")
   @@index([phoneNumber], map: "idx_customers_phone")
   @@index([storeId], map: "idx_customers_store")
 }
@@ -188,6 +188,7 @@ model orders {
   storeId            String
   qrPaymentState     String?
   orderType          String? @default("POS")
+  dailyOrderNumber   Int?
   stores             stores  @relation(fields: [storeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
@@ -315,6 +316,7 @@ model stores {
   stampsPerItem            Int?               @default(1)
   stampsToRedeem           Int?               @default(10)
   loyaltyRewardDescription String?            @default("Free Drink")
+  stampDisplayTimeout      Int?               @default(15)
   addons                   addons[]
   announcements            announcements[]
   cash_drawer_logs         cash_drawer_logs[]
@@ -322,6 +324,7 @@ model stores {
   combos                   combos[]
   current_orders           current_orders[]
   customers                customers[]
+  expenses                 expenses[]
   feedback                 feedback[]
   leave_requests           leave_requests[]
   modifierGroups           modifierGroups[]
@@ -338,7 +341,6 @@ model stores {
   time_logs                time_logs[]
   users                    users[]
   wastage_logs             wastage_logs[]
-  expenses                 expenses[]
 }
 
 model supply_items {
@@ -369,25 +371,27 @@ model time_logs {
 }
 
 model users {
-  id                String           @id
-  username          String           @unique
-  role              String
-  password          String?
-  pin               String?
-  firstName         String?
-  lastName          String?
-  profilePictureUrl String?
-  email             String?
-  phoneNumber       String?
-  storeId           String?
-  hourlyRate        Float?           @default(0) @db.Real
-  loyalty_points    Int?             @default(0)
-  tier              String?          @default("Silver")
-  leave_requests    leave_requests[]
-  shifts            shifts[]
-  staff_rewards     staff_rewards[]
-  time_logs         time_logs[]
-  stores            stores?          @relation(fields: [storeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id                     String           @id
+  username               String           @unique
+  role                   String
+  password               String?
+  pin                    String?
+  firstName              String?
+  lastName               String?
+  profilePictureUrl      String?
+  email                  String?
+  phoneNumber            String?
+  storeId                String?
+  hourlyRate             Float?           @default(0) @db.Real
+  loyalty_points         Int?             @default(0)
+  tier                   String?          @default("Silver")
+  salary                 Float?           @default(0) @db.Real
+  monthlyDayOffAllowance Float?           @default(0) @db.Real
+  leave_requests         leave_requests[]
+  shifts                 shifts[]
+  staff_rewards          staff_rewards[]
+  time_logs              time_logs[]
+  stores                 stores?          @relation(fields: [storeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
@@ -413,5 +417,20 @@ model expenses {
   reportedByName String?
   storeId        String
   timestamp      DateTime? @default(now()) @db.Timestamptz(6)
-  stores         stores    @relation(fields: [storeId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  stores         stores    @relation(fields: [storeId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "expenses_storeid_fkey")
+}
+
+model overtime_requests {
+  id             String    @id
+  userId         String
+  userName       String?
+  storeId        String
+  date           DateTime  @db.Date
+  reason         String?
+  requestedHours Float     @db.Real
+  approvedHours  Float?    @db.Real
+  status         String?   @default("Pending")
+  requestedAt    DateTime? @default(now()) @db.Timestamptz(6)
+  respondedAt    DateTime? @db.Timestamptz(6)
+  responseNote   String?
 }

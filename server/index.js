@@ -714,7 +714,8 @@ app.put(
         "qrCodeUrl", "displayTheme", "backgroundColor", "overlayOpacity",
         "accentColor", "fontFamily", "headerColor", "bodyTextColor", "logoSize",
         "telegramBotToken", "telegramChatId", "displayLayout", "slideshowImageUrls",
-        "loyaltyEnabled", "stampsPerItem", "stampsToRedeem", "loyaltyRewardDescription"
+        "loyaltyEnabled", "stampsPerItem", "stampsToRedeem", "loyaltyRewardDescription",
+        "stampDisplayTimeout"
       ];
 
       const safeUpdates = {};

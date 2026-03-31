@@ -53,6 +53,7 @@ export interface Store {
   stampsPerItem?: number;
   stampsToRedeem?: number;
   loyaltyRewardDescription?: string;
+  stampDisplayTimeout?: number;
 }
 
 export interface Customer {

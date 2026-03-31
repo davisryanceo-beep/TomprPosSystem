@@ -105,7 +105,9 @@ const CustomerDisplay: React.FC = () => {
 
   useEffect(() => {
     if (order && order.qrPaymentState === QRPaymentState.PAYMENT_SUCCESSFUL) {
-      const timeoutMs = order.pendingStampClaimId ? 60000 : 5000;
+      const timeoutMs = order.pendingStampClaimId 
+        ? ((store?.stampDisplayTimeout || 15) * 1000) 
+        : 5000;
       const timer = setTimeout(() => {
         const currentStored = localStorage.getItem('currentOrder');
         if (currentStored) {
