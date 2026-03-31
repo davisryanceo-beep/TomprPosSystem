@@ -31,7 +31,7 @@ const ProductCard: React.FC<{ product: Product; onSelect: (cust: Partial<OrderIt
       <div
         onClick={handleSelect}
         className={`
-          bg-cream-light dark:bg-charcoal-dark rounded-xl shadow-lg overflow-hidden flex flex-col p-3
+          bg-cream-light dark:bg-charcoal-dark rounded-xl shadow-lg overflow-hidden flex flex-col p-3 h-fit
           transform transition-all duration-200 active:scale-95
           ${isOutOfStock ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:shadow-2xl hover:-translate-y-1'}
           ${product.isSeasonal ? 'border-2 border-orange-400/30' : ''}
@@ -103,7 +103,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, onAddItem }) => {
   }
 
   return (
-    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-6 gap-3 h-full overflow-y-auto pr-1 pb-4">
+    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-6 gap-3 items-start h-full overflow-y-auto pr-1 pb-4">
       {/* Show combos first if they are active */}
       {combos.filter(c => c.isActive).map(combo => (
         <ComboProductCard

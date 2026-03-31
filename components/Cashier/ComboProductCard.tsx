@@ -37,7 +37,7 @@ const ComboProductCard: React.FC<ComboProductCardProps> = ({ combo, onAddItem, p
     return (
         <div
             onClick={handleAdd}
-            className="bg-cream-light dark:bg-charcoal-dark rounded-xl shadow-lg overflow-hidden flex flex-col p-3 transform transition-all duration-200 active:scale-95 cursor-pointer hover:shadow-2xl hover:-translate-y-1 border-2 border-emerald/30"
+            className="bg-cream-light dark:bg-charcoal-dark rounded-xl shadow-lg overflow-hidden flex flex-col p-3 h-fit transform transition-all duration-200 active:scale-95 cursor-pointer hover:shadow-2xl hover:-translate-y-1 border-2 border-emerald/30"
         >
             <div className="relative aspect-square sm:aspect-auto sm:h-36">
                 {combo.imageUrl ? (
