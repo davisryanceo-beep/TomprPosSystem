@@ -1,7 +1,7 @@
 {
-    "name": "Tompr Stamp Cafe Management",
-    "short_name": "Tompr Stamp",
-    "description": "Professional Loyalty & Stamp system for cafes and restaurants",
+    "name": "FlowsPOS",
+    "short_name": "FlowsPOS",
+    "description": "Professional POS System for cafes and restaurants",
     "start_url": "/",
     "display": "standalone",
     "background_color": "#f5f5f5",

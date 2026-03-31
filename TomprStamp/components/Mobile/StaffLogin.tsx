@@ -48,7 +48,7 @@ const StaffLogin: React.FC = () => {
                     <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 text-4xl mx-auto mb-4">
                         <FaStore />
                     </div>
-                    <h2 className="text-2xl font-bold text-gray-800">Tompr Stamp</h2>
+                    <h2 className="text-2xl font-bold text-gray-800">FlowsPOS</h2>
                     <p className="text-gray-500 text-sm">Staff Check-in</p>
                 </div>
 

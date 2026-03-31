@@ -10,8 +10,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icon-192.png', 'icon-512.png'],
       manifest: {
-        name: 'Tompr Stamp Cafe Management',
-        short_name: 'Tompr Stamp',
+        name: 'FlowsPOS',
+        short_name: 'FlowsPOS',
         description: 'Professional Loyalty & Stamp system for cafes and restaurants',
         theme_color: '#10b981',
         background_color: '#f5f5f5',

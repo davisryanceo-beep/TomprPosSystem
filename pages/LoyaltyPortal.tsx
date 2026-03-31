@@ -26,7 +26,7 @@ const LoyaltyPortal: React.FC = () => {
     <div className="min-h-screen bg-cream flex flex-col items-center p-4 sm:p-8">
       <header className="mb-8 text-center">
         <h1 className="text-4xl font-black text-charcoal-dark flex items-center justify-center">
-          <FaCoffee className="mr-3 text-emerald" /> Tompr Stamp
+          <FaCoffee className="mr-3 text-emerald" /> FlowsPOS
         </h1>
         <p className="text-charcoal-light mt-2">Check your rewards & stamps anytime!</p>
       </header>

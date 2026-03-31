@@ -95,7 +95,7 @@ const RegisterScreen: React.FC = () => {
                         Create an Account
                     </h2>
                     <p className="mt-2 text-base text-charcoal-light dark:text-charcoal-light">
-                        Join the Tompr Stamp team
+                        Join the FlowsPOS team
                     </p>
                 </div>
 

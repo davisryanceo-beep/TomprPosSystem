@@ -125,7 +125,7 @@ const Navbar: React.FC = () => {
             <div className="flex items-center">
               <span className="h-10 w-10 text-emerald mr-3"><FaCoffee size={40} /></span>
               <div className="flex flex-col">
-                <span className="font-extrabold text-2xl text-charcoal-dark dark:text-cream-light tracking-tight">Tompr Stamp</span>
+                <span className="font-extrabold text-2xl text-charcoal-dark dark:text-cream-light tracking-tight">FlowsPOS</span>
                 <div className="flex items-center text-charcoal-light dark:text-charcoal-light text-xs -mt-1">
                   {isGlobalAdmin && currentStoreId && getStoreById(currentStoreId) ? (
                     <><span className="mr-1"><FaStore /></span>{getStoreById(currentStoreId)?.name}</>

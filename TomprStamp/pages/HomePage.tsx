@@ -61,9 +61,9 @@ const HomePage: React.FC = () => {
                         </div>
                         <div>
                             <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-600 to-teal-500">
-                                ទំព័រ Tompr Stamp
+                                ទំព័រ FlowsPOS
                             </h1>
-                            <p className="text-[10px] uppercase tracking-widest text-gray-500 font-semibold">Tompr Stamp</p>
+                            <p className="text-[10px] uppercase tracking-widest text-gray-500 font-semibold">FlowsPOS</p>
                         </div>
                     </div>
                     <div className="hidden md:flex items-center space-x-8 text-sm font-medium text-gray-600">
@@ -338,7 +338,7 @@ const HomePage: React.FC = () => {
                                 <div className="bg-emerald-600 p-1.5 rounded-lg">
                                     <span className="text-white text-sm"><FaStore /></span>
                                 </div>
-                                <span className="font-bold text-gray-900">Tompr Stamp</span>
+                                <span className="font-bold text-gray-900">FlowsPOS</span>
                             </div>
                             <p className="text-gray-500 text-sm">Empowering cafes with modern technology.</p>
                         </div>

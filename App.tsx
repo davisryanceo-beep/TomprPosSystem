@@ -298,7 +298,7 @@ const App: React.FC = () => {
           {renderDashboard()}
         </main>
         <footer className="text-center p-2 text-xs text-charcoal-light dark:text-charcoal-light border-t border-charcoal-dark/10 dark:border-charcoal-light/10 bg-cream dark:bg-charcoal-900">
-          Tompr Stamp &copy; {new Date().getFullYear()}
+          FlowsPOS &copy; {new Date().getFullYear()}
         </footer>
       </div>
     </CartProvider>
