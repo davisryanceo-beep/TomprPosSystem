@@ -1596,19 +1596,19 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (promo.endDate && new Date(promo.endDate) < now) return false;
 
       // Time of Day Check
-      if (promo.conditions.startTime) {
+      if (promo.conditions?.startTime) {
         const [startH, startM] = promo.conditions.startTime.split(':').map(Number);
         const startTimeVal = startH * 60 + startM;
         if (currentTimeVal < startTimeVal) return false;
       }
-      if (promo.conditions.endTime) {
+      if (promo.conditions?.endTime) {
         const [endH, endM] = promo.conditions.endTime.split(':').map(Number);
         const endTimeVal = endH * 60 + endM;
         if (currentTimeVal > endTimeVal) return false;
       }
 
       const total = order.items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
-      if (promo.conditions.minOrderAmount && total < promo.conditions.minOrderAmount) return false;
+      if (promo.conditions?.minOrderAmount && total < promo.conditions.minOrderAmount) return false;
       return true;
     });
   }, [promotions]);
