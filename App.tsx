@@ -30,9 +30,9 @@ import POSAlerts from './components/Shared/POSAlerts';
 
 // ... (imports remain)
 
-export const STAMP_ONLY = import.meta.env.VITE_STAMP_ONLY === 'true' || window.location.hostname.includes('stamp.flowspos.com') || window.location.hostname.includes('tompr-stamp');
-const PRIMARY_DOMAIN = 'flowspos.com';
-const LOYALTY_DOMAIN = 'stamp.flowspos.com';
+export const STAMP_ONLY = import.meta.env.VITE_STAMP_ONLY === 'true' || window.location.hostname.includes('tompr-stamp');
+const PRIMARY_DOMAIN = 'poscafesystem.vercel.app';
+const LOYALTY_DOMAIN = 'tompr-stamp.vercel.app';
 const LOYALTY_URL = `https://${LOYALTY_DOMAIN}`;
 
 // --- EARLY STORE LOCK DETECTION ---

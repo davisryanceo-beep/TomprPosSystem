@@ -269,7 +269,7 @@ const CustomerDisplay: React.FC = () => {
                     <h2 className="text-3xl font-bold ml-3" style={{ color: headerColor }}>Claim Your {order.pendingStampCount || 0} Stamps!</h2>
                   </div>
                   <div className="p-6 bg-white rounded-3xl shadow-inner mb-6">
-                    <QRCodeCanvas value={`https://stamp.flowspos.com/#/claim/${order.pendingStampClaimId}`} size={240} level="H" includeMargin={true} />
+                    <QRCodeCanvas value={`https://tompr-stamp.vercel.app/#/claim/${order.pendingStampClaimId}`} size={240} level="H" includeMargin={true} />
                   </div>
                   <p className="text-xl max-w-md opacity-90" style={{ color: bodyTextColor }}>Scan this code with your mobile app to collect your digital stamps.</p>
                 </>
