@@ -1166,7 +1166,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
           let eligibleAmount = Math.max(0, total - itemLevelDiscountTotal);
 
-          const hasCategoryRestrictions = (promotion.conditions.applicableCategoryIds && promotion.conditions.applicableCategoryIds.length > 0) || promotion.conditions.applicableCategory;
+          const hasCategoryRestrictions = (promotion.conditions?.applicableCategoryIds && promotion.conditions.applicableCategoryIds.length > 0) || promotion.conditions?.applicableCategory;
 
           if (hasCategoryRestrictions) {
             // Filter items that match the categories AND subtract their specific item discounts
@@ -1175,12 +1175,12 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               if (!product) return false;
 
               // Check new array based categories
-              if (promotion.conditions.applicableCategoryIds && promotion.conditions.applicableCategoryIds.length > 0) {
+              if (promotion.conditions?.applicableCategoryIds && promotion.conditions.applicableCategoryIds.length > 0) {
                 return promotion.conditions.applicableCategoryIds.includes(product.category);
               }
 
               // Fallback to legacy single category
-              if (promotion.conditions.applicableCategory) {
+              if (promotion.conditions?.applicableCategory) {
                 return product.category === promotion.conditions.applicableCategory;
               }
               return false;
