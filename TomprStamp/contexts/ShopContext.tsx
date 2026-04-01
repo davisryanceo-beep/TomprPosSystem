@@ -1101,16 +1101,20 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (promotion.startDate && new Date(promotion.startDate) > now) isValid = false;
         if (promotion.endDate && new Date(promotion.endDate) < now) isValid = false;
 
-        if (isValid && promotion.conditions.startTime) {
+        if (isValid && promotion.conditions?.startTime) {
           const [startH, startM] = promotion.conditions.startTime.split(':').map(Number);
           const startTimeVal = startH * 60 + startM;
           if (currentTimeVal < startTimeVal) isValid = false;
         }
 
-        if (isValid && promotion.conditions.endTime) {
+        if (isValid && promotion.conditions?.endTime) {
           const [endH, endM] = promotion.conditions.endTime.split(':').map(Number);
           const endTimeVal = endH * 60 + endM;
           if (currentTimeVal > endTimeVal) isValid = false;
+        }
+
+        if (isValid && promotion.conditions?.minOrderAmount && total < promotion.conditions.minOrderAmount) {
+          isValid = false;
         }
 
         if (isValid) {
