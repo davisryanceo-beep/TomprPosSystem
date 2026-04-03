@@ -22,7 +22,8 @@ CREATE TABLE IF NOT EXISTS stores (
     bodyTextColor TEXT,
     logoSize INTEGER,
     telegramBotToken TEXT,
-    telegramChatId TEXT
+    telegramChatId TEXT,
+    "cashDeclarationRequired" INTEGER DEFAULT 1
 );
 
 -- Users Table
@@ -236,8 +237,59 @@ CREATE TABLE IF NOT EXISTS current_orders(
     cashierId TEXT,
     isRushOrder INTEGER,
     appliedPromotionId TEXT,
+    storeId TEXT NOT NULL,
     qrPaymentState TEXT,
     lastUpdated TEXT,
     FOREIGN KEY(storeId) REFERENCES stores(id)
+);
+
+-- Daily Sales Reports Table
+CREATE TABLE IF NOT EXISTS "daily_sales_reports"(
+    "id" TEXT PRIMARY KEY,
+    "storeId" TEXT NOT NULL,
+    "date" TEXT NOT NULL,
+    "dailyRevenue" REAL,
+    "totalCash" REAL,
+    "totalQR" REAL,
+    "itemSales" TEXT, -- JSONB
+    "inventorySnapshot" TEXT, -- JSONB
+    "pastryCount" INTEGER,
+    "cashierId" TEXT,
+    "cashierName" TEXT,
+    "timestamp" TEXT,
+    FOREIGN KEY("storeId") REFERENCES stores("id")
+);
+
+-- Leave Requests Table
+CREATE TABLE IF NOT EXISTS "leave_requests"(
+    "id" TEXT PRIMARY KEY,
+    "userId" TEXT NOT NULL,
+    "userName" TEXT,
+    "storeId" TEXT NOT NULL,
+    "startDate" TEXT,
+    "endDate" TEXT,
+    "reason" TEXT,
+    "requestedAt" TEXT,
+    "respondedAt" TEXT,
+    "status" TEXT,
+    FOREIGN KEY("storeId") REFERENCES stores("id"),
+    FOREIGN KEY("userId") REFERENCES users("id")
+);
+
+-- Staff Rewards Table
+CREATE TABLE IF NOT EXISTS "staff_rewards"(
+    "id" TEXT PRIMARY KEY,
+    "userId" TEXT NOT NULL,
+    "userName" TEXT,
+    "storeId" TEXT NOT NULL,
+    "date" TEXT,
+    "shiftId" TEXT,
+    "timestamp" TEXT,
+    "claimedAt" TEXT,
+    "claimedProductId" TEXT,
+    "claimedOrderId" TEXT,
+    "status" TEXT,
+    FOREIGN KEY("storeId") REFERENCES stores("id"),
+    FOREIGN KEY("userId") REFERENCES users("id")
 );
 `;

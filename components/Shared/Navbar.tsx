@@ -30,7 +30,7 @@ const Navbar: React.FC = () => {
   const {
     stores, currentStoreId, getStoreById,
     clockIn, clockOut, getActiveTimeLogForUser, timeLogs,
-    cashDrawerLogs
+    cashDrawerLogs, addCashDrawerLog, getExpectedCash
   } = useShop();
   const { t, i18n } = useTranslation();
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -178,9 +178,27 @@ const Navbar: React.FC = () => {
                                 const hasClosed = dailyLogs.some(l => l.type === 'CLOSE');
 
                                 if (!hasOpened) {
+                                  const currentStore = getStoreById(currentStoreId || '');
+                                  const isDeclarationRequired = currentStore?.cashDeclarationRequired !== false;
+
                                   return (
                                     <button 
-                                      onClick={() => { setForcedDeclareType('OPEN'); setShowDeclareCashModal(true); setIsMenuOpen(false); }} 
+                                      onClick={async () => { 
+                                        if (isDeclarationRequired) {
+                                          setForcedDeclareType('OPEN'); 
+                                          setShowDeclareCashModal(true); 
+                                        } else {
+                                          // Auto-open drawer without modal
+                                          await addCashDrawerLog({
+                                            type: 'OPEN',
+                                            declaredAmount: 0,
+                                            cashierId: currentUser!.id,
+                                            cashierName: currentUser!.username,
+                                            shiftDate: todayStr
+                                          });
+                                        }
+                                        setIsMenuOpen(false); 
+                                      }}
                                       disabled={!activeTimeLog}
                                       className="w-full text-left flex items-center gap-3 p-2 rounded-lg bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 disabled:opacity-50 transition-all font-bold mt-1"
                                     >
@@ -188,6 +206,8 @@ const Navbar: React.FC = () => {
                                     </button>
                                   );
                                 } else if (!hasClosed) {
+                                  const currentStore = getStoreById(currentStoreId || '');
+                                  const isDeclarationRequired = currentStore?.cashDeclarationRequired !== false;
                                   return (
                                     <>
                                       <button 
@@ -214,7 +234,23 @@ const Navbar: React.FC = () => {
                                         </button>
                                       </div>
                                       <button 
-                                        onClick={() => { setForcedDeclareType('CLOSE'); setShowDeclareCashModal(true); setIsMenuOpen(false); }} 
+                                        onClick={async () => { 
+                                          if (isDeclarationRequired) {
+                                            setForcedDeclareType('CLOSE'); 
+                                            setShowDeclareCashModal(true); 
+                                          } else {
+                                            // Auto-close drawer with balanced declaration
+                                            await addCashDrawerLog({
+                                              type: 'CLOSE',
+                                              declaredAmount: getExpectedCash(currentUser!.id, 'CLOSE'),
+                                              cashierId: currentUser!.id,
+                                              cashierName: currentUser!.username,
+                                              shiftDate: todayStr,
+                                              cashierNotes: 'Auto-balanced (Declaration Disabled)'
+                                            });
+                                          }
+                                          setIsMenuOpen(false); 
+                                        }} 
                                         disabled={!activeTimeLog}
                                         className="w-full text-left flex items-center gap-3 p-2 rounded-lg bg-indigo-500/10 text-indigo-600 hover:bg-indigo-500/20 disabled:opacity-50 transition-all font-bold mt-1"
                                       >

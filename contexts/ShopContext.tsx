@@ -1866,6 +1866,13 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const hasDeclaredStartingCash = useCallback((userId: string): boolean => {
     if (!currentStoreId) return false;
+    
+    // Check if the current store requires cash declaration. If not, bypass the check.
+    const currentStore = getStoreById(currentStoreId);
+    if (currentStore && currentStore.cashDeclarationRequired === false) {
+      return true;
+    }
+
     const todayStr = new Date().toLocaleDateString('en-CA');
     return cashDrawerLogsState.some(l => 
         l.cashierId === userId && 
@@ -1873,7 +1880,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         l.shiftDate === todayStr &&
         l.storeId === currentStoreId
     );
-  }, [cashDrawerLogsState, currentStoreId]);
+  }, [cashDrawerLogsState, currentStoreId, getStoreById]);
 
   const openCashDrawer = useCallback(async () => {
     console.log("CASH DRAWER OPENED - Requesting hardware pulse if available.");

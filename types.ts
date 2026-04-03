@@ -55,6 +55,7 @@ export interface Store {
   loyaltyRewardDescription?: string;
   stampDisplayTimeout?: number;
   onlineMenuEnabled?: boolean;
+  cashDeclarationRequired?: boolean;
 }
 
 export interface Customer {
