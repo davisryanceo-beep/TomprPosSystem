@@ -5,9 +5,10 @@ import Button from '../Shared/Button';
 import Input from '../Shared/Input';
 import Select from '../Shared/Select';
 import Modal from '../Shared/Modal';
-import { FaTrash, FaEdit, FaEye, FaSearch, FaFilter, FaReceipt } from 'react-icons/fa';
+import { FaTrash, FaEdit, FaEye, FaSearch, FaFilter, FaReceipt, FaPrint } from 'react-icons/fa';
 import PrintableReceipt from '../Cashier/PrintableReceipt';
 import ReactDOM from 'react-dom';
+import { useEffect } from 'react';
 
 const OrderManagement: React.FC = () => {
     const { orders, currentStoreId, deleteOrder, updateOrder } = useShop();
@@ -23,6 +24,14 @@ const OrderManagement: React.FC = () => {
     // Edit State
     const [editStatus, setEditStatus] = useState<OrderStatus>(OrderStatus.PAID);
     const [editPaymentMethod, setEditPaymentMethod] = useState<PaymentMethod>('Cash');
+    const [printableAreaNode, setPrintableAreaNode] = useState<HTMLElement | null>(null);
+
+    useEffect(() => {
+        const node = document.getElementById('printable-area');
+        if (node) {
+            setPrintableAreaNode(node);
+        }
+    }, []);
 
     const filteredOrders = useMemo(() => {
         return orders
@@ -90,15 +99,12 @@ const OrderManagement: React.FC = () => {
 
     // Helper to print receipt from view modal
     const handlePrintReceipt = () => {
-        const node = document.getElementById('printable-area-admin');
-        if (selectedOrder && node) {
-            // Render receipt into hidden div
-            ReactDOM.render(<PrintableReceipt order={selectedOrder} />, node);
+        if (selectedOrder) {
+            // Portal will handle rendering into #printable-area
+            // We just need to trigger print
             setTimeout(() => {
                 window.print();
-                // Cleanup
-                ReactDOM.unmountComponentAtNode(node);
-            }, 100);
+            }, 300);
         }
     };
 
@@ -107,7 +113,6 @@ const OrderManagement: React.FC = () => {
             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                 <h2 className="text-2xl font-bold text-charcoal-dark dark:text-cream-light">Order Management</h2>
                 <div className="flex gap-2">
-                    <div id="printable-area-admin" className="hidden-print"></div>
                 </div>
             </div>
 
@@ -281,6 +286,11 @@ const OrderManagement: React.FC = () => {
                 <p>Are you sure you want to delete order <strong>{selectedOrder?.id}</strong>?</p>
                 <p className="text-red-500 text-sm mt-2">This action cannot be undone.</p>
             </Modal>
+
+            {printableAreaNode && selectedOrder && isViewModalOpen && ReactDOM.createPortal(
+                <PrintableReceipt order={selectedOrder} />,
+                printableAreaNode
+            )}
 
         </div>
     );

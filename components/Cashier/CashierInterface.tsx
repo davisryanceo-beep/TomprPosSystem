@@ -10,7 +10,7 @@ import { OrderItem, Order, ProductCategory, PaymentMethod, PaymentCurrency, QRPa
 import useKeyboardShortcuts from '../../hooks/useKeyboardShortcuts';
 import OnlineMenuModal from './OnlineMenuModal';
 import OnlineOrdersModal from './OnlineOrdersModal';
-import { FaReceipt, FaShoppingCart, FaCoffee, FaLeaf, FaCookieBite, FaShoppingBag, FaQuestionCircle, FaDesktop, FaStore, FaBell, FaFolderOpen, FaUserTag, FaWifi, FaCloudUploadAlt, FaCalculator, FaMoneyBillWave, FaLock } from 'react-icons/fa';
+import { FaReceipt, FaShoppingCart, FaCoffee, FaLeaf, FaCookieBite, FaShoppingBag, FaQuestionCircle, FaDesktop, FaStore, FaBell, FaFolderOpen, FaUserTag, FaWifi, FaCloudUploadAlt, FaCalculator, FaMoneyBillWave, FaLock, FaPrint } from 'react-icons/fa';
 import PrintableReceipt from './PrintableReceipt';
 import CashPaymentModal from './CashPaymentModal';
 import TableSelectionModal from './TableSelectionModal';
@@ -227,6 +227,21 @@ const CashierInterface: React.FC = () => {
     setShowReceiptModal(false);
     setLastCompletedOrder(null);
   };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  // Auto-print when receipt modal is shown
+  useEffect(() => {
+    if (showReceiptModal && lastCompletedOrder) {
+      // Small delay to ensure Portal content is rendered and styles applied
+      const timer = setTimeout(() => {
+        handlePrint();
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [showReceiptModal, lastCompletedOrder]);
 
   const isQRPaymentInProgress = currentOrder?.qrPaymentState && currentOrder.qrPaymentState !== QRPaymentState.NONE;
 
@@ -450,9 +465,14 @@ const CashierInterface: React.FC = () => {
           title="Order Confirmation"
           size="md"
           footer={
-            <Button onClick={handleCloseReceiptModal} className="w-full" leftIcon={<FaReceipt />}>
-              Close
-            </Button>
+            <div className="flex gap-2 w-full">
+              <Button onClick={handlePrint} variant="primary" className="flex-1" leftIcon={<FaPrint />}>
+                Print Receipt
+              </Button>
+              <Button onClick={handleCloseReceiptModal} variant="ghost" className="flex-1">
+                Close
+              </Button>
+            </div>
           }
         >
           <PrintableReceipt order={lastCompletedOrder} />
