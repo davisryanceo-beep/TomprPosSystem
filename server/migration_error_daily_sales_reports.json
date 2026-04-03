@@ -1,0 +1,14 @@
+[
+  {
+    "id": "report-1770967315445",
+    "error": "Could not find the 'cashierId' column of 'daily_sales_reports' in the schema cache"
+  },
+  {
+    "id": "report-1770967331801",
+    "error": "Could not find the 'cashierId' column of 'daily_sales_reports' in the schema cache"
+  },
+  {
+    "id": "report-1771073543227",
+    "error": "Could not find the 'cashierId' column of 'daily_sales_reports' in the schema cache"
+  }
+]

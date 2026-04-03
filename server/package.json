@@ -20,6 +20,7 @@
         "firebase-admin": "^13.7.0",
         "helmet": "^8.1.0",
         "jsonwebtoken": "^9.0.3",
+        "pg": "^8.20.0",
         "undici": "^7.24.3",
         "uuid": "^13.0.0",
         "xss": "^1.0.15"

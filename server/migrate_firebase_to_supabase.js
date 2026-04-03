@@ -3,7 +3,7 @@ import { readFileSync, writeFileSync } from 'fs';
 import { db as supabase } from './db.js';
 
 // Load service account securely
-const serviceAccount = JSON.parse(readFileSync('../firebase-key.json', 'utf8'));
+const serviceAccount = JSON.parse(readFileSync('../TomprStamp/firebase-key.json', 'utf8'));
 
 // Initialize Firebase App
 if (!admin.apps.length) {
@@ -29,9 +29,15 @@ const COLLECTIONS_TO_MIGRATE = [
     'promotions',
     'wastage_logs',
     'time_logs',
+    'timeLogs', // Also migrate this one
     'cash_drawer_logs',
     'announcements',
-    'feedback'
+    'feedback',
+    'app_settings',
+    'daily_sales_reports',
+    'leave_requests',
+    'staff_rewards',
+    'current_orders'
 ];
 
 // Helper to convert Firestore Timestamps to ISO strings
@@ -73,7 +79,12 @@ const ALLOWED_KEYS = {
     time_logs: ["id", "userId", "userName", "role", "clockInTime", "clockOutTime", "notes", "storeId"],
     cash_drawer_logs: ["id", "shiftDate", "declaredAmount", "expectedAmount", "discrepancy", "notes", "adminNotes", "reportedBy", "logTimestamp", "storeId"],
     announcements: ["id", "title", "message", "priority", "authorId", "authorName", "timestamp", "isArchived", "targetRoles", "storeId"],
-    feedback: ["id", "type", "message", "timestamp", "userId", "userName", "storeId"]
+    feedback: ["id", "type", "message", "timestamp", "userId", "userName", "storeId"],
+    app_settings: ["id", "registrationEnabled", "updatedAt"],
+    daily_sales_reports: ["id", "storeId", "date", "dailyRevenue", "totalCash", "totalQR", "itemSales", "inventorySnapshot", "pastryCount", "cashierId", "cashierName", "timestamp"],
+    leave_requests: ["id", "userId", "userName", "storeId", "startDate", "endDate", "reason", "requestedAt", "respondedAt", "status"],
+    staff_rewards: ["id", "userId", "userName", "storeId", "date", "shiftId", "timestamp", "claimedAt", "claimedProductId", "claimedOrderId", "status"],
+    current_orders: ["id", "storeId", "terminalId", "items", "tableNumber", "totalAmount", "taxAmount", "discountAmount", "finalAmount", "cashierId", "isRushOrder", "appliedPromotionId", "qrPaymentState", "lastUpdated"]
 };
 
 // Ensure array or object fields expected as JSONB are correct and filter out redundant fields
@@ -104,15 +115,39 @@ function prepareDataForSupabase(collectionName, firestoreData) {
         }
     }
 
-    // Booleans map directly in Postgres
+    // Booleans must be stored as 0/1 integers for Supabase INTEGER columns
+    const boolToInt = (v) => (v === true || v === 'true' || v === 1) ? 1 : 0;
+
     if (collectionName === 'orders' && data.isRushOrder !== undefined) {
-        data.isRushOrder = !!data.isRushOrder;
+        data.isRushOrder = boolToInt(data.isRushOrder);
+    }
+    if (collectionName === 'promotions' && data.isActive !== undefined) {
+        data.isActive = boolToInt(data.isActive);
+    }
+    if (collectionName === 'announcements' && data.isArchived !== undefined) {
+        data.isArchived = boolToInt(data.isArchived);
     }
     if (collectionName === 'products' && data.allowAddOns !== undefined) {
-        data.allowAddOns = !!data.allowAddOns;
+        data.allowAddOns = boolToInt(data.allowAddOns);
     }
     if (collectionName === 'products' && data.isSeasonal !== undefined) {
-        data.isSeasonal = !!data.isSeasonal;
+        data.isSeasonal = boolToInt(data.isSeasonal);
+    }
+    // Numeric fields: ensure they are numbers or null, not booleans
+    const numericFields = {
+        orders: ['totalAmount', 'taxAmount', 'discountAmount', 'finalAmount', 'cashTendered', 'changeGiven'],
+        supply_items: ['currentStock', 'lowStockThreshold'],
+        promotions: ['value', 'minOrderAmount'],
+        cash_drawer_logs: ['declaredAmount', 'expectedAmount', 'discrepancy'],
+        wastage_logs: ['quantity'],
+    };
+    if (numericFields[collectionName]) {
+        for (const field of numericFields[collectionName]) {
+            if (data[field] !== undefined) {
+                const parsed = parseFloat(data[field]);
+                data[field] = isNaN(parsed) ? null : parsed;
+            }
+        }
     }
 
     const converted = convertTimestamps(data);
@@ -164,7 +199,12 @@ async function migrateCollection(collectionName) {
         const errors = [];
 
         // Check if data already exists to prevent duplicate key errors, or just use upsert
-        const targetTable = collectionName === 'modifierGroups' ? 'modifiergroups' : collectionName;
+        let targetTable = collectionName === 'modifierGroups' ? 'modifiergroups' : collectionName;
+        
+        // Alias timeLogs to time_logs table
+        if (collectionName === 'timeLogs') {
+            targetTable = 'time_logs';
+        }
 
         for (let i = 0; i < rowsToInsert.length; i += batchSize) {
             const batch = rowsToInsert.slice(i, i + batchSize);
@@ -236,9 +276,15 @@ async function runMigration() {
         'promotions',      // Depends on stores
         'wastage_logs',    // Depends on stores
         'time_logs',       // Depends on users, stores
+        'timeLogs',        // Mapped to time_logs table
         'cash_drawer_logs',// Depends on stores
         'announcements',   // Depends on stores
-        'feedback'         // Depends on stores
+        'feedback',         // Depends on stores
+        'app_settings',
+        'daily_sales_reports',
+        'leave_requests',
+        'staff_rewards',
+        'current_orders'
     ];
 
     for (const collectionName of orderedCollections) {

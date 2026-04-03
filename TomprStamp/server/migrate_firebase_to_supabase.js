@@ -104,15 +104,38 @@ function prepareDataForSupabase(collectionName, firestoreData) {
         }
     }
 
-    // Booleans map directly in Postgres
+    // Booleans must be stored as 0/1 integers for Supabase INTEGER columns
+    const boolToInt = (v) => (v === true || v === 'true' || v === 1) ? 1 : 0;
+
     if (collectionName === 'orders' && data.isRushOrder !== undefined) {
-        data.isRushOrder = !!data.isRushOrder;
+        data.isRushOrder = boolToInt(data.isRushOrder);
+    }
+    if (collectionName === 'promotions' && data.isActive !== undefined) {
+        data.isActive = boolToInt(data.isActive);
+    }
+    if (collectionName === 'announcements' && data.isArchived !== undefined) {
+        data.isArchived = boolToInt(data.isArchived);
     }
     if (collectionName === 'products' && data.allowAddOns !== undefined) {
-        data.allowAddOns = !!data.allowAddOns;
+        data.allowAddOns = boolToInt(data.allowAddOns);
     }
     if (collectionName === 'products' && data.isSeasonal !== undefined) {
-        data.isSeasonal = !!data.isSeasonal;
+        data.isSeasonal = boolToInt(data.isSeasonal);
+    }
+    const numericFields = {
+        orders: ['totalAmount', 'taxAmount', 'discountAmount', 'finalAmount', 'cashTendered', 'changeGiven'],
+        supply_items: ['currentStock', 'lowStockThreshold'],
+        promotions: ['value', 'minOrderAmount'],
+        cash_drawer_logs: ['declaredAmount', 'expectedAmount', 'discrepancy'],
+        wastage_logs: ['quantity'],
+    };
+    if (numericFields[collectionName]) {
+        for (const field of numericFields[collectionName]) {
+            if (data[field] !== undefined) {
+                const parsed = parseFloat(data[field]);
+                data[field] = isNaN(parsed) ? null : parsed;
+            }
+        }
     }
 
     const converted = convertTimestamps(data);

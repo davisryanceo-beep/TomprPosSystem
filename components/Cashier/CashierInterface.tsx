@@ -422,7 +422,7 @@ const CashierInterface: React.FC = () => {
       </div>
 
       {/* Order Summary Panel */}
-      <div className="lg:col-span-1 bg-cream-light dark:bg-charcoal-dark p-3 sm:p-4 rounded-xl shadow-lg flex flex-col max-h-[45vh] lg:max-h-none overflow-hidden">
+      <div className="lg:col-span-1 bg-cream-light dark:bg-charcoal-dark p-3 sm:p-4 rounded-xl shadow-lg flex flex-col h-[60vh] lg:h-full overflow-hidden border border-charcoal/5 dark:border-cream-light/5">
         <h2 className="text-lg sm:text-2xl font-extrabold text-charcoal-dark dark:text-cream-light mb-3 flex items-center flex-shrink-0">
           <span className="mr-2 text-emerald"><FaShoppingCart /></span>Current Order
         </h2>

@@ -1,0 +1,18 @@
+[
+  {
+    "id": "0c7280db-4152-46da-8fb1-31aa80a44d50",
+    "error": "Could not find the 'date' column of 'staff_rewards' in the schema cache"
+  },
+  {
+    "id": "193239d9-c72e-44d0-973f-541852803ce8",
+    "error": "Could not find the 'date' column of 'staff_rewards' in the schema cache"
+  },
+  {
+    "id": "1bfbc704-266e-4949-8a57-b469e7a661ac",
+    "error": "Could not find the 'date' column of 'staff_rewards' in the schema cache"
+  },
+  {
+    "id": "a55812cb-9cfe-4cef-8aae-0284998f9508",
+    "error": "Could not find the 'date' column of 'staff_rewards' in the schema cache"
+  }
+]

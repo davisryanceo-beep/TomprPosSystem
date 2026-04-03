@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Order, OrderItem, PaymentMethod, QRPaymentState } from '../../types';
 import Button from '../Shared/Button';
-import { FaTrash, FaPlus, FaMinus, FaMoneyBillWave, FaQrcode, FaShippingFast, FaTags, FaTimesCircle, FaChair, FaDesktop, FaStar, FaPrint, FaSave } from 'react-icons/fa';
+import { FaTrash, FaPlus, FaMinus, FaMoneyBillWave, FaQrcode, FaShippingFast, FaTags, FaTimesCircle, FaChair, FaDesktop, FaStar, FaPrint, FaSave, FaShoppingCart } from 'react-icons/fa';
 import ApplyPromotionModal from './ApplyPromotionModal';
 import ItemDiscountModal from './ItemDiscountModal';
 import { useShop } from '../../contexts/ShopContext';
@@ -124,7 +124,15 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   };
 
   if (!order || !order.items || order.items.length === 0) {
-    return <p className="text-center text-charcoal-light dark:text-charcoal-light py-6 flex-grow flex items-center justify-center">No items in order.</p>;
+    return (
+      <div className="flex flex-col h-full bg-cream-light dark:bg-charcoal-dark border-2 border-dashed border-charcoal/10 rounded-xl items-center justify-center py-10 px-4 text-center">
+        <div className="w-20 h-20 bg-charcoal/5 dark:bg-white/5 rounded-full flex items-center justify-center mb-4 transition-transform hover:rotate-12">
+          <FaShoppingCart size={32} className="text-charcoal-light" />
+        </div>
+        <h3 className="font-bold text-charcoal-dark dark:text-cream-light mb-1">Your cart is empty</h3>
+        <p className="text-sm text-charcoal-light">Add items from the menu to build an order.</p>
+      </div>
+    );
   }
 
   // QR Payment Flow UI
@@ -160,14 +168,27 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
         {/* Items list */}
         <div className="overflow-y-auto flex-grow min-h-0 pr-2 -mr-2">
           <div className="sticky top-0 bg-cream-light dark:bg-charcoal-dark pt-1 pb-3 z-10 space-y-2">
-            <Button
-              variant="ghost"
-              className="w-full !justify-start text-lg !py-3"
-              leftIcon={<FaChair />}
-            >
-              <span className="mr-2 font-bold text-emerald">{order.dailyOrderNumber ? `#${order.dailyOrderNumber}` : (order.items.length > 0 ? '#New' : '')}</span>
-              {order.tableNumber ? `Table: ${order.tableNumber}` : 'Select Table'}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                className="flex-1 !justify-start text-lg !py-3 bg-white dark:bg-charcoal shadow-sm"
+                leftIcon={<FaChair />}
+                onClick={onSelectTableClick}
+              >
+                <span className="mr-2 font-black text-emerald uppercase tracking-tighter">
+                  {order.dailyOrderNumber ? `#${order.dailyOrderNumber}` : (order.items.length > 0 ? '#New' : '')}
+                </span>
+                {order.tableNumber ? `Table: ${order.tableNumber}` : 'Select Table'}
+              </Button>
+              <Button 
+                variant="ghost" 
+                onClick={onClearOrder} 
+                className="text-terracotta hover:bg-terracotta/10 !p-3 rounded-xl border border-terracotta/10" 
+                title="Clear Entire Order"
+              >
+                <FaTrash />
+              </Button>
+            </div>
           </div>
           <table className="min-w-full">
             <tbody className="divide-y divide-charcoal/10 dark:divide-cream-light/10">
@@ -283,8 +304,6 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
               <Button onClick={() => onInitiatePayment('Cash')} variant="secondary" className="w-full !py-4 text-lg" leftIcon={<FaMoneyBillWave />}>Pay Cash</Button>
               <Button onClick={() => onInitiatePayment('QR')} variant="primary" className="w-full !py-4 text-lg" leftIcon={<FaQrcode />}>Confirm Order (QR)</Button>
             </div>
-
-            <Button onClick={onClearOrder} variant="danger" className="w-full !py-3">Clear Order</Button>
           </div>
         </div>
       </div>
