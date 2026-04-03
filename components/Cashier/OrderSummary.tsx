@@ -171,8 +171,8 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
             <div className="flex items-center gap-2">
               <Button
                 variant="ghost"
-                className="flex-1 !justify-start text-xs !py-1 px-1 opacity-70 hover:opacity-100"
-                leftIcon={<FaChair size={10} />}
+                className="flex-1 !justify-start text-[10px] !py-0.5 px-1 opacity-50 hover:opacity-100"
+                leftIcon={<FaChair size={8} />}
                 onClick={onSelectTableClick}
               >
                 <span className="font-bold text-emerald mr-1">{order.dailyOrderNumber ? `#${order.dailyOrderNumber}` : '#New'}</span>
@@ -251,51 +251,37 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
               Tax ({taxRatePercent}%):
               <span className="font-bold text-charcoal-dark dark:text-cream-light">${order.taxAmount.toFixed(2)}</span>
             </p>
-            <div className="flex justify-between font-black text-lg text-charcoal-dark dark:text-cream-light pt-0.5 mt-0.5 border-t border-charcoal/5 dark:border-white/5">
+            <div className="flex justify-between font-black text-base text-charcoal-dark dark:text-cream-light border-t border-charcoal/5 pt-0.5">
               <span>Total:</span>
               <span className="text-emerald">${order.finalAmount.toFixed(2)}</span>
             </div>
           </div>
 
-          <div className="mt-3 space-y-2">
-            <div className="grid grid-cols-2 gap-2">
-              <label htmlFor="rushOrder" className="flex items-center space-x-2 p-2 rounded-lg bg-cream dark:bg-charcoal-dark/50 cursor-pointer border border-charcoal/5">
+          <div className="mt-1 space-y-1">
+            <div className="grid grid-cols-2 gap-1.5">
+              <label htmlFor="rushOrder" className="flex items-center space-x-1 p-1 rounded bg-cream dark:bg-charcoal-dark/50 cursor-pointer border border-charcoal/5">
                 <input
                   type="checkbox"
                   id="rushOrder"
-                  className="h-4 w-4 text-terracotta border-charcoal/30 rounded focus:ring-terracotta"
+                  className="h-3 w-3 text-terracotta border-charcoal/30 rounded focus:ring-terracotta"
                   checked={order.isRushOrder || false}
                   onChange={(e) => onSetRushOrder(e.target.checked)}
                 />
-                <span className="font-bold text-xs flex items-center gap-1"><span className="text-terracotta"><FaShippingFast size={12} /></span> Rush Order</span>
+                <span className="font-bold text-[9px] flex items-center gap-0.5"><span className="text-terracotta"><FaShippingFast size={10} /></span> Rush</span>
               </label>
 
               {appliedPromotion ? (
-                <Button
-                  onClick={removePromotionFromCurrentOrder}
-                  variant="ghost"
-                  className="w-full !py-2 text-xs text-terracotta"
-                  leftIcon={<FaTimesCircle size={12} />}
-                >
-                  Remove Promo
-                </Button>
+                <Button onClick={removePromotionFromCurrentOrder} variant="ghost" className="w-full !py-1 text-[10px] text-terracotta" leftIcon={<FaTimesCircle size={10} />}>No Promo</Button>
               ) : (
-                <Button
-                  onClick={() => setIsPromotionModalOpen(true)}
-                  variant="ghost"
-                  className="w-full !py-2 text-xs"
-                  leftIcon={<FaTags size={12} />}
-                >
-                  Apply Promo
-                </Button>
+                <Button onClick={() => setIsPromotionModalOpen(true)} variant="ghost" className="w-full !py-1 text-[10px]" leftIcon={<FaTags size={10} />}>Promo</Button>
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-2 mt-2">
-              <Button onClick={() => onInitiatePayment('Cash')} variant="secondary" className="w-full !py-3 text-sm sm:text-base font-bold shadow-lg" leftIcon={<FaMoneyBillWave size={16} />}>Pay Cash</Button>
-              <Button onClick={() => onInitiatePayment('QR')} variant="primary" className="w-full !py-3 text-sm sm:text-base font-bold shadow-lg shadow-emerald/20" leftIcon={<FaQrcode size={16} />}>Confirm (QR)</Button>
-              <Button onClick={() => onInitiatePayment('Unpaid')} variant="outline" className="w-full !py-3 text-sm font-bold border-2 border-emerald/30 text-emerald hover:bg-emerald/5" leftIcon={<FaSave size={14} />}>Save Tab</Button>
-              <Button onClick={onClearOrder} variant="danger" className="w-full !py-3 text-sm font-bold shadow-md shadow-terracotta/10" leftIcon={<FaTrash size={14} />}>Clear Order</Button>
+            <div className="grid grid-cols-2 gap-1.5 px-0.5 pb-1">
+              <Button onClick={() => onInitiatePayment('Cash')} variant="secondary" className="w-full !py-2.5 text-xs sm:text-sm font-bold" leftIcon={<FaMoneyBillWave size={14} />}>Pay Cash</Button>
+              <Button onClick={() => onInitiatePayment('QR')} variant="primary" className="w-full !py-2.5 text-xs sm:text-sm font-bold" leftIcon={<FaQrcode size={14} />}>Confirm (QR)</Button>
+              <Button onClick={() => onInitiatePayment('Unpaid')} variant="outline" className="w-full !py-2 text-[10px] font-bold border-emerald/30 text-emerald" leftIcon={<FaSave size={12} />}>Save Tab</Button>
+              <Button onClick={onClearOrder} variant="danger" className="w-full !py-2 text-[10px] font-bold" leftIcon={<FaTrash size={12} />}>Clear Order</Button>
             </div>
           </div>
         </div>
