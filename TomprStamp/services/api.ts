@@ -5,7 +5,7 @@ const getBaseURL = () => {
     
     // If on the stamp portal domain, point to the POS system's API
     if (window.location.hostname.includes('tompr-stamp')) {
-        return 'https://poscafesystem.vercel.app/api';
+        return 'https://flowspos.com/api';
     }
     
     return '/api';

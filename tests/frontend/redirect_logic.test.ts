@@ -4,14 +4,14 @@ describe('App Redirect Logic', () => {
   beforeEach(() => {
     vi.resetModules();
     vi.stubGlobal('location', {
-      hostname: 'poscafesystem.vercel.app',
+      hostname: 'flowspos.com',
       hash: '',
       search: ''
     });
   });
 
   it('should identify POS system on primary domain', async () => {
-    vi.stubGlobal('location', { hostname: 'poscafesystem.vercel.app' });
+    vi.stubGlobal('location', { hostname: 'flowspos.com' });
     vi.stubEnv('VITE_STAMP_ONLY', 'false');
 
     const { STAMP_ONLY } = await import('../../App');

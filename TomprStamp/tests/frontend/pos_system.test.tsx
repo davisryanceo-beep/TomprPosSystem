@@ -2,7 +2,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // 1. Setup global mocks BEFORE importing component
-vi.stubGlobal('location', { hostname: 'poscafesystem.vercel.app' });
+vi.stubGlobal('location', { hostname: 'flowspos.com' });
 vi.stubEnv('VITE_STAMP_ONLY', 'false');
 
 // 2. Define intermediate mocks

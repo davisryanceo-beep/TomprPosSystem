@@ -241,7 +241,7 @@ const CustomerDisplay: React.FC = () => {
 
                   <div className="p-6 bg-white rounded-3xl shadow-inner mb-6">
                     <QRCodeCanvas
-                      value={`https://poscafesystem.vercel.app/#/claim/${order.pendingStampClaimId}`}
+                      value={`https://flowspos.com/#/claim/${order.pendingStampClaimId}`}
                       size={240}
                       level="H"
                       includeMargin={true}
