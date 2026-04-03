@@ -332,7 +332,7 @@ const CashierInterface: React.FC = () => {
         </div>
       )}
       
-      <div className="fade-in grid grid-cols-1 lg:grid-cols-3 gap-2 sm:gap-3 flex-grow p-1 sm:p-2 overflow-hidden h-[calc(100vh-4rem-1rem)]">
+      <div className="fade-in grid grid-cols-1 lg:grid-cols-3 gap-2 sm:gap-3 flex-grow p-1 sm:p-2 overflow-hidden h-[calc(100vh-140px)]">
         {/* Strict Enforcement Overlay */}
         {currentUser && !hasDeclaredStartingCash(currentUser.id) && (
           <div className="absolute inset-0 z-30 flex items-center justify-center backdrop-blur-md bg-white/30 dark:bg-charcoal/30 transition-all p-6 text-center">

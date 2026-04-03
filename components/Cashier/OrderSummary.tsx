@@ -239,23 +239,16 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
 
         {/* Totals and Payment */}
         <div className="flex-shrink-0 pt-2 border-t border-charcoal/10 dark:border-cream-light/10 mt-2">
-          <div className="space-y-1 text-sm">
-            <p className="flex justify-between text-charcoal-light dark:text-cream-light/70">Subtotal: <span className="font-bold text-charcoal-dark dark:text-cream-light">${order.totalAmount.toFixed(2)}</span></p>
-            {appliedPromotion && order.discountAmount && order.discountAmount > 0 && (
-              <div className="flex justify-between text-emerald">
-                <span>Discount ({appliedPromotion.name}):</span>
-                <span className="font-bold">-${order.discountAmount.toFixed(2)}</span>
+            <div className="flex justify-between items-baseline font-black text-emerald border-t border-charcoal/5 pt-0.5">
+              <div className="text-[10px] text-charcoal/40 font-bold flex gap-2">
+                <span>Sub: ${order.totalAmount.toFixed(2)}</span>
+                <span>Tax: ${order.taxAmount.toFixed(2)}</span>
               </div>
-            )}
-            <p className="flex justify-between text-charcoal-light dark:text-cream-light/70">
-              Tax ({taxRatePercent}%):
-              <span className="font-bold text-charcoal-dark dark:text-cream-light">${order.taxAmount.toFixed(2)}</span>
-            </p>
-            <div className="flex justify-between font-black text-base text-charcoal-dark dark:text-cream-light border-t border-charcoal/5 pt-0.5">
-              <span>Total:</span>
-              <span className="text-emerald">${order.finalAmount.toFixed(2)}</span>
+              <div className="text-base flex items-baseline gap-1">
+                <span className="text-[10px] text-charcoal/40 uppercase">Total</span>
+                <span>${order.finalAmount.toFixed(2)}</span>
+              </div>
             </div>
-          </div>
 
           <div className="mt-1 space-y-1">
             <div className="grid grid-cols-2 gap-1.5">
