@@ -315,7 +315,7 @@ const CashierInterface: React.FC = () => {
   ], !isQRPaymentInProgress);
 
   return (
-    <div className="relative h-screen flex flex-col">
+    <div className="relative h-screen flex flex-col overflow-hidden">
       {!isOnline && (
         <div className="bg-amber-500 text-white px-4 py-2 flex items-center justify-between animate-pulse-slow z-50">
           <div className="flex items-center gap-2 font-bold text-sm">
@@ -332,7 +332,7 @@ const CashierInterface: React.FC = () => {
         </div>
       )}
       
-      <div className="fade-in grid grid-cols-1 lg:grid-cols-3 gap-2 sm:gap-3 flex-grow p-1 sm:p-2 min-h-0 overflow-hidden relative">
+      <div className="fade-in grid grid-cols-1 lg:grid-cols-3 gap-2 sm:gap-3 flex-grow p-1 sm:p-2 overflow-hidden h-[calc(100vh-4rem-1rem)]">
         {/* Strict Enforcement Overlay */}
         {currentUser && !hasDeclaredStartingCash(currentUser.id) && (
           <div className="absolute inset-0 z-30 flex items-center justify-center backdrop-blur-md bg-white/30 dark:bg-charcoal/30 transition-all p-6 text-center">
@@ -422,7 +422,7 @@ const CashierInterface: React.FC = () => {
       </div>
 
       {/* Order Summary Panel */}
-      <div className="lg:col-span-1 bg-cream-light dark:bg-charcoal-dark p-3 sm:p-4 rounded-xl shadow-lg flex flex-col h-[60vh] lg:h-full overflow-hidden border border-charcoal/5 dark:border-cream-light/5">
+      <div className="lg:col-span-1 bg-cream-light dark:bg-charcoal-dark p-2 sm:p-3 rounded-xl shadow-lg flex flex-col h-[50vh] lg:h-full max-h-full overflow-hidden border border-charcoal/5 dark:border-cream-light/5">
         <h2 className="text-lg sm:text-2xl font-extrabold text-charcoal-dark dark:text-cream-light mb-3 flex items-center flex-shrink-0">
           <span className="mr-2 text-emerald"><FaShoppingCart /></span>Current Order
         </h2>

@@ -175,10 +175,10 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
                 leftIcon={<FaChair />}
                 onClick={onSelectTableClick}
               >
-                <span className="mr-2 font-black text-emerald uppercase tracking-tighter">
+                <span className="mr-1 sm:mr-2 font-black text-emerald uppercase tracking-tighter text-sm">
                   {order.dailyOrderNumber ? `#${order.dailyOrderNumber}` : (order.items.length > 0 ? '#New' : '')}
                 </span>
-                {order.tableNumber ? `Table: ${order.tableNumber}` : 'Select Table'}
+                <span className="text-sm truncate">{order.tableNumber ? `Table ${order.tableNumber}` : 'Select Table'}</span>
               </Button>
               <Button 
                 variant="ghost" 
@@ -261,7 +261,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
               Tax ({taxRatePercent}%):
               <span className="font-bold text-charcoal-dark dark:text-cream-light">${order.taxAmount.toFixed(2)}</span>
             </p>
-            <div className="flex justify-between font-black text-2xl text-charcoal-dark dark:text-cream-light pt-1 mt-1 border-t border-charcoal/5 dark:border-white/5">
+            <div className="flex justify-between font-black text-xl text-charcoal-dark dark:text-cream-light pt-1 mt-1 border-t border-charcoal/5 dark:border-white/5">
               <span>Total:</span>
               <span className="text-emerald">${order.finalAmount.toFixed(2)}</span>
             </div>
@@ -301,10 +301,11 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
-              <Button onClick={() => onInitiatePayment('Unpaid')} variant="outline" className="col-span-2 !py-2 text-sm border-2 border-emerald text-emerald hover:bg-emerald/10" leftIcon={<FaSave size={14} />}>Save Tab (Unpaid)</Button>
-              <Button onClick={() => onInitiatePayment('Cash')} variant="secondary" className="w-full !py-3 text-base" leftIcon={<FaMoneyBillWave size={16} />}>Pay Cash</Button>
-              <Button onClick={() => onInitiatePayment('QR')} variant="primary" className="w-full !py-3 text-base" leftIcon={<FaQrcode size={16} />}>Confirm Order (QR)</Button>
+            <div className="grid grid-cols-2 gap-1.5 mt-2">
+              <Button onClick={() => onInitiatePayment('Cash')} variant="secondary" className="w-full !py-2 text-sm" leftIcon={<FaMoneyBillWave size={12} />}>Pay Cash</Button>
+              <Button onClick={() => onInitiatePayment('QR')} variant="primary" className="w-full !py-2 text-sm" leftIcon={<FaQrcode size={12} />}>Confirm (QR)</Button>
+              <Button onClick={() => onInitiatePayment('Unpaid')} variant="outline" className="w-full !py-1.5 text-xs border border-emerald text-emerald hover:bg-emerald/10" leftIcon={<FaSave size={10} />}>Save Tab</Button>
+              <Button onClick={onClearOrder} variant="danger" className="w-full !py-1.5 text-xs opacity-80 hover:opacity-100" leftIcon={<FaTrash size={10} />}>Clear Order</Button>
             </div>
           </div>
         </div>
