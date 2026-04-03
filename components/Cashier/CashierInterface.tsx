@@ -332,7 +332,7 @@ const CashierInterface: React.FC = () => {
         </div>
       )}
       
-      <div className="fade-in grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 flex-grow p-2 sm:p-4 min-h-0 overflow-hidden relative">
+      <div className="fade-in grid grid-cols-1 lg:grid-cols-3 gap-2 sm:gap-3 flex-grow p-1 sm:p-2 min-h-0 overflow-hidden relative">
         {/* Strict Enforcement Overlay */}
         {currentUser && !hasDeclaredStartingCash(currentUser.id) && (
           <div className="absolute inset-0 z-30 flex items-center justify-center backdrop-blur-md bg-white/30 dark:bg-charcoal/30 transition-all p-6 text-center">
@@ -361,10 +361,10 @@ const CashierInterface: React.FC = () => {
         )}
 
         {/* Product Panel */}
-      <div className={`lg:col-span-2 bg-cream dark:bg-charcoal-dark/50 p-3 sm:p-4 rounded-xl shadow-lg flex flex-col transition-opacity duration-300 ${isQRPaymentInProgress ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
+      <div className={`lg:col-span-2 bg-cream dark:bg-charcoal-dark/50 p-2 sm:p-3 rounded-xl shadow-lg flex flex-col transition-opacity duration-300 ${isQRPaymentInProgress ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
         <div className="flex-shrink-0">
-          <div className="flex justify-between items-center mb-3 gap-2">
-            <h1 className="text-xl sm:text-3xl font-extrabold text-charcoal-dark dark:text-cream-light">Menu</h1>
+          <div className="flex justify-between items-center mb-2 gap-2">
+            <h1 className="text-lg sm:text-xl font-black text-charcoal-dark dark:text-cream-light tracking-tighter">Menu</h1>
             <div className="flex items-center gap-1 sm:gap-2 flex-wrap justify-end">
               {/* Online indicator */}
               <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold ${isOnline ? 'bg-emerald/10 text-emerald' : 'bg-amber-500 text-white'}`}>
@@ -397,13 +397,13 @@ const CashierInterface: React.FC = () => {
               </div>
             </div>
           </div>
-          <div className="flex flex-wrap gap-1 sm:gap-2 mb-3">
+          <div className="flex flex-wrap gap-1 mb-2">
             {knownCategories.map(category => (
               <button
                 key={category}
                 onClick={() => setActiveCategory(category)}
-                className={`flex-grow sm:flex-grow-0 flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-bold rounded-lg transition-all transform active:scale-95 shadow-md ${activeCategory === category
-                  ? 'bg-emerald text-white'
+                className={`flex-grow sm:flex-grow-0 flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-xs font-bold rounded-lg transition-all transform active:scale-95 shadow-sm border border-charcoal/5 dark:border-white/5 ${activeCategory === category
+                  ? 'bg-emerald text-white shadow-emerald/20'
                   : 'bg-cream-light dark:bg-charcoal-dark text-charcoal-light dark:text-cream-light hover:bg-cream dark:hover:bg-charcoal'
                   }`}
               >

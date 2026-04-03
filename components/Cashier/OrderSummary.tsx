@@ -196,9 +196,9 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
                 const isCustomized = hasCustomizations(item);
                 return (
                   <tr key={item.productId + JSON.stringify(item.customizations) + index}>
-                    <td className="py-3 pr-2">
+                    <td className="py-1.5 pr-2">
                       <div className="flex items-center gap-2">
-                        <p className="font-bold text-lg text-charcoal-dark dark:text-cream-light">
+                        <p className="font-bold text-base text-charcoal-dark dark:text-cream-light leading-tight">
                           {item.productName}
                           {item.isCombo && <span className="ml-2 text-xs bg-emerald text-white px-1.5 py-0.5 rounded uppercase">Combo</span>}
                         </p>
@@ -219,14 +219,14 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
                         </p>
                       )}
                     </td>
-                    <td className="py-3 px-2 text-right">
+                    <td className="py-1.5 px-2 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <Button size="sm" variant="ghost" className="!p-2 rounded-full" onClick={() => onUpdateQuantity(item, -1)}><FaMinus /></Button>
-                        <span className="w-8 text-center font-extrabold text-xl text-charcoal-dark dark:text-cream-light">{item.quantity}</span>
-                        <Button size="sm" variant="ghost" className="!p-2 rounded-full" onClick={() => onUpdateQuantity(item, 1)}><FaPlus /></Button>
+                        <Button size="sm" variant="ghost" className="!p-1.5 rounded-full" onClick={() => onUpdateQuantity(item, -1)}><FaMinus size={10} /></Button>
+                        <span className="w-6 text-center font-black text-lg text-charcoal-dark dark:text-cream-light">{item.quantity}</span>
+                        <Button size="sm" variant="ghost" className="!p-1.5 rounded-full" onClick={() => onUpdateQuantity(item, 1)}><FaPlus size={10} /></Button>
                       </div>
                     </td>
-                    <td className="py-3 pl-2 text-right font-bold text-lg text-charcoal-dark dark:text-cream-light w-28">
+                    <td className="py-1.5 pl-2 text-right font-bold text-base text-charcoal-dark dark:text-cream-light w-24">
                       ${(item.unitPrice * item.quantity).toFixed(2)}
                       {item.discount && (
                         <div className="text-xs text-emerald line-through opacity-75">
@@ -234,9 +234,11 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
                         </div>
                       )}
                     </td>
-                    <td className="py-3 pl-2">
-                      <Button size="sm" variant="ghost" onClick={() => setDiscountModalItem(item)} className="!p-2 text-emerald rounded-full mr-1"><FaTags size={12} /></Button>
-                      <Button size="sm" variant="ghost" onClick={() => onUpdateQuantity(item, -item.quantity)} className="!p-2 text-terracotta rounded-full"><FaTrash /></Button>
+                    <td className="py-1.5 pl-2">
+                      <div className="flex items-center gap-0.5">
+                        <Button size="sm" variant="ghost" onClick={() => setDiscountModalItem(item)} className="!p-1.5 text-emerald rounded-full"><FaTags size={10} /></Button>
+                        <Button size="sm" variant="ghost" onClick={() => onUpdateQuantity(item, -item.quantity)} className="!p-1.5 text-terracotta rounded-full"><FaTrash size={10} /></Button>
+                      </div>
                     </td>
                   </tr>
                 );
@@ -246,44 +248,44 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
         </div>
 
         {/* Totals and Payment */}
-        <div className="flex-shrink-0 pt-4">
-          <div className="border-t-2 border-dashed border-charcoal/20 dark:border-cream-light/20 pt-4 space-y-2 text-lg">
-            <p className="flex justify-between text-charcoal dark:text-cream-light">Subtotal: <span>${order.totalAmount.toFixed(2)}</span></p>
+        <div className="flex-shrink-0 pt-2 border-t border-charcoal/10 dark:border-cream-light/10 mt-2">
+          <div className="space-y-1 text-sm">
+            <p className="flex justify-between text-charcoal-light dark:text-cream-light/70">Subtotal: <span className="font-bold text-charcoal-dark dark:text-cream-light">${order.totalAmount.toFixed(2)}</span></p>
             {appliedPromotion && order.discountAmount && order.discountAmount > 0 && (
-              <div className="flex justify-between text-emerald-dark dark:text-emerald">
+              <div className="flex justify-between text-emerald">
                 <span>Discount ({appliedPromotion.name}):</span>
-                <span>-${order.discountAmount.toFixed(2)}</span>
+                <span className="font-bold">-${order.discountAmount.toFixed(2)}</span>
               </div>
             )}
-            <p className="flex justify-between text-charcoal dark:text-cream-light">
+            <p className="flex justify-between text-charcoal-light dark:text-cream-light/70">
               Tax ({taxRatePercent}%):
-              <span>${order.taxAmount.toFixed(2)}</span>
+              <span className="font-bold text-charcoal-dark dark:text-cream-light">${order.taxAmount.toFixed(2)}</span>
             </p>
-            <div className="flex justify-between font-extrabold text-3xl text-charcoal-dark dark:text-cream-light pt-2 mt-2">
+            <div className="flex justify-between font-black text-2xl text-charcoal-dark dark:text-cream-light pt-1 mt-1 border-t border-charcoal/5 dark:border-white/5">
               <span>Total:</span>
-              <span>${order.finalAmount.toFixed(2)}</span>
+              <span className="text-emerald">${order.finalAmount.toFixed(2)}</span>
             </div>
           </div>
 
-          <div className="mt-4 space-y-3">
-            <div className="grid grid-cols-2 gap-3">
-              <label htmlFor="rushOrder" className="flex items-center space-x-3 p-3 rounded-lg bg-cream dark:bg-charcoal-dark/50 cursor-pointer">
+          <div className="mt-3 space-y-2">
+            <div className="grid grid-cols-2 gap-2">
+              <label htmlFor="rushOrder" className="flex items-center space-x-2 p-2 rounded-lg bg-cream dark:bg-charcoal-dark/50 cursor-pointer border border-charcoal/5">
                 <input
                   type="checkbox"
                   id="rushOrder"
-                  className="h-6 w-6 text-terracotta border-charcoal/30 rounded focus:ring-terracotta"
+                  className="h-4 w-4 text-terracotta border-charcoal/30 rounded focus:ring-terracotta"
                   checked={order.isRushOrder || false}
                   onChange={(e) => onSetRushOrder(e.target.checked)}
                 />
-                <span className="font-bold flex items-center gap-2"><span className="text-terracotta"><FaShippingFast /></span> Rush Order</span>
+                <span className="font-bold text-xs flex items-center gap-1"><span className="text-terracotta"><FaShippingFast size={12} /></span> Rush Order</span>
               </label>
 
               {appliedPromotion ? (
                 <Button
                   onClick={removePromotionFromCurrentOrder}
                   variant="ghost"
-                  className="w-full !py-3 text-terracotta"
-                  leftIcon={<FaTimesCircle />}
+                  className="w-full !py-2 text-xs text-terracotta"
+                  leftIcon={<FaTimesCircle size={12} />}
                 >
                   Remove Promo
                 </Button>
@@ -291,18 +293,18 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
                 <Button
                   onClick={() => setIsPromotionModalOpen(true)}
                   variant="ghost"
-                  className="w-full !py-3"
-                  leftIcon={<FaTags />}
+                  className="w-full !py-2 text-xs"
+                  leftIcon={<FaTags size={12} />}
                 >
                   Apply Promo
                 </Button>
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <Button onClick={() => onInitiatePayment('Unpaid')} variant="outline" className="col-span-2 !py-3 text-lg border-2 border-emerald text-emerald hover:bg-emerald/10" leftIcon={<FaSave />}>Save Tab (Unpaid)</Button>
-              <Button onClick={() => onInitiatePayment('Cash')} variant="secondary" className="w-full !py-4 text-lg" leftIcon={<FaMoneyBillWave />}>Pay Cash</Button>
-              <Button onClick={() => onInitiatePayment('QR')} variant="primary" className="w-full !py-4 text-lg" leftIcon={<FaQrcode />}>Confirm Order (QR)</Button>
+            <div className="grid grid-cols-2 gap-2">
+              <Button onClick={() => onInitiatePayment('Unpaid')} variant="outline" className="col-span-2 !py-2 text-sm border-2 border-emerald text-emerald hover:bg-emerald/10" leftIcon={<FaSave size={14} />}>Save Tab (Unpaid)</Button>
+              <Button onClick={() => onInitiatePayment('Cash')} variant="secondary" className="w-full !py-3 text-base" leftIcon={<FaMoneyBillWave size={16} />}>Pay Cash</Button>
+              <Button onClick={() => onInitiatePayment('QR')} variant="primary" className="w-full !py-3 text-base" leftIcon={<FaQrcode size={16} />}>Confirm Order (QR)</Button>
             </div>
           </div>
         </div>

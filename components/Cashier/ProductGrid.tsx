@@ -31,13 +31,13 @@ const ProductCard: React.FC<{ product: Product; onSelect: (cust: Partial<OrderIt
       <div
         onClick={handleSelect}
         className={`
-          bg-cream-light dark:bg-charcoal-dark rounded-xl shadow-lg overflow-hidden flex flex-col p-3 h-fit
+          bg-cream-light dark:bg-charcoal-dark rounded-xl shadow-lg overflow-hidden flex flex-col p-2 h-fit
           transform transition-all duration-200 active:scale-95
           ${isOutOfStock ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:shadow-2xl hover:-translate-y-1'}
           ${product.isSeasonal ? 'border-2 border-orange-400/30' : ''}
         `}
       >
-        <div className="relative aspect-square sm:aspect-auto sm:h-36">
+        <div className="relative aspect-square sm:aspect-auto sm:h-28">
           <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover rounded-lg" />
           {isOutOfStock && (
             <div className="absolute inset-0 bg-charcoal-900/70 flex items-center justify-center rounded-lg">
@@ -56,12 +56,12 @@ const ProductCard: React.FC<{ product: Product; onSelect: (cust: Partial<OrderIt
           )}
         </div>
         <div className="pt-2 flex flex-col">
-          <div className="mb-2">
-            <h3 className="text-xs sm:text-base font-black text-charcoal-dark dark:text-cream-light leading-tight line-clamp-1" title={product.name}>{product.name}</h3>
+          <div className="mb-1">
+            <h3 className="text-[10px] sm:text-sm font-black text-charcoal-dark dark:text-cream-light leading-tight line-clamp-1" title={product.name}>{product.name}</h3>
             <p className="text-[10px] sm:text-xs text-charcoal-light dark:text-charcoal-light line-clamp-1 mt-0.5">{product.description || 'A delicious treat.'}</p>
           </div>
-          <div className="flex justify-between items-center">
-            <p className="text-sm sm:text-lg font-black text-emerald leading-none">${product.price.toFixed(2)}</p>
+          <div className="flex justify-between items-center px-0.5">
+            <p className="text-sm sm:text-base font-black text-emerald leading-none">${product.price.toFixed(2)}</p>
             <Button
               onClick={(e) => { e.stopPropagation(); handleSelect(); }}
               disabled={isOutOfStock}
@@ -103,7 +103,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, onAddItem }) => {
   }
 
   return (
-    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-6 gap-3 items-start h-full overflow-y-auto pr-1 pb-4">
+    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-6 gap-2 items-start h-full overflow-y-auto pr-1 pb-4">
       {/* Show combos first if they are active */}
       {combos.filter(c => c.isActive).map(combo => (
         <ComboProductCard

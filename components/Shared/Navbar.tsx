@@ -119,14 +119,14 @@ const Navbar: React.FC = () => {
 
   return (
     <>
-      <nav className="bg-cream-light dark:bg-charcoal-dark shadow-lg sticky top-0 z-40 border-b border-charcoal/10 dark:border-cream-light/10">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-20">
+      <nav className="bg-cream-light dark:bg-charcoal-dark shadow-md sticky top-0 z-40 border-b border-charcoal/5 dark:border-cream-light/5">
+        <div className="container mx-auto px-2 sm:px-4">
+          <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
-              <span className="h-10 w-10 text-emerald mr-3"><FaCoffee size={40} /></span>
+              <span className="h-8 w-8 text-emerald mr-2"><FaCoffee size={32} /></span>
               <div className="flex flex-col">
-                <span className="font-extrabold text-2xl text-charcoal-dark dark:text-cream-light tracking-tight">FlowsPOS</span>
-                <div className="flex items-center text-charcoal-light dark:text-charcoal-light text-xs -mt-1">
+                <span className="font-black text-xl text-charcoal-dark dark:text-cream-light tracking-tighter leading-none">FlowsPOS</span>
+                <div className="flex items-center text-charcoal-light dark:text-charcoal-light text-[10px] mt-0.5">
                   {isGlobalAdmin && currentStoreId && getStoreById(currentStoreId) ? (
                     <><span className="mr-1"><FaStore /></span>{getStoreById(currentStoreId)?.name}</>
                   ) : isStoreSpecificRole && currentUser?.storeId && getStoreById(currentUser.storeId) ? (
@@ -143,11 +143,11 @@ const Navbar: React.FC = () => {
 
               {currentUser && (
                 <div className="relative" ref={menuRef}>
-                  <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="flex items-center space-x-2 text-charcoal-dark dark:text-cream-light p-2 rounded-lg hover:bg-cream dark:hover:bg-charcoal">
+                  <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="flex items-center space-x-2 text-charcoal-dark dark:text-cream-light p-1.5 rounded-lg hover:bg-cream dark:hover:bg-charcoal transition-colors">
                     {currentUser.profilePictureUrl ? (
-                      <img src={currentUser.profilePictureUrl} alt="Profile" className="h-10 w-10 rounded-full object-cover" />
+                      <img src={currentUser.profilePictureUrl} alt="Profile" className="h-8 w-8 rounded-full object-cover border border-emerald/20" />
                     ) : (
-                      <span className="h-10 w-10 text-charcoal-light"><FaUserCircle size={40} /></span>
+                      <span className="h-8 w-8 text-charcoal-light opacity-50"><FaUserCircle size={32} /></span>
                     )}
                     <div className="hidden sm:flex flex-col items-start leading-tight">
                       <span className="font-bold">{getDisplayName()}</span>
