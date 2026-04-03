@@ -171,8 +171,8 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
             <div className="flex items-center gap-2">
               <Button
                 variant="ghost"
-                className="flex-1 !justify-start text-lg !py-3 bg-white dark:bg-charcoal shadow-sm"
-                leftIcon={<FaChair />}
+                className="flex-1 !justify-start text-sm !py-2 bg-white dark:bg-charcoal shadow-sm border border-charcoal/5"
+                leftIcon={<FaChair size={12} />}
                 onClick={onSelectTableClick}
               >
                 <span className="mr-1 sm:mr-2 font-black text-emerald uppercase tracking-tighter text-sm">
@@ -183,10 +183,10 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
               <Button 
                 variant="ghost" 
                 onClick={onClearOrder} 
-                className="text-terracotta hover:bg-terracotta/10 !p-3 rounded-xl border border-terracotta/10" 
+                className="text-terracotta hover:bg-terracotta/10 !p-2 rounded-lg border border-terracotta/10" 
                 title="Clear Entire Order"
               >
-                <FaTrash />
+                <FaTrash size={12} />
               </Button>
             </div>
           </div>
@@ -261,7 +261,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
               Tax ({taxRatePercent}%):
               <span className="font-bold text-charcoal-dark dark:text-cream-light">${order.taxAmount.toFixed(2)}</span>
             </p>
-            <div className="flex justify-between font-black text-xl text-charcoal-dark dark:text-cream-light pt-1 mt-1 border-t border-charcoal/5 dark:border-white/5">
+            <div className="flex justify-between font-black text-lg text-charcoal-dark dark:text-cream-light pt-0.5 mt-0.5 border-t border-charcoal/5 dark:border-white/5">
               <span>Total:</span>
               <span className="text-emerald">${order.finalAmount.toFixed(2)}</span>
             </div>
