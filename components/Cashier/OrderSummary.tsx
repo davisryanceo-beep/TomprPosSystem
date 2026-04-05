@@ -270,11 +270,11 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-1.5 px-0.5 pb-1">
-              <Button onClick={() => onInitiatePayment('Cash')} variant="secondary" className="w-full !py-2.5 text-xs sm:text-sm font-bold" leftIcon={<FaMoneyBillWave size={14} />}>Pay Cash</Button>
-              <Button onClick={() => onInitiatePayment('QR')} variant="primary" className="w-full !py-2.5 text-xs sm:text-sm font-bold" leftIcon={<FaQrcode size={14} />}>Confirm (QR)</Button>
-              <Button onClick={() => onInitiatePayment('Unpaid')} variant="outline" className="w-full !py-2.5 text-xs sm:text-sm font-bold border-emerald/30 text-emerald" leftIcon={<FaSave size={14} />}>Save Tab</Button>
-              <Button onClick={onClearOrder} variant="danger" className="w-full !py-2.5 text-xs sm:text-sm font-bold" leftIcon={<FaTrash size={14} />}>Clear Order</Button>
+            <div className="grid grid-cols-2 gap-2 px-0.5 pb-1">
+              <Button onClick={() => onInitiatePayment('Cash')} variant="secondary" className="w-full !py-4 text-sm sm:text-base font-black shadow-md active:scale-95 transition-transform" leftIcon={<FaMoneyBillWave size={18} />}>Pay Cash</Button>
+              <Button onClick={() => onInitiatePayment('QR')} variant="primary" className="w-full !py-4 text-sm sm:text-base font-black shadow-md active:scale-95 transition-transform" leftIcon={<FaQrcode size={18} />}>Confirm (QR)</Button>
+              <Button onClick={() => onInitiatePayment('Unpaid')} variant="outline" className="w-full !py-3.5 text-sm sm:text-base font-black border-2 border-emerald/30 text-emerald shadow-sm active:scale-95 transition-transform" leftIcon={<FaSave size={16} />}>Save Tab</Button>
+              <Button onClick={onClearOrder} variant="danger" className="w-full !py-3.5 text-sm sm:text-base font-black shadow-sm active:scale-95 transition-transform" leftIcon={<FaTrash size={16} />}>Clear Order</Button>
             </div>
           </div>
         </div>
