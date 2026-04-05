@@ -18,11 +18,12 @@ const StoreSettings: React.FC = () => {
     useEffect(() => {
         if (currentStoreId) {
             const storeData = getStoreById(currentStoreId);
-            if (storeData) {
+            // Only initialize if we don't have settings for this store yet, or ID changed
+            if (storeData && (settings.id !== currentStoreId)) {
                 setSettings(storeData);
             }
         }
-    }, [currentStoreId, getStoreById]);
+    }, [currentStoreId, getStoreById, settings.id]);
 
     const handleSettingChange = (field: keyof Store, value: any) => {
         setSettings(prev => ({ ...prev, [field]: value }));
@@ -152,14 +153,14 @@ const StoreSettings: React.FC = () => {
                             <input
                                 type="checkbox"
                                 className="sr-only peer"
-                                checked={Number(settings.loyaltyEnabled) !== 0}
+                                checked={settings.loyaltyEnabled !== 0 && settings.loyaltyEnabled !== '0' && settings.loyaltyEnabled !== false}
                                 onChange={e => handleSettingChange('loyaltyEnabled', e.target.checked)}
                             />
                             <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
                         </label>
                     </div>
 
-                    {settings.loyaltyEnabled && (
+                    {(settings.loyaltyEnabled !== 0 && settings.loyaltyEnabled !== '0' && settings.loyaltyEnabled !== false) && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in duration-300">
                             <Input
                                 label="Stamps Per Item"
@@ -194,20 +195,20 @@ const StoreSettings: React.FC = () => {
                 <div className="mt-6 p-4 bg-white dark:bg-charcoal-dark rounded-xl border border-emerald/20 shadow-sm transition-all hover:shadow-md">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <div className={`p-2 rounded-lg ${settings.onlineMenuEnabled ? 'bg-emerald/10 text-emerald' : 'bg-charcoal-light/10 text-charcoal-light'}`}>
+                            <div className={`p-2 rounded-lg ${(settings.onlineMenuEnabled !== 0 && settings.onlineMenuEnabled !== '0' && settings.onlineMenuEnabled !== false) ? 'bg-emerald/10 text-emerald' : 'bg-charcoal-light/10 text-charcoal-light'}`}>
                                 <FaGlobe size={20} />
                             </div>
                             <div>
                                 <h4 className="font-bold text-charcoal-dark dark:text-cream-light flex items-center gap-2">
                                     Online storefront & Menu
-                                    {settings.onlineMenuEnabled ? (
+                                    {(settings.onlineMenuEnabled !== 0 && settings.onlineMenuEnabled !== '0' && settings.onlineMenuEnabled !== false) ? (
                                         <span className="text-[10px] px-2 py-0.5 bg-emerald text-white rounded-full uppercase tracking-widest font-black animate-pulse">Live</span>
                                     ) : (
                                         <span className="text-[10px] px-2 py-0.5 bg-charcoal-light text-white rounded-full uppercase tracking-widest font-black">Hidden</span>
                                     )}
                                 </h4>
                                 <p className="text-xs text-charcoal-light max-w-md italic">
-                                    {settings.onlineMenuEnabled 
+                                    {(settings.onlineMenuEnabled !== 0 && settings.onlineMenuEnabled !== '0' && settings.onlineMenuEnabled !== false) 
                                         ? "Your product menu is visible to customers in the Stamp App. Customers can browse and see prices." 
                                         : "Your menu is currently hidden from the public. Use this to pause online browsing while keeping the loyalty system active."}
                                 </p>
@@ -217,7 +218,7 @@ const StoreSettings: React.FC = () => {
                             <input
                                 type="checkbox"
                                 className="sr-only peer"
-                                checked={Number(settings.onlineMenuEnabled) !== 0}
+                                checked={settings.onlineMenuEnabled !== 0 && settings.onlineMenuEnabled !== '0' && settings.onlineMenuEnabled !== false}
                                 onChange={e => handleSettingChange('onlineMenuEnabled', e.target.checked)}
                             />
                             <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
@@ -229,20 +230,20 @@ const StoreSettings: React.FC = () => {
                 <div className="mt-4 p-4 bg-white dark:bg-charcoal-dark rounded-xl border border-emerald/20 shadow-sm transition-all hover:shadow-md">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <div className={`p-2 rounded-lg ${Number(settings.cashDeclarationRequired) !== 0 ? 'bg-emerald/10 text-emerald' : 'bg-charcoal-light/10 text-charcoal-light'}`}>
+                            <div className={`p-2 rounded-lg ${settings.cashDeclarationRequired !== 0 && settings.cashDeclarationRequired !== '0' && settings.cashDeclarationRequired !== false ? 'bg-emerald/10 text-emerald' : 'bg-charcoal-light/10 text-charcoal-light'}`}>
                                 <FaCalculator size={20} />
                             </div>
                             <div>
                                 <h4 className="font-bold text-charcoal-dark dark:text-cream-light flex items-center gap-2">
                                     Enforce Cash Declaration
-                                    {Number(settings.cashDeclarationRequired) !== 0 ? (
+                                    {settings.cashDeclarationRequired !== 0 && settings.cashDeclarationRequired !== '0' && settings.cashDeclarationRequired !== false ? (
                                         <span className="text-[10px] px-2 py-0.5 bg-emerald text-white rounded-full uppercase tracking-widest font-black">Required</span>
                                     ) : (
                                         <span className="text-[10px] px-2 py-0.5 bg-charcoal-light text-white rounded-full uppercase tracking-widest font-black">Optional</span>
                                     )}
                                 </h4>
                                 <p className="text-xs text-charcoal-light max-w-md italic">
-                                    {Number(settings.cashDeclarationRequired) !== 0 
+                                    {settings.cashDeclarationRequired !== 0 && settings.cashDeclarationRequired !== '0' && settings.cashDeclarationRequired !== false 
                                         ? "Staff MUST count cash and declare the starting/ending float every shift." 
                                         : "Staff can open and close the register instantly without counting cash manually."}
                                 </p>
@@ -252,7 +253,7 @@ const StoreSettings: React.FC = () => {
                             <input
                                 type="checkbox"
                                 className="sr-only peer"
-                                checked={Number(settings.cashDeclarationRequired) !== 0}
+                                checked={settings.cashDeclarationRequired !== 0 && settings.cashDeclarationRequired !== '0' && settings.cashDeclarationRequired !== false}
                                 onChange={e => handleSettingChange('cashDeclarationRequired', e.target.checked)}
                             />
                             <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>

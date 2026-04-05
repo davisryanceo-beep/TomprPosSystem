@@ -1871,8 +1871,8 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // If the store hasn't loaded yet, return true to prevent the modal from popping up
     if (!currentStore) return true;
     
-    // Explicitly check for 0/false using Number normalization
-    if (Number(currentStore.cashDeclarationRequired) === 0) {
+    // Explicitly check for 0/false/ '0' bypass
+    if (currentStore.cashDeclarationRequired === 0 || currentStore.cashDeclarationRequired === '0' || currentStore.cashDeclarationRequired === false) {
       return true;
     }
 

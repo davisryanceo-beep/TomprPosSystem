@@ -179,7 +179,7 @@ const Navbar: React.FC = () => {
 
                                 if (!hasOpened) {
                                   const currentStore = getStoreById(currentStoreId || '');
-                                  const isDeclarationRequired = Number(currentStore?.cashDeclarationRequired) !== 0;
+                                  const isDeclarationRequired = currentStore?.cashDeclarationRequired !== 0 && currentStore?.cashDeclarationRequired !== '0' && currentStore?.cashDeclarationRequired !== false;
 
                                   return (
                                     <button 
