@@ -273,8 +273,8 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
             <div className="grid grid-cols-2 gap-1.5 px-0.5 pb-1">
               <Button onClick={() => onInitiatePayment('Cash')} variant="secondary" className="w-full !py-2.5 text-xs sm:text-sm font-bold" leftIcon={<FaMoneyBillWave size={14} />}>Pay Cash</Button>
               <Button onClick={() => onInitiatePayment('QR')} variant="primary" className="w-full !py-2.5 text-xs sm:text-sm font-bold" leftIcon={<FaQrcode size={14} />}>Confirm (QR)</Button>
-              <Button onClick={() => onInitiatePayment('Unpaid')} variant="outline" className="w-full !py-2 text-[10px] font-bold border-emerald/30 text-emerald" leftIcon={<FaSave size={12} />}>Save Tab</Button>
-              <Button onClick={onClearOrder} variant="danger" className="w-full !py-2 text-[10px] font-bold" leftIcon={<FaTrash size={12} />}>Clear Order</Button>
+              <Button onClick={() => onInitiatePayment('Unpaid')} variant="outline" className="w-full !py-2.5 text-xs sm:text-sm font-bold border-emerald/30 text-emerald" leftIcon={<FaSave size={14} />}>Save Tab</Button>
+              <Button onClick={onClearOrder} variant="danger" className="w-full !py-2.5 text-xs sm:text-sm font-bold" leftIcon={<FaTrash size={14} />}>Clear Order</Button>
             </div>
           </div>
         </div>
