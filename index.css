@@ -2,9 +2,8 @@
 @config "./tailwind.config.js";
  
  html, body {
-   @apply h-screen overflow-hidden m-0 p-0;
-   height: 100%;
-   width: 100%;
+   @apply m-0 p-0 overflow-y-auto;
+   min-height: 100vh;
  }
  
  .no-scrollbar::-webkit-scrollbar {
