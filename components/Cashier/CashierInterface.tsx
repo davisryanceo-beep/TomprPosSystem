@@ -22,7 +22,7 @@ import DeclareCashModal from './DeclareCashModal';
 const CashierInterface: React.FC = () => {
   const {
     products, currentOrder, createOrUpdateCurrentOrder, clearCurrentOrder,
-    finalizeCurrentOrder, setRushOrder, getProductById, currentStoreId,
+    finalizeCurrentOrder, setRushOrder, getProductById, getStoreById, currentStoreId,
     setTableNumberForCurrentOrder, updateCurrentOrder, knownCategories,
     saveOrderAsTab, loadOrderAsCurrent, selectedCustomer, isOnline, pendingOrders,
     hasDeclaredStartingCash, orders
@@ -44,10 +44,11 @@ const CashierInterface: React.FC = () => {
 
   // Auto-open declaration if needed
   useEffect(() => {
-    if (currentUser && !hasDeclaredStartingCash(currentUser.id)) {
+    const storeObj = getStoreById(currentStoreId || '');
+    if (currentUser && storeObj && !hasDeclaredStartingCash(currentUser.id)) {
       setShowDeclareCashModal(true);
     }
-  }, [currentUser, hasDeclaredStartingCash]);
+  }, [currentUser, currentStoreId, getStoreById, hasDeclaredStartingCash]);
 
   // Calculate active online orders count for badge
   const activeOnlineOrdersCount = orders.filter(o =>
