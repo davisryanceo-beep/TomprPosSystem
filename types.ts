@@ -23,7 +23,7 @@ export interface Store {
   qrCodeUrl?: string; // URL for the payment QR code
 
   // Payment Integration
-  khqrEnabled?: boolean;
+  khqrEnabled?: boolean | number;
   khqrMerchantID?: string;
   khqrMerchantName?: string;
   khqrCity?: string;
@@ -49,13 +49,13 @@ export interface Store {
   rewardPolicy?: RewardPolicy;
 
   // Loyalty Settings
-  loyaltyEnabled?: boolean;
+  loyaltyEnabled?: boolean | number;
   stampsPerItem?: number;
   stampsToRedeem?: number;
   loyaltyRewardDescription?: string;
   stampDisplayTimeout?: number;
-  onlineMenuEnabled?: boolean;
-  cashDeclarationRequired?: boolean;
+  onlineMenuEnabled?: boolean | number;
+  cashDeclarationRequired?: boolean | number;
 }
 
 export interface Customer {
