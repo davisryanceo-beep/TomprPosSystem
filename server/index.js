@@ -741,8 +741,21 @@ app.put(
       ];
 
       const safeUpdates = {};
+      const integerFields = [
+        "loyaltyEnabled", "stampsPerItem", "stampsToRedeem", 
+        "stampDisplayTimeout", "cashDeclarationRequired", "logoSize",
+        "onlineMenuEnabled"
+      ];
+
       for (const key of allowedKeys) {
-        if (updates[key] !== undefined) safeUpdates[key] = updates[key];
+        if (updates[key] !== undefined) {
+          let value = updates[key];
+          // Convert Booleans to Integers for DB compatibility
+          if (integerFields.includes(key) && typeof value === 'boolean') {
+            value = value ? 1 : 0;
+          }
+          safeUpdates[key] = value;
+        }
       }
 
       const { error } = await db.from("stores").update(safeUpdates).eq("id", id);
