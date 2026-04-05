@@ -735,7 +735,9 @@ app.put(
         "accentColor", "fontFamily", "headerColor", "bodyTextColor", "logoSize",
         "telegramBotToken", "telegramChatId", "displayLayout", "slideshowImageUrls",
         "loyaltyEnabled", "stampsPerItem", "stampsToRedeem", "loyaltyRewardDescription",
-        "stampDisplayTimeout", "onlineMenuEnabled"
+        "stampDisplayTimeout", "onlineMenuEnabled", "taxRate", "khqrEnabled",
+        "khqrMerchantID", "khqrMerchantName", "khqrCity", "rewardPolicy", 
+        "cashDeclarationRequired"
       ];
 
       const safeUpdates = {};
