@@ -125,9 +125,9 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
 
   if (!order || !order.items || order.items.length === 0) {
     return (
-      <div className="flex flex-col h-full bg-cream-light dark:bg-charcoal-dark border-2 border-dashed border-charcoal/10 rounded-xl items-center justify-center py-10 px-4 text-center">
-        <div className="w-20 h-20 bg-charcoal/5 dark:bg-white/5 rounded-full flex items-center justify-center mb-4 transition-transform hover:rotate-12">
-          <FaShoppingCart size={32} className="text-charcoal-light" />
+      <div className="flex flex-col h-full bg-white/20 dark:bg-charcoal/20 border-2 border-dashed border-charcoal/10 dark:border-white/10 rounded-2xl items-center justify-center py-10 px-4 text-center backdrop-blur-sm animate-fade-in-up">
+        <div className="w-20 h-20 bg-emerald/10 dark:bg-emerald/20 rounded-full flex items-center justify-center mb-4 animate-float shadow-[0_0_20px_rgba(16,185,129,0.2)]">
+          <FaShoppingCart size={32} className="text-emerald drop-shadow-sm" />
         </div>
         <h3 className="font-bold text-charcoal-dark dark:text-cream-light mb-1">Your cart is empty</h3>
         <p className="text-sm text-charcoal-light">Add items from the menu to build an order.</p>
@@ -185,7 +185,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
               {order.items.map((item, index) => {
                 const isCustomized = hasCustomizations(item);
                 return (
-                  <tr key={item.productId + JSON.stringify(item.customizations) + index}>
+                  <tr key={item.productId + JSON.stringify(item.customizations) + index} className="group hover:bg-black/5 dark:hover:bg-white/5 transition-colors duration-200">
                     <td className="py-1.5 pr-2">
                       <div className="flex items-center gap-2">
                         <p className="font-bold text-base text-charcoal-dark dark:text-cream-light leading-tight">
@@ -271,10 +271,10 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
             </div>
 
             <div className="grid grid-cols-2 gap-2 px-0.5 pb-1">
-              <Button onClick={() => onInitiatePayment('Cash')} variant="secondary" className="w-full !py-4 text-sm sm:text-base font-black shadow-md active:scale-95 transition-transform" leftIcon={<FaMoneyBillWave size={18} />}>Pay Cash</Button>
-              <Button onClick={() => onInitiatePayment('QR')} variant="primary" className="w-full !py-4 text-sm sm:text-base font-black shadow-md active:scale-95 transition-transform" leftIcon={<FaQrcode size={18} />}>Confirm (QR)</Button>
-              <Button onClick={() => onInitiatePayment('Unpaid')} variant="outline" className="w-full !py-3.5 text-sm sm:text-base font-black border-2 border-emerald/30 text-emerald shadow-sm active:scale-95 transition-transform" leftIcon={<FaSave size={16} />}>Save Tab</Button>
-              <Button onClick={onClearOrder} variant="danger" className="w-full !py-3.5 text-sm sm:text-base font-black shadow-sm active:scale-95 transition-transform" leftIcon={<FaTrash size={16} />}>Clear Order</Button>
+              <Button onClick={() => onInitiatePayment('Cash')} className="w-full !py-4 text-sm sm:text-base font-black shadow-lg bg-gradient-to-tr from-charcoal-dark to-charcoal text-white hover:opacity-90 active:scale-95 transition-all border-none" leftIcon={<FaMoneyBillWave size={18} />}>Pay Cash</Button>
+              <Button onClick={() => onInitiatePayment('QR')} className="w-full !py-4 text-sm sm:text-base font-black shadow-[0_4px_15px_rgba(16,185,129,0.3)] bg-gradient-to-r from-emerald to-teal-500 text-white hover:opacity-90 active:scale-95 transition-all border-none" leftIcon={<FaQrcode size={18} />}>Confirm (QR)</Button>
+              <Button onClick={() => onInitiatePayment('Unpaid')} variant="outline" className="w-full !py-3.5 text-sm sm:text-base font-black border-2 border-emerald/50 text-emerald shadow-sm hover:bg-emerald/5 active:scale-95 transition-all" leftIcon={<FaSave size={16} />}>Save Tab</Button>
+              <Button onClick={onClearOrder} className="w-full !py-3.5 text-sm sm:text-base font-black shadow-sm bg-terracotta hover:bg-terracotta-dark text-white active:scale-95 transition-all border-none" leftIcon={<FaTrash size={16} />}>Clear Order</Button>
             </div>
           </div>
         </div>

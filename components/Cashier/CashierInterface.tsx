@@ -303,7 +303,7 @@ const CashierInterface: React.FC = () => {
   ], !isQRPaymentInProgress);
 
   return (
-    <div className="relative min-h-screen flex flex-col">
+    <div className="relative min-h-screen flex flex-col bg-gradient-to-br from-cream via-cream-light to-emerald-50 dark:from-charcoal-dark dark:via-charcoal dark:to-emerald-900/10 transition-colors duration-500">
       {!isOnline && (
         <div className="bg-amber-500 text-white px-4 py-2 flex items-center justify-between animate-pulse-slow z-50">
           <div className="flex items-center gap-2 font-bold text-sm">
@@ -324,7 +324,7 @@ const CashierInterface: React.FC = () => {
 
 
         {/* Product Panel */}
-      <div className={`lg:col-span-2 bg-cream dark:bg-charcoal-dark/50 p-2 sm:p-3 rounded-xl shadow-lg flex flex-col transition-opacity duration-300 ${isQRPaymentInProgress ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
+      <div className={`lg:col-span-2 glass-panel p-2 sm:p-3 rounded-2xl flex flex-col transition-all duration-300 animate-fade-in-up ${isQRPaymentInProgress ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
         <div className="flex-shrink-0">
           <div className="flex justify-between items-center mb-2 gap-2">
             <h1 className="text-lg sm:text-xl font-black text-charcoal-dark dark:text-cream-light tracking-tighter">Menu</h1>
@@ -365,9 +365,9 @@ const CashierInterface: React.FC = () => {
               <button
                 key={category}
                 onClick={() => setActiveCategory(category)}
-                className={`flex-grow sm:flex-grow-0 flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-xs font-bold rounded-lg transition-all transform active:scale-95 shadow-sm border border-charcoal/5 dark:border-white/5 ${activeCategory === category
-                  ? 'bg-emerald text-white shadow-emerald/20'
-                  : 'bg-cream-light dark:bg-charcoal-dark text-charcoal-light dark:text-cream-light hover:bg-cream dark:hover:bg-charcoal'
+                className={`flex-grow sm:flex-grow-0 flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-xs font-bold rounded-xl transition-all transform active:scale-95 border ${activeCategory === category
+                  ? 'bg-gradient-to-r from-emerald to-emerald-dark text-white border-transparent shadow-[0_4px_15px_rgba(16,185,129,0.3)]'
+                  : 'bg-white/50 dark:bg-charcoal-dark/50 text-charcoal-light dark:text-cream-light border-white/60 dark:border-white/10 hover:bg-white/80 dark:hover:bg-charcoal/80 shadow-sm backdrop-blur-md'
                   }`}
               >
                 {categoryIcons[category] || <FaQuestionCircle />}
@@ -385,7 +385,7 @@ const CashierInterface: React.FC = () => {
       </div>
 
       {/* Order Summary Panel */}
-      <div className="lg:col-span-1 lg:self-start bg-cream-light dark:bg-charcoal-dark p-1.5 sm:p-2 rounded-xl shadow-lg flex flex-col h-[50vh] lg:h-[calc(100vh-80px)] lg:sticky lg:top-[70px] border border-charcoal/5 dark:border-cream-light/5">
+      <div className="lg:col-span-1 lg:self-start glass-panel p-1.5 sm:p-2 rounded-2xl flex flex-col h-[50vh] lg:h-[calc(100vh-80px)] lg:sticky lg:top-[70px] transition-all duration-300 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
         <h2 className="text-xs font-black text-charcoal/40 uppercase tracking-widest mb-1 flex items-center px-1">
           <span className="mr-1 text-emerald/60"><FaShoppingCart size={12} /></span>Current Order
         </h2>

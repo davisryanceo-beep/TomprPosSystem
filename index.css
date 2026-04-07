@@ -151,3 +151,26 @@
 .animation-delay-2000 { animation-delay: 2s; }
 .animation-delay-4000 { animation-delay: 4s; }
 .animate-pulse-slow { animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+
+/* === Premium UI Utilities === */
+.glass-panel {
+  @apply backdrop-blur-md border border-white/40 shadow-[0_8px_32px_rgba(0,0,0,0.08)];
+  background: rgba(255, 255, 255, 0.65);
+}
+
+.dark .glass-panel {
+  @apply border-white/5 shadow-[0_8px_32px_rgba(0,0,0,0.4)];
+  background: rgba(30, 41, 59, 0.65);
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in-up { animation: fadeInUp 0.5s ease-out forwards; }
+
+@keyframes floatGentle {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+.animate-float { animation: floatGentle 3s ease-in-out infinite; }

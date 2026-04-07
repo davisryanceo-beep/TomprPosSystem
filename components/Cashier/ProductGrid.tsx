@@ -31,14 +31,15 @@ const ProductCard: React.FC<{ product: Product; onSelect: (cust: Partial<OrderIt
       <div
         onClick={handleSelect}
         className={`
-          bg-cream-light dark:bg-charcoal-dark rounded-xl shadow-lg overflow-hidden flex flex-col p-2 h-fit
-          transform transition-all duration-200 active:scale-95
-          ${isOutOfStock ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:shadow-2xl hover:-translate-y-1'}
-          ${product.isSeasonal ? 'border-2 border-orange-400/30' : ''}
+          glass-panel rounded-2xl overflow-hidden flex flex-col p-2 h-fit
+          transform transition-all duration-300 active:scale-95 animate-fade-in-up
+          ${isOutOfStock ? 'opacity-60 cursor-not-allowed grayscale' : 'cursor-pointer hover:shadow-[0_15px_30px_rgba(16,185,129,0.15)] hover:-translate-y-1.5 hover:border-emerald/30 dark:hover:border-emerald/50'}
+          ${product.isSeasonal ? 'ring-2 ring-orange-400/50' : ''}
         `}
       >
-        <div className="relative aspect-square sm:aspect-auto sm:h-28">
-          <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover rounded-lg" />
+        <div className="relative aspect-square sm:aspect-auto sm:h-28 rounded-xl overflow-hidden group">
+          <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent z-10 pointer-events-none transition-opacity group-hover:opacity-0" />
+          <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-110" />
           {isOutOfStock && (
             <div className="absolute inset-0 bg-charcoal-900/70 flex items-center justify-center rounded-lg">
               <span className="text-cream-light font-bold text-xs tracking-widest -rotate-12 border-2 border-terracotta p-1 rounded">OUT OF STOCK</span>
@@ -61,12 +62,12 @@ const ProductCard: React.FC<{ product: Product; onSelect: (cust: Partial<OrderIt
             <p className="text-[10px] sm:text-xs text-charcoal-light dark:text-charcoal-light line-clamp-1 mt-0.5">{product.description || 'A delicious treat.'}</p>
           </div>
           <div className="flex justify-between items-center px-0.5">
-            <p className="text-sm sm:text-base font-black text-emerald leading-none">${product.price.toFixed(2)}</p>
+            <p className="text-sm sm:text-base font-black bg-clip-text text-transparent bg-gradient-to-r from-emerald-500 to-teal-400 leading-none drop-shadow-sm">${product.price.toFixed(2)}</p>
             <Button
               onClick={(e) => { e.stopPropagation(); handleSelect(); }}
               disabled={isOutOfStock}
               size="sm"
-              className="!py-1 !px-3 font-bold text-xs"
+              className={`!py-1 !px-3 font-bold text-xs border-none \${isOutOfStock ? '' : 'bg-gradient-to-r from-emerald to-emerald-dark hover:shadow-lg hover:shadow-emerald/40 text-white'}`}
               aria-label={`Add ${product.name}`}
             >
               Add
@@ -103,7 +104,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, onAddItem }) => {
   }
 
   return (
-    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-6 gap-2 items-start h-full overflow-y-auto pr-1 pb-4">
+    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-6 gap-3 items-start h-full overflow-y-auto pr-1 pb-4 custom-scrollbar">
       {/* Show combos first if they are active */}
       {combos.filter(c => c.isActive).map(combo => (
         <ComboProductCard
