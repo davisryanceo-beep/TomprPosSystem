@@ -17,7 +17,6 @@ import TableSelectionModal from './TableSelectionModal';
 import ShortcutsHelp from '../Shared/ShortcutsHelp';
 import OpenTabsModal from './OpenTabsModal';
 import LoyaltyLookupModal from './LoyaltyLookupModal';
-import DeclareCashModal from './DeclareCashModal';
 
 const CashierInterface: React.FC = () => {
   const {
@@ -25,7 +24,7 @@ const CashierInterface: React.FC = () => {
     finalizeCurrentOrder, setRushOrder, getProductById, getStoreById, currentStoreId,
     setTableNumberForCurrentOrder, updateCurrentOrder, knownCategories,
     saveOrderAsTab, loadOrderAsCurrent, selectedCustomer, isOnline, pendingOrders,
-    hasDeclaredStartingCash, orders
+    orders
   } = useShop();
   const { currentUser } = useAuth();
   const [showReceiptModal, setShowReceiptModal] = useState(false);
@@ -39,16 +38,9 @@ const CashierInterface: React.FC = () => {
   const [showOnlineOrdersModal, setShowOnlineOrdersModal] = useState(false);
   const [showOpenTabsModal, setShowOpenTabsModal] = useState(false);
   const [showLoyaltyModal, setShowLoyaltyModal] = useState(false);
-  const [showDeclareCashModal, setShowDeclareCashModal] = useState(false);
 
 
-  // Auto-open declaration if needed
-  useEffect(() => {
-    const storeObj = getStoreById(currentStoreId || '');
-    if (currentUser && storeObj && !hasDeclaredStartingCash(currentUser.id)) {
-      setShowDeclareCashModal(true);
-    }
-  }, [currentUser, currentStoreId, getStoreById, hasDeclaredStartingCash]);
+
 
   // Calculate active online orders count for badge
   const activeOnlineOrdersCount = orders.filter(o =>
@@ -152,12 +144,7 @@ const CashierInterface: React.FC = () => {
       }
     }
     
-    // Enforcement: Check for cash declaration
-    if (currentUser && !hasDeclaredStartingCash(currentUser.id)) {
-      alert("Please declare starting cash before processing orders.");
-      setShowDeclareCashModal(true);
-      return;
-    }
+
 
     if (method === 'Cash') {
       setShowCashPaymentModal(true);
@@ -334,32 +321,7 @@ const CashierInterface: React.FC = () => {
       )}
       
       <div className="fade-in grid grid-cols-1 lg:grid-cols-3 gap-2 sm:gap-3 flex-grow p-1 sm:p-2">
-        {/* Strict Enforcement Overlay */}
-        {currentUser && !hasDeclaredStartingCash(currentUser.id) && (
-          <div className="absolute inset-0 z-30 flex items-center justify-center backdrop-blur-md bg-white/30 dark:bg-charcoal/30 transition-all p-6 text-center">
-            <div className="max-w-md w-full bg-white dark:bg-charcoal-dark p-10 rounded-[2.5rem] shadow-2xl border-4 border-emerald/20 animate-fade-in space-y-6">
-              <div className="w-24 h-24 bg-emerald/10 rounded-full flex items-center justify-center mx-auto">
-                <FaCalculator className="text-4xl text-emerald animate-pulse" />
-              </div>
-              <div>
-                <h2 className="text-3xl font-black text-charcoal-dark dark:text-cream-light mb-2">Shift Setup Required</h2>
-                <p className="text-charcoal-light font-bold">Please declare your starting cash float to unlock the register and begin processing orders.</p>
-              </div>
-              <Button 
-                onClick={() => setShowDeclareCashModal(true)} 
-                variant="primary" 
-                size="xl" 
-                className="w-full shadow-lg shadow-emerald/30 !py-6 text-xl tracking-tight"
-                leftIcon={<FaMoneyBillWave />}
-              >
-                Open Cash Drawer
-              </Button>
-              <div className="flex items-center justify-center gap-2 text-[10px] font-black text-charcoal-light/40 uppercase tracking-widest">
-                <FaLock /> Secure Shift Management Protocol
-              </div>
-            </div>
-          </div>
-        )}
+
 
         {/* Product Panel */}
       <div className={`lg:col-span-2 bg-cream dark:bg-charcoal-dark/50 p-2 sm:p-3 rounded-xl shadow-lg flex flex-col transition-opacity duration-300 ${isQRPaymentInProgress ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
@@ -496,13 +458,6 @@ const CashierInterface: React.FC = () => {
         onClose={() => setShowLoyaltyModal(false)}
       />
 
-      <DeclareCashModal
-        isOpen={showDeclareCashModal}
-        onClose={() => setShowDeclareCashModal(false)}
-        cashierId={currentUser?.id || ''}
-        cashierName={currentUser?.firstName || currentUser?.username || ''}
-        forcedType="OPEN"
-      />
       </div>
     </div>
   );
