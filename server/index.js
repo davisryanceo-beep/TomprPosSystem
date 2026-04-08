@@ -937,10 +937,10 @@ app.put("/api/orders/:id", authenticateToken, async (req, res) => {
 
     delete updates.id; // Prevent updating ID
 
-    // Prevent redundant updates / race conditions
-    if (updates.status && currentOrder.status === updates.status) {
-      return res.json({ success: true, id, message: "Order already in target status" });
-    }
+    // Ensure we don't accidentally revert status if it moved forward in a race condition,
+    // but we still want to save item changes for open tabs.
+    // If the frontend sends a full order update, we should apply safeUpdates.
+    // We'll remove the early return that was completely blocking Open Tab item updates.
 
     // Filter updates
     const allowedKeys = [
