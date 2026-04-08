@@ -148,7 +148,7 @@ export const updateOvertimeRequest = (id: string, data: any) => api.put(`/overti
 export const getCurrentOrder = (storeId: string, terminalId?: string) =>
     api.get('/current-orders', { params: { storeId, terminalId } });
 export const saveCurrentOrder = (order: any) => api.post('/current-orders', order);
-export const clearCurrentOrder = (id: string) => api.delete(`/current-orders/${id}`);
+export const clearCurrentOrder = (id: string, terminalId?: string) => api.delete(`/current-orders/${id}`, { params: { terminalId } });
 
 
 // Mobile / Staff App API

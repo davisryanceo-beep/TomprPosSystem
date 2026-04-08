@@ -279,6 +279,15 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [pendingOrders, setPendingOrders] = useState<Order[]>([]);
 
+  // Unique session ID for each device/terminal to prevent "cart jumping" between tablets
+  const [posTerminalId] = useState(() => {
+    const existing = localStorage.getItem('posTerminalId');
+    if (existing) return existing;
+    const newId = `terminal-${Math.random().toString(36).substr(2, 9)}`;
+    localStorage.setItem('posTerminalId', newId);
+    return newId;
+  });
+
   useEffect(() => {
     // Sync online status
     const handleOnline = () => setIsOnline(true);
@@ -575,7 +584,8 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const loadCurrentOrder = async () => {
       if (currentStoreId) {
         try {
-          const response = await getCurrentOrder(currentStoreId);
+          // Pass terminalId to ensure we only load OUR terminal's cart
+          const response = await getCurrentOrder(currentStoreId, posTerminalId);
           if (response.data) {
             let loadedOrder = { ...response.data, timestamp: new Date(response.data.timestamp || new Date()) };
             // Auto-reset hanging QR states to avoid stuck "Awaiting Payment" screens across login sessions
@@ -583,14 +593,17 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               loadedOrder.qrPaymentState = QRPaymentState.NONE;
             }
             setCurrentOrder(loadedOrder);
+          } else {
+            setCurrentOrder(null);
           }
         } catch (err) {
           console.error("Failed to load current order", err);
+          setCurrentOrder(null);
         }
       }
     };
     loadCurrentOrder();
-  }, [currentStoreId]);
+  }, [currentStoreId, posTerminalId]);
 
   const updateAppSettings = useCallback(async (settings: Partial<AppSettings>) => {
     const newSettings = { ...appSettings, ...settings };
@@ -1298,8 +1311,8 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
         return null;
       }
-      // Save to database
-      saveCurrentOrder(newOrder).catch(err => console.error("Failed to save current order", err));
+      // Save to database with terminalId
+      saveCurrentOrder({ ...newOrder, terminalId: posTerminalId }).catch(err => console.error("Failed to save current order", err));
       return newOrder;
     });
   }, [currentStoreId, promotions]);
@@ -1307,13 +1320,13 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const clearCurrentOrderLocal = useCallback(async () => {
     if (currentOrder?.id) {
       try {
-        await clearCurrentOrder(currentOrder.id);
+        await clearCurrentOrder(currentOrder.id, posTerminalId);
       } catch (err) {
         console.error("Failed to clear current order from database", err);
       }
     }
     setCurrentOrder(null);
-  }, [currentOrder]);
+  }, [currentOrder, posTerminalId]);
 
   const lookupCustomer = useCallback(async (phoneNumber: string) => {
     try {
@@ -1570,11 +1583,11 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         });
         // Note: For tabs, we primarily rely on online sync, but we could queue here too.
       }
-      
       // 3. AGGRESSIVE CLEARING: Ensure the cashier's screen is wiped clean immediately.
       // We explicitly await the database clearing of the current cart session.
       try {
-        await clearCurrentOrder(currentOrder.id);
+        // ALWAYS pass terminalId to identify WHICH cart session to clear
+        await clearCurrentOrder(currentOrder.id, posTerminalId);
       } catch (clearErr) {
         console.warn("Minor: Failed to clear cart session from DB, but state will be wiped anyway.", clearErr);
       }
