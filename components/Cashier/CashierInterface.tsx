@@ -38,6 +38,7 @@ const CashierInterface: React.FC = () => {
   const [showOnlineOrdersModal, setShowOnlineOrdersModal] = useState(false);
   const [showOpenTabsModal, setShowOpenTabsModal] = useState(false);
   const [showLoyaltyModal, setShowLoyaltyModal] = useState(false);
+  const [isSavingTab, setIsSavingTab] = useState(false);
 
 
 
@@ -151,7 +152,11 @@ const CashierInterface: React.FC = () => {
     } else if (method === 'QR') {
       updateCurrentOrder({ qrPaymentState: QRPaymentState.AWAITING_PAYMENT });
     } else if (method === 'Unpaid') {
-      saveOrderAsTab(currentUser.id);
+      if (isSavingTab) return;
+      setIsSavingTab(true);
+      saveOrderAsTab(currentUser.id).finally(() => {
+        setIsSavingTab(false);
+      });
     }
   };
 
