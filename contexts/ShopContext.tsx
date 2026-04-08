@@ -1521,33 +1521,59 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     if (!currentOrder || !currentStoreId) return null;
 
+    const isExistingTab = currentOrder.id && currentOrder.id.startsWith('order-');
+    const orderId = isExistingTab ? currentOrder.id : `order-${Date.now()}`;
+
     const tabOrder: Order = {
-      ...currentOrder, id: `order-${Date.now()}`, status: OrderStatus.CREATED,
+      ...currentOrder, id: orderId, status: OrderStatus.CREATED,
       timestamp: new Date(), cashierId: cashierId, paymentMethod: 'Unpaid'
     };
 
-    // Calculate Daily Order Number
-    const todayStr = new Date().toDateString();
-    const todaysOrders = ordersState.filter(o =>
-      o.storeId === currentStoreId &&
-      new Date(o.timestamp).toDateString() === todayStr
-    );
-    const maxOrderNum = todaysOrders.reduce((max, o) => Math.max(max, o.dailyOrderNumber || 0), 0);
-    tabOrder.dailyOrderNumber = maxOrderNum + 1;
+    // Calculate Daily Order Number only if not already set (e.g. from an existing tab)
+    if (!tabOrder.dailyOrderNumber) {
+      const todayStr = new Date().toDateString();
+      const todaysOrders = ordersState.filter(o =>
+        o.storeId === currentStoreId &&
+        new Date(o.timestamp).toDateString() === todayStr
+      );
+      const maxOrderNum = todaysOrders.reduce((max, o) => Math.max(max, o.dailyOrderNumber || 0), 0);
+      tabOrder.dailyOrderNumber = maxOrderNum + 1;
+    }
 
     try {
-      const res = await createOrder(tabOrder);
-      const savedOrder = res.data.order;
-      setOrdersState(prev => [...prev, savedOrder]);
+      let savedOrder: Order;
+      if (isExistingTab && isOnline) {
+        await apiUpdateOrder(tabOrder.id, tabOrder);
+        savedOrder = tabOrder;
+        setOrdersState(prev => prev.map(o => o.id === orderId ? tabOrder : o));
+      } else if (isOnline) {
+        const res = await createOrder(tabOrder);
+        savedOrder = res.data.order;
+        setOrdersState(prev => [...prev, savedOrder]);
+      } else {
+        // Offline: just queue it (basic logic, aligns with how finalize handles it slightly)
+        savedOrder = tabOrder;
+        setOrdersState(prev => {
+          const index = prev.findIndex(o => o.id === orderId);
+          if (index > -1) {
+             const newOrders = [...prev];
+             newOrders[index] = tabOrder;
+             return newOrders;
+          }
+          return [...prev, savedOrder];
+        });
+      }
+      
       // Note: We intentionally do NOT deduct stock upon saving a tab, 
       // stock will be deducted when the order is loaded and completely PAID.
       clearCurrentOrderLocal();
       return savedOrder;
     } catch (err) {
       console.error("Failed to save order as tab", err);
+      // Fallback update local state if api fails
       return null;
     }
-  }, [currentOrder, currentStoreId, clearCurrentOrderLocal, ordersState]);
+  }, [currentOrder, currentStoreId, clearCurrentOrderLocal, ordersState, isOnline]);
 
   const setRushOrder = useCallback((isRush: boolean) => {
     setCurrentOrder(prev => {
