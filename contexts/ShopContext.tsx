@@ -170,7 +170,7 @@ interface ShopContextType {
   createOrUpdateCurrentOrder: (item: OrderItem, quantityChange: number) => void;
   loadOrderAsCurrent: (order: Order) => void;
   clearCurrentOrder: () => void;
-  saveOrderAsTab: (cashierId: string) => Promise<Order | null>;
+  saveOrderAsTab: (cashierId: string, customLabel?: string) => Promise<Order | null>;
   finalizeCurrentOrder: (
     cashierId: string,
     paymentMethod: PaymentMethod,
@@ -495,7 +495,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return () => {
       clearInterval(intervalId);
       window.removeEventListener('storage', handleStorageChange);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [reloadData]);
 
@@ -1530,7 +1530,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [currentOrder, currentStoreId, clearCurrentOrderLocal, storesState, selectedCustomer, awardStamps, isOnline, ordersState]);
 
-  const saveOrderAsTab = useCallback(async (cashierId: string) => {
+  const saveOrderAsTab = useCallback(async (cashierId: string, customLabel?: string) => {
     if (!currentOrder || !currentStoreId) return null;
 
     // 1. Identify if this is an existing tab or a new one
@@ -1541,6 +1541,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       ...currentOrder,
       id: orderId,
       status: OrderStatus.CREATED,
+      tableNumber: customLabel || currentOrder.tableNumber,
       timestamp: new Date(),
       cashierId: cashierId,
       paymentMethod: 'Unpaid'

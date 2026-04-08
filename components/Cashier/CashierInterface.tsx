@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Component, ErrorInfo, ReactNode } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, Component, ErrorInfo, ReactNode } from 'react';
 import ReactDOM from 'react-dom';
 import ProductGrid from './ProductGrid';
 import OrderSummary from './OrderSummary';
@@ -10,12 +10,13 @@ import { OrderItem, Order, ProductCategory, PaymentMethod, PaymentCurrency, QRPa
 import useKeyboardShortcuts from '../../hooks/useKeyboardShortcuts';
 import OnlineMenuModal from './OnlineMenuModal';
 import OnlineOrdersModal from './OnlineOrdersModal';
-import { FaReceipt, FaShoppingCart, FaCoffee, FaLeaf, FaCookieBite, FaShoppingBag, FaQuestionCircle, FaDesktop, FaStore, FaBell, FaFolderOpen, FaUserTag, FaWifi, FaCloudUploadAlt, FaCalculator, FaMoneyBillWave, FaLock, FaPrint } from 'react-icons/fa';
+import { FaCoffee, FaLeaf, FaCookieBite, FaShoppingBag, FaQuestionCircle, FaDesktop, FaStore, FaBell, FaFolderOpen, FaUserTag, FaWifi, FaCloudUploadAlt, FaPrint } from 'react-icons/fa';
 import PrintableReceipt from './PrintableReceipt';
 import CashPaymentModal from './CashPaymentModal';
 import TableSelectionModal from './TableSelectionModal';
 import ShortcutsHelp from '../Shared/ShortcutsHelp';
 import OpenTabsModal from './OpenTabsModal';
+import SaveTabPromptModal from './SaveTabPromptModal';
 import LoyaltyLookupModal from './LoyaltyLookupModal';
 
 const CashierInterface: React.FC = () => {
@@ -37,11 +38,9 @@ const CashierInterface: React.FC = () => {
   const [showOnlineMenuModal, setShowOnlineMenuModal] = useState(false);
   const [showOnlineOrdersModal, setShowOnlineOrdersModal] = useState(false);
   const [showOpenTabsModal, setShowOpenTabsModal] = useState(false);
+  const [showSaveTabPrompt, setShowSaveTabPrompt] = useState(false);
   const [showLoyaltyModal, setShowLoyaltyModal] = useState(false);
   const [isSavingTab, setIsSavingTab] = useState(false);
-
-
-
 
   // Calculate active online orders count for badge
   const activeOnlineOrdersCount = orders.filter(o =>
@@ -50,6 +49,15 @@ const CashierInterface: React.FC = () => {
     o.status !== 'Cancelled' &&
     new Date(o.timestamp).getTime() > Date.now() - 24 * 60 * 60 * 1000
   ).length;
+
+  // Calculate Unpaid Orders Count for badge
+  const unpaidOrdersCount = useMemo(() => {
+    return orders.filter(o => 
+      o.storeId === currentStoreId && 
+      o.status === OrderStatus.CREATED && 
+      o.paymentMethod === 'Unpaid'
+    ).length;
+  }, [orders, currentStoreId]);
 
   useEffect(() => {
     const node = document.getElementById('printable-area');
@@ -87,8 +95,6 @@ const CashierInterface: React.FC = () => {
   };
 
   const handleAddItemToOrder = (item: OrderItem) => {
-    // For combos, we check stock of first item as a proxy or just allow it
-    // For regular products, we check stock normally
     let canAdd = true;
     let productName = item.productName;
 
@@ -145,20 +151,28 @@ const CashierInterface: React.FC = () => {
       }
     }
     
-
-
     if (method === 'Cash') {
       setShowCashPaymentModal(true);
     } else if (method === 'QR') {
       updateCurrentOrder({ qrPaymentState: QRPaymentState.AWAITING_PAYMENT });
     } else if (method === 'Unpaid') {
       if (isSavingTab) return;
-      setIsSavingTab(true);
-      saveOrderAsTab(currentUser.id).finally(() => {
-        // Add a small buffer to ensure the UI clears before the lock is released
-        setTimeout(() => setIsSavingTab(false), 500);
-      });
+      // Show prompt if no table/customer assigned, else save immediately
+      if (!currentOrder.tableNumber && !selectedCustomer) {
+        setShowSaveTabPrompt(true);
+      } else {
+        handleSaveTabConfirm();
+      }
     }
+  };
+
+  const handleSaveTabConfirm = (customLabel?: string) => {
+    if (isSavingTab) return;
+    setIsSavingTab(true);
+    setShowSaveTabPrompt(false);
+    saveOrderAsTab(currentUser!.id, customLabel).finally(() => {
+      setTimeout(() => setIsSavingTab(false), 500);
+    });
   };
 
 
@@ -174,11 +188,9 @@ const CashierInterface: React.FC = () => {
   const handleConfirmQRPayment = async () => {
     if (!currentUser || !currentOrder) return;
 
-    // Finalize the order, which will clear the cashier's screen immediately
     const completedOrder = await finalizeCurrentOrder(currentUser.id, 'QR');
 
     if (completedOrder) {
-      // Continue with the normal cashier flow (receipt, etc.)
       setLastCompletedOrder(completedOrder);
       setShowReceiptModal(true);
     } else {
@@ -202,7 +214,6 @@ const CashierInterface: React.FC = () => {
       if (completedOrder) {
         setLastCompletedOrder(completedOrder);
         setShowReceiptModal(true);
-        console.log(`Payment processed by ${completedOrder.paymentMethod} (${completedOrder.paymentCurrency || 'USD'}) for order ${completedOrder.id}`);
       } else {
         alert("Failed to finalize order. Please try again.");
       }
@@ -226,10 +237,8 @@ const CashierInterface: React.FC = () => {
     window.print();
   };
 
-  // Auto-print when receipt modal is shown
   useEffect(() => {
     if (showReceiptModal && lastCompletedOrder) {
-      // Small delay to ensure Portal content is rendered and styles applied
       const timer = setTimeout(() => {
         handlePrint();
       }, 500);
@@ -239,7 +248,6 @@ const CashierInterface: React.FC = () => {
 
   const isQRPaymentInProgress = currentOrder?.qrPaymentState && currentOrder.qrPaymentState !== QRPaymentState.NONE;
 
-  // Keyboard shortcuts
   useKeyboardShortcuts([
     {
       key: 'F2',
@@ -274,7 +282,6 @@ const CashierInterface: React.FC = () => {
       ctrl: true,
       description: 'Apply discount',
       action: () => {
-        // This would open promotion modal - for now just alert
         if (currentOrder && currentOrder.items && currentOrder.items.length > 0) {
           alert('Discount feature - press Apply Promo button');
         }
@@ -328,39 +335,47 @@ const CashierInterface: React.FC = () => {
       
       <div className="fade-in grid grid-cols-1 lg:grid-cols-3 gap-2 sm:gap-3 flex-grow p-1 sm:p-2">
 
-
-        {/* Product Panel */}
       <div className={`lg:col-span-2 glass-panel p-2 sm:p-3 rounded-2xl flex flex-col transition-all duration-300 animate-fade-in-up ${isQRPaymentInProgress ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
         <div className="flex-shrink-0">
           <div className="flex justify-between items-center mb-2 gap-2">
             <h1 className="text-lg sm:text-xl font-black text-charcoal-dark dark:text-cream-light tracking-tighter">Menu</h1>
             <div className="flex items-center gap-1 sm:gap-2 flex-wrap justify-end">
-              {/* Online indicator */}
               <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold ${isOnline ? 'bg-emerald/10 text-emerald' : 'bg-amber-500 text-white'}`}>
                 <FaWifi className={isOnline ? '' : 'animate-pulse'} />
                 <span className="hidden sm:inline">{isOnline ? 'Online' : `Offline (${pendingOrders.length})`}</span>
               </div>
-              {/* Online Orders bell */}
               <Button onClick={() => setShowOnlineOrdersModal(true)} variant="ghost" className="relative" title="Online Orders">
                 <span className={activeOnlineOrdersCount > 0 ? "text-emerald animate-pulse" : ""}><FaBell /></span>
                 {activeOnlineOrdersCount > 0 && (
                   <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">{activeOnlineOrdersCount}</span>
                 )}
               </Button>
-              {/* Desktop buttons */}
               <div className="hidden md:flex items-center gap-1">
                 <Button onClick={() => setShowShortcutsHelp(true)} variant="ghost" size="sm" title="Keyboard Shortcuts (?)"><span className="text-base">⌨️</span></Button>
                 <Button onClick={() => setShowOnlineMenuModal(true)} variant="ghost" leftIcon={<FaStore />}><span className="hidden xl:inline">Online Menu</span></Button>
-                <Button onClick={() => setShowOpenTabsModal(true)} variant="ghost" leftIcon={<FaFolderOpen />}><span className="hidden xl:inline">Open Tabs</span></Button>
+                <Button onClick={() => setShowOpenTabsModal(true)} variant="ghost" leftIcon={<FaFolderOpen />} className="relative">
+                  <span className="hidden xl:inline">Open Tabs</span>
+                  {unpaidOrdersCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-emerald text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full border-2 border-white dark:border-charcoal shadow-sm animate-bounce-slow">
+                      {unpaidOrdersCount}
+                    </span>
+                  )}
+                </Button>
                 <Button onClick={openCustomerDisplay} variant="ghost" leftIcon={<FaDesktop />}><span className="hidden xl:inline">Screen</span></Button>
                 <Button onClick={() => setShowLoyaltyModal(true)} variant={selectedCustomer ? 'secondary' : 'ghost'} leftIcon={<FaUserTag />} className={selectedCustomer ? 'border-emerald text-emerald' : ''}>
                   <span className="hidden xl:inline">Loyalty {selectedCustomer ? `(${selectedCustomer.name || selectedCustomer.phoneNumber.slice(-4)})` : ''}</span>
                 </Button>
               </div>
-              {/* Mobile icon-only buttons */}
               <div className="flex md:hidden items-center gap-1">
                 <Button onClick={() => setShowOnlineMenuModal(true)} variant="ghost" size="sm" title="Online Menu"><FaStore /></Button>
-                <Button onClick={() => setShowOpenTabsModal(true)} variant="ghost" size="sm" title="Open Tabs"><FaFolderOpen /></Button>
+                <Button onClick={() => setShowOpenTabsModal(true)} variant="ghost" size="sm" title="Open Tabs" className="relative">
+                  <FaFolderOpen />
+                  {unpaidOrdersCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-emerald text-white text-[8px] font-black w-4 h-4 flex items-center justify-center rounded-full border border-white dark:border-charcoal">
+                      {unpaidOrdersCount}
+                    </span>
+                  )}
+                </Button>
                 <Button onClick={openCustomerDisplay} variant="ghost" size="sm" title="Customer Screen"><FaDesktop /></Button>
                 <Button onClick={() => setShowLoyaltyModal(true)} variant={selectedCustomer ? 'secondary' : 'ghost'} size="sm" title="Loyalty" className={selectedCustomer ? 'border-emerald text-emerald' : ''}><FaUserTag /></Button>
               </div>
@@ -390,10 +405,9 @@ const CashierInterface: React.FC = () => {
         </div>
       </div>
 
-      {/* Order Summary Panel */}
       <div className="lg:col-span-1 lg:self-start glass-panel p-1.5 sm:p-2 rounded-2xl flex flex-col h-[50vh] lg:h-[calc(100vh-80px)] lg:sticky lg:top-[70px] transition-all duration-300 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
         <h2 className="text-xs font-black text-charcoal/40 uppercase tracking-widest mb-1 flex items-center px-1">
-          <span className="mr-1 text-emerald/60"><FaShoppingCart size={12} /></span>Current Order
+          <span className="mr-1 text-emerald/60"><FaFolderOpen size={12} /></span>Current Order
         </h2>
         <OrderSummary
           order={currentOrder}
@@ -457,7 +471,23 @@ const CashierInterface: React.FC = () => {
 
       <OnlineMenuModal isOpen={showOnlineMenuModal} onClose={() => setShowOnlineMenuModal(false)} />
       <OnlineOrdersModal isOpen={showOnlineOrdersModal} onClose={() => setShowOnlineOrdersModal(false)} />
-      <OpenTabsModal isOpen={showOpenTabsModal} onClose={() => setShowOpenTabsModal(false)} onLoadTab={handleLoadTab} />
+      <OpenTabsModal
+        isOpen={showOpenTabsModal}
+        onClose={() => setShowOpenTabsModal(false)}
+        onLoadTab={handleLoadTab}
+        onSettleTab={(order) => {
+          setShowOpenTabsModal(false);
+          loadOrderAsCurrent(order);
+          setTimeout(() => setShowCashPaymentModal(true), 300);
+        }}
+      />
+
+      <SaveTabPromptModal
+        isOpen={showSaveTabPrompt}
+        onClose={() => setShowSaveTabPrompt(false)}
+        onConfirm={handleSaveTabConfirm}
+        currentTable={currentOrder?.tableNumber}
+      />
 
       <LoyaltyLookupModal
         isOpen={showLoyaltyModal}
