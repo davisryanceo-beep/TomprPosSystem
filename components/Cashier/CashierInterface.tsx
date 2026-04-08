@@ -155,7 +155,8 @@ const CashierInterface: React.FC = () => {
       if (isSavingTab) return;
       setIsSavingTab(true);
       saveOrderAsTab(currentUser.id).finally(() => {
-        setIsSavingTab(false);
+        // Add a small buffer to ensure the UI clears before the lock is released
+        setTimeout(() => setIsSavingTab(false), 500);
       });
     }
   };

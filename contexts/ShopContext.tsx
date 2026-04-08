@@ -1518,18 +1518,22 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [currentOrder, currentStoreId, clearCurrentOrderLocal, storesState, selectedCustomer, awardStamps, isOnline, ordersState]);
 
   const saveOrderAsTab = useCallback(async (cashierId: string) => {
-
     if (!currentOrder || !currentStoreId) return null;
 
+    // 1. Identify if this is an existing tab or a new one
     const isExistingTab = currentOrder.id && currentOrder.id.startsWith('order-');
     const orderId = isExistingTab ? currentOrder.id : `order-${Date.now()}`;
 
     const tabOrder: Order = {
-      ...currentOrder, id: orderId, status: OrderStatus.CREATED,
-      timestamp: new Date(), cashierId: cashierId, paymentMethod: 'Unpaid'
+      ...currentOrder,
+      id: orderId,
+      status: OrderStatus.CREATED,
+      timestamp: new Date(),
+      cashierId: cashierId,
+      paymentMethod: 'Unpaid'
     };
 
-    // Calculate Daily Order Number only if not already set (e.g. from an existing tab)
+    // 2. Daily Order Number calculation logic
     if (!tabOrder.dailyOrderNumber) {
       const todayStr = new Date().toDateString();
       const todaysOrders = ordersState.filter(o =>
@@ -1542,38 +1546,49 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     try {
       let savedOrder: Order;
-      if (isExistingTab && isOnline) {
-        await apiUpdateOrder(tabOrder.id, tabOrder);
-        savedOrder = tabOrder;
-        setOrdersState(prev => prev.map(o => o.id === orderId ? tabOrder : o));
-      } else if (isOnline) {
-        const res = await createOrder(tabOrder);
-        savedOrder = res.data.order;
-        setOrdersState(prev => [...prev, savedOrder]);
+      if (isOnline) {
+        if (isExistingTab) {
+          await apiUpdateOrder(tabOrder.id, tabOrder);
+          savedOrder = tabOrder;
+          setOrdersState(prev => prev.map(o => o.id === orderId ? tabOrder : o));
+        } else {
+          const res = await createOrder(tabOrder);
+          savedOrder = res.data.order;
+          setOrdersState(prev => [...prev, savedOrder]);
+        }
       } else {
-        // Offline: just queue it (basic logic, aligns with how finalize handles it slightly)
+        // Offline: Add to local state and queue for sync
         savedOrder = tabOrder;
         setOrdersState(prev => {
           const index = prev.findIndex(o => o.id === orderId);
           if (index > -1) {
-             const newOrders = [...prev];
-             newOrders[index] = tabOrder;
-             return newOrders;
+            const newOrders = [...prev];
+            newOrders[index] = tabOrder;
+            return newOrders;
           }
-          return [...prev, savedOrder];
+          return [...prev, tabOrder];
         });
+        // Note: For tabs, we primarily rely on online sync, but we could queue here too.
       }
       
-      // Note: We intentionally do NOT deduct stock upon saving a tab, 
-      // stock will be deducted when the order is loaded and completely PAID.
-      clearCurrentOrderLocal();
+      // 3. AGGRESSIVE CLEARING: Ensure the cashier's screen is wiped clean immediately.
+      // We explicitly await the database clearing of the current cart session.
+      try {
+        await clearCurrentOrder(currentOrder.id);
+      } catch (clearErr) {
+        console.warn("Minor: Failed to clear cart session from DB, but state will be wiped anyway.", clearErr);
+      }
+      
+      // Wipe React state and LocalStorage immediately
+      setCurrentOrder(null);
+      localStorage.removeItem('currentOrder');
+      
       return savedOrder;
     } catch (err) {
-      console.error("Failed to save order as tab", err);
-      // Fallback update local state if api fails
+      console.error("CRITICAL: Failed to save order as tab", err);
       return null;
     }
-  }, [currentOrder, currentStoreId, clearCurrentOrderLocal, ordersState, isOnline]);
+  }, [currentOrder, currentStoreId, ordersState, isOnline]);
 
   const setRushOrder = useCallback((isRush: boolean) => {
     setCurrentOrder(prev => {
