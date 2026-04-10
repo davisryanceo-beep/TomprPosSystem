@@ -353,7 +353,7 @@ async function getNextDailyOrderNumber(storeId) {
 
     if (error) {
       console.error("Supabase error in getNextDailyOrderNumber:", error.message);
-      throw error;
+      return (Math.floor(Date.now() / 1000) % 10000); // Fallback instead of crashing
     }
     const maxNum = (data && data.length > 0) ? (data[0].dailyOrderNumber || 0) : 0;
     return maxNum + 1;
@@ -934,11 +934,22 @@ app.post("/api/orders", authenticateToken, async (req, res) => {
       "finalAmount", "status", "timestamp", "cashierId", "baristaId", "isRushOrder",
       "paymentMethod", "paymentCurrency", "cashTendered", "changeGiven",
       "appliedPromotionId", "storeId", "qrPaymentState", "dailyOrderNumber",
-      "customerId", "customerPhone", "orderType", "kitchenStatus", "kitchenStartTime", "kitchenReadyTime"
+      "customerId", "customerPhone", "orderType", "kitchenStatus", "kitchenStartTime",
+      "kitchenReadyTime", "terminalId", "deliveryDetails", "pendingStampClaimId", "pendingStampCount"
     ];
+
     const safeOrder = {};
+    const integerFields = ["isRushOrder", "dailyOrderNumber", "pendingStampCount"];
+
     for (const key of allowedKeys) {
-      if (order[key] !== undefined) safeOrder[key] = order[key];
+      if (order[key] !== undefined) {
+        let value = order[key];
+        // Convert Booleans to Integers for DB compatibility if needed
+        if (integerFields.includes(key) && typeof value === 'boolean') {
+          value = value ? 1 : 0;
+        }
+        safeOrder[key] = value;
+      }
     }
 
     const { error } = await db.from("orders").insert(safeOrder);
@@ -982,11 +993,21 @@ app.put("/api/orders/:id", authenticateToken, async (req, res) => {
       "finalAmount", "status", "cashierId", "baristaId", "isRushOrder",
       "paymentMethod", "paymentCurrency", "cashTendered", "changeGiven",
       "appliedPromotionId", "qrPaymentState", "dailyOrderNumber",
-      "customerId", "customerPhone", "orderType", "kitchenStatus", "kitchenStartTime", "kitchenReadyTime"
+      "customerId", "customerPhone", "orderType", "kitchenStatus", "kitchenStartTime",
+      "kitchenReadyTime", "terminalId", "deliveryDetails", "pendingStampClaimId", "pendingStampCount"
     ];
+
     const safeUpdates = {};
+    const integerFields = ["isRushOrder", "dailyOrderNumber", "pendingStampCount"];
+
     for (const key of allowedKeys) {
-      if (updates[key] !== undefined) safeUpdates[key] = updates[key];
+      if (updates[key] !== undefined) {
+        let value = updates[key];
+        if (integerFields.includes(key) && typeof value === 'boolean') {
+          value = value ? 1 : 0;
+        }
+        safeUpdates[key] = value;
+      }
     }
 
     const { error: updateErr } = await db.from("orders").update(safeUpdates).eq("id", id);
