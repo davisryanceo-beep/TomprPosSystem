@@ -337,6 +337,10 @@ app.get("/api/public/menu/:storeId", publicApiLimiter, async (req, res) => {
 
 // Helper for Daily Order Numbering
 async function getNextDailyOrderNumber(storeId) {
+  if (!storeId) {
+    console.warn("getNextDailyOrderNumber: No storeId provided, using timestamp fallback.");
+    return Math.floor(Date.now() / 1000) % 10000; // Limit to 4 digits for fallback
+  }
   try {
     const today = new Date().toISOString().split('T')[0];
     const { data, error } = await db
@@ -347,12 +351,15 @@ async function getNextDailyOrderNumber(storeId) {
       .order("dailyOrderNumber", { ascending: false })
       .limit(1);
 
-    if (error) throw error;
+    if (error) {
+      console.error("Supabase error in getNextDailyOrderNumber:", error.message);
+      throw error;
+    }
     const maxNum = (data && data.length > 0) ? (data[0].dailyOrderNumber || 0) : 0;
     return maxNum + 1;
   } catch (err) {
-    console.error("Backend Numbering Error:", err);
-    return Math.floor(Date.now() / 1000); // Fallback to timestamp-based if DB fails
+    console.error("Backend Numbering Error:", err.message || err);
+    return (Math.floor(Date.now() / 1000) % 10000); // Fallback to 4 digits of timestamp
   }
 }
 
@@ -381,7 +388,8 @@ app.post("/api/public/orders", publicApiLimiter, async (req, res) => {
 
     res.json({ success: true, orderId: order.id });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("Public Order Error:", err);
+    res.status(500).json({ error: err.message || "Failed to create public order", details: err });
   }
 });
 
@@ -938,8 +946,12 @@ app.post("/api/orders", authenticateToken, async (req, res) => {
 
     res.json({ success: true, order: safeOrder });
   } catch (err) {
-    console.error("Error creating order:", err);
-    res.status(500).json({ error: err.message });
+    console.error("Detailed Order Creation Error:", err);
+    res.status(500).json({ 
+      error: err.message || "Failed to create order", 
+      details: err.details || err.hint || err,
+      code: err.code
+    });
   }
 });
 
