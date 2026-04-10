@@ -128,6 +128,11 @@ CREATE TABLE IF NOT EXISTS orders (
     orderType TEXT DEFAULT 'POS',
     qrPaymentState TEXT,
     dailyOrderNumber INTEGER,
+    kitchenStatus TEXT DEFAULT 'pending',
+    kitchenStartTime TIMESTAMPTZ,
+    kitchenReadyTime TIMESTAMPTZ,
+    deliveryDetails JSONB,
+    terminalId TEXT,
     FOREIGN KEY (storeId) REFERENCES stores(id) ON DELETE CASCADE
 );
 
@@ -405,3 +410,13 @@ CREATE TABLE IF NOT EXISTS expenses (
     timestamp TIMESTAMPTZ DEFAULT NOW(),
     FOREIGN KEY (storeId) REFERENCES stores(id) ON DELETE CASCADE
 );
+
+-- --- MIGRATIONS --- --
+
+-- Fix for Order Number and Saving Bug (2024-04-10)
+-- Run these if your local database is missing columns:
+-- ALTER TABLE orders ADD COLUMN IF NOT EXISTS kitchenStatus TEXT DEFAULT 'pending';
+-- ALTER TABLE orders ADD COLUMN IF NOT EXISTS kitchenStartTime TIMESTAMPTZ;
+-- ALTER TABLE orders ADD COLUMN IF NOT EXISTS kitchenReadyTime TIMESTAMPTZ;
+-- ALTER TABLE orders ADD COLUMN IF NOT EXISTS deliveryDetails JSONB;
+-- ALTER TABLE orders ADD COLUMN IF NOT EXISTS terminalId TEXT;

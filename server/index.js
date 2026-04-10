@@ -335,6 +335,27 @@ app.get("/api/public/menu/:storeId", publicApiLimiter, async (req, res) => {
   }
 });
 
+// Helper for Daily Order Numbering
+async function getNextDailyOrderNumber(storeId) {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    const { data, error } = await db
+      .from("orders")
+      .select("dailyOrderNumber")
+      .eq("storeId", storeId)
+      .gte("timestamp", today)
+      .order("dailyOrderNumber", { ascending: false })
+      .limit(1);
+
+    if (error) throw error;
+    const maxNum = (data && data.length > 0) ? (data[0].dailyOrderNumber || 0) : 0;
+    return maxNum + 1;
+  } catch (err) {
+    console.error("Backend Numbering Error:", err);
+    return Math.floor(Date.now() / 1000); // Fallback to timestamp-based if DB fails
+  }
+}
+
 app.post("/api/public/orders", publicApiLimiter, async (req, res) => {
   const order = req.body;
 
@@ -351,7 +372,9 @@ app.post("/api/public/orders", publicApiLimiter, async (req, res) => {
     order.timestamp = new Date().toISOString();
     order.status = "Created"; // Initial status
     order.paymentMethod = "Cash"; // Default to Cash on Delivery for now
-    if (order.isRushOrder !== undefined) order.isRushOrder = order.isRushOrder ? 1 : 0;
+    
+    // Generate Daily Order Number on Backend
+    order.dailyOrderNumber = await getNextDailyOrderNumber(order.storeId);
 
     const { error } = await db.from("orders").insert(order);
     if (error) throw error;
@@ -887,17 +910,23 @@ app.post("/api/orders", authenticateToken, async (req, res) => {
     }
 
     // Ensure crucial fields are present
+    if (!order.isRushOrder) order.isRushOrder = false;
     if (!order.id) order.id = `order-${Date.now()}`;
     if (!order.timestamp) order.timestamp = new Date().toISOString();
     if (!order.status) order.status = "Created";
-    if (order.isRushOrder !== undefined) order.isRushOrder = order.isRushOrder ? 1 : 0;
+
+    // Generate Daily Order Number on Backend if missing
+    if (!order.dailyOrderNumber) {
+      order.dailyOrderNumber = await getNextDailyOrderNumber(order.storeId);
+    }
 
     // Filter out keys that don't belong in the "orders" table to prevent Postgres crashes
     const allowedKeys = [
       "id", "items", "tableNumber", "totalAmount", "taxAmount", "discountAmount",
       "finalAmount", "status", "timestamp", "cashierId", "baristaId", "isRushOrder",
       "paymentMethod", "paymentCurrency", "cashTendered", "changeGiven",
-      "appliedPromotionId", "storeId", "qrPaymentState", "dailyOrderNumber"
+      "appliedPromotionId", "storeId", "qrPaymentState", "dailyOrderNumber",
+      "customerId", "customerPhone", "orderType", "kitchenStatus", "kitchenStartTime", "kitchenReadyTime"
     ];
     const safeOrder = {};
     for (const key of allowedKeys) {
@@ -918,8 +947,6 @@ app.post("/api/orders", authenticateToken, async (req, res) => {
 app.put("/api/orders/:id", authenticateToken, async (req, res) => {
   const { id } = req.params;
   const updates = req.body;
-  if (updates.isRushOrder !== undefined) updates.isRushOrder = updates.isRushOrder ? 1 : 0;
-
   try {
     const { data: currentOrder, error: checkErr } = await db
       .from("orders")
@@ -937,17 +964,13 @@ app.put("/api/orders/:id", authenticateToken, async (req, res) => {
 
     delete updates.id; // Prevent updating ID
 
-    // Ensure we don't accidentally revert status if it moved forward in a race condition,
-    // but we still want to save item changes for open tabs.
-    // If the frontend sends a full order update, we should apply safeUpdates.
-    // We'll remove the early return that was completely blocking Open Tab item updates.
-
     // Filter updates
     const allowedKeys = [
       "items", "tableNumber", "totalAmount", "taxAmount", "discountAmount",
       "finalAmount", "status", "cashierId", "baristaId", "isRushOrder",
       "paymentMethod", "paymentCurrency", "cashTendered", "changeGiven",
-      "appliedPromotionId", "qrPaymentState", "dailyOrderNumber"
+      "appliedPromotionId", "qrPaymentState", "dailyOrderNumber",
+      "customerId", "customerPhone", "orderType", "kitchenStatus", "kitchenStartTime", "kitchenReadyTime"
     ];
     const safeUpdates = {};
     for (const key of allowedKeys) {
