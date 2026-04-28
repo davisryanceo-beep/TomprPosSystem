@@ -58,67 +58,73 @@ const OpenTabsModal: React.FC<OpenTabsModalProps> = ({ isOpen, onClose, onLoadTa
                     {openTabs.length === 0 ? (
                         <p className="text-center text-gray-500 py-8">No open tabs found.</p>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-5">
                             {openTabs.map((tab) => (
                                 <div
                                     key={tab.id}
-                                    className="border dark:border-gray-700 rounded-lg p-4 bg-white dark:bg-charcoal-dark shadow-sm flex flex-col justify-between"
+                                    className="glass-panel border-emerald/10 dark:border-emerald/20 rounded-2xl p-5 bg-white/70 dark:bg-charcoal-dark/70 shadow-xl hover:shadow-2xl transition-all duration-300 flex flex-col justify-between group animate-fade-in"
                                 >
                                     <div>
-                                        <div className="flex justify-between items-start mb-3">
-                                            <div>
-                                                <h3 className="font-bold text-lg text-charcoal dark:text-cream-light flex items-center gap-2">
-                                                    {tab.dailyOrderNumber ? `#${tab.dailyOrderNumber}` : 'New Tab'}
-                                                </h3>
-                                                <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-1">
-                                                    <FaClock /> {new Date(tab.timestamp).toLocaleTimeString()}
+                                        <div className="flex justify-between items-start mb-4">
+                                            <div className="space-y-1">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="bg-emerald/10 text-emerald text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
+                                                        {tab.tableNumber ? 'Table' : 'Takeaway'}
+                                                    </span>
+                                                    <h3 className="font-black text-xl text-charcoal-dark dark:text-cream-light leading-none">
+                                                        {tab.dailyOrderNumber ? `#${tab.dailyOrderNumber}` : `#${tab.id.slice(-4)}`}
+                                                    </h3>
+                                                </div>
+                                                <p className="text-xs text-charcoal-light dark:text-gray-400 flex items-center gap-1.5">
+                                                    <FaClock className="text-emerald/60" /> {new Date(tab.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                                                 </p>
                                                 {tab.tableNumber && (
-                                                    <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 mt-1">
-                                                        Table: {tab.tableNumber}
+                                                    <p className="text-sm font-bold text-emerald leading-none mt-2">
+                                                        {tab.tableNumber}
                                                     </p>
                                                 )}
                                             </div>
                                             <div className="text-right">
-                                                <p className="font-extrabold text-xl text-emerald">
+                                                <p className="font-black text-2xl text-emerald drop-shadow-sm">
                                                     ${tab.finalAmount.toFixed(2)}
                                                 </p>
-                                                <p className="text-xs text-gray-500 dark:text-gray-400">
-                                                    {tab.items.length} items
+                                                <p className="text-[10px] font-bold text-charcoal-light dark:text-gray-500 uppercase tracking-tighter">
+                                                    {tab.items.length} {tab.items.length === 1 ? 'item' : 'items'}
                                                 </p>
                                             </div>
                                         </div>
 
-                                        <div className="mb-4 text-sm text-gray-600 dark:text-gray-300">
+                                        <div className="mb-5 text-xs text-charcoal-dark/70 dark:text-gray-300 italic line-clamp-2 min-h-[2.5rem]">
                                             {tab.items.map((i) => `${i.quantity}x ${i.productName}`).join(', ')}
                                         </div>
                                     </div>
 
-                                    <div className="flex gap-2 mt-2">
-                                        <Button
-                                            onClick={() => onLoadTab(tab)}
-                                            variant="outline"
-                                            className="flex-1 !py-2"
-                                            leftIcon={<FaFolderOpen />}
-                                        >
-                                            Edit
-                                        </Button>
-                                        <Button
-                                            onClick={() => onSettleTab(tab)}
-                                            variant="primary"
-                                            className="flex-1 !py-2 shadow-sm bg-emerald hover:bg-emerald-dark"
-                                            leftIcon={<FaMoneyBillWave />}
-                                        >
-                                            Pay
-                                        </Button>
-                                        <Button
+                                    <div className="flex items-center gap-2">
+                                        <div className="flex flex-1 gap-2">
+                                            <Button
+                                                onClick={() => onLoadTab(tab)}
+                                                variant="outline"
+                                                className="flex-1 !py-2.5 !px-2 rounded-xl text-xs font-black uppercase tracking-widest border-emerald/20 hover:bg-emerald/5 transition-colors"
+                                                leftIcon={<FaFolderOpen className="text-emerald" />}
+                                            >
+                                                Edit
+                                            </Button>
+                                            <Button
+                                                onClick={() => onSettleTab(tab)}
+                                                variant="primary"
+                                                className="flex-1 !py-2.5 !px-2 rounded-xl text-xs font-black uppercase tracking-widest bg-gradient-to-r from-emerald to-teal-500 hover:shadow-lg hover:shadow-emerald/20 transition-all active:scale-95"
+                                                leftIcon={<FaMoneyBillWave />}
+                                            >
+                                                Pay
+                                            </Button>
+                                        </div>
+                                        <button
                                             onClick={() => handleDeleteTab(tab.id)}
-                                            variant="ghost"
-                                            className="text-red-500 border-red-200 hover:bg-red-50 dark:hover:bg-red-900/20 px-3"
+                                            className="p-2.5 rounded-xl bg-red-50 dark:bg-red-900/10 text-red-400 hover:text-red-600 hover:bg-red-100 dark:hover:bg-red-900/20 transition-all border border-red-100 dark:border-red-900/20"
                                             title="Delete Tab"
                                         >
-                                            <FaTrash />
-                                        </Button>
+                                            <FaTrash size={14} />
+                                        </button>
                                     </div>
                                 </div>
                             ))}
