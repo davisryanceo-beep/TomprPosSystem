@@ -342,21 +342,27 @@ async function getNextDailyOrderNumber(storeId) {
     return Math.floor(Date.now() / 1000) % 10000; // Limit to 4 digits for fallback
   }
   try {
-    const today = new Date().toISOString().split('T')[0];
-    const { data, error } = await db
-      .from("orders")
-      .select("dailyOrderNumber")
-      .eq("storeId", storeId)
-      .gte("timestamp", today)
-      .order("dailyOrderNumber", { ascending: false })
-      .limit(1);
-
+    // ATOMIC FIX: Use the RPC function for race-condition-safe numbering
+    const { data, error } = await db.rpc('get_next_daily_order_number', { p_store_id: storeId });
+    
     if (error) {
-      console.error("Supabase error in getNextDailyOrderNumber:", error.message);
-      return (Math.floor(Date.now() / 1000) % 10000); // Fallback instead of crashing
+      console.warn("RPC get_next_daily_order_number failed, falling back to query:", error.message);
+      // Fallback to traditional query if RPC is not installed
+      const today = new Date().toISOString().split('T')[0];
+      const { data: qData, error: qErr } = await db
+        .from("orders")
+        .select("dailyOrderNumber")
+        .eq("storeId", storeId)
+        .gte("timestamp", today)
+        .order("dailyOrderNumber", { ascending: false })
+        .limit(1);
+
+      if (qErr) throw qErr;
+      const maxNum = (qData && qData.length > 0) ? (qData[0].dailyOrderNumber || 0) : 0;
+      return maxNum + 1;
     }
-    const maxNum = (data && data.length > 0) ? (data[0].dailyOrderNumber || 0) : 0;
-    return maxNum + 1;
+    
+    return data;
   } catch (err) {
     console.error("Backend Numbering Error:", err.message || err);
     return (Math.floor(Date.now() / 1000) % 10000); // Fallback to 4 digits of timestamp
@@ -871,12 +877,16 @@ app.get("/api/orders", authenticateToken, enforceStoreScope, async (req, res) =>
       query = query.eq("storeId", storeId);
     }
 
+    // DEFAULT LIMIT: Only fetch last 30 days of orders if no date range is provided
+    // This prevents memory issues in the POS app over time.
     const { startDate, endDate } = req.query;
-    if (startDate) {
-      query = query.gte("timestamp", startDate);
-    }
-    if (endDate) {
-      query = query.lte("timestamp", endDate);
+    if (!startDate && !endDate) {
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      query = query.gte("timestamp", thirtyDaysAgo.toISOString());
+    } else {
+      if (startDate) query = query.gte("timestamp", startDate);
+      if (endDate) query = query.lte("timestamp", endDate);
     }
 
     const { data: rawOrders, error } = await query;
@@ -939,15 +949,34 @@ app.post("/api/orders", authenticateToken, async (req, res) => {
     ];
 
     const safeOrder = {};
-    const integerFields = ["isRushOrder", "dailyOrderNumber", "pendingStampCount"];
+    const integerFields = ["dailyOrderNumber", "pendingStampCount"];
+    const booleanFields = ["isRushOrder"];
 
     for (const key of allowedKeys) {
       if (order[key] !== undefined) {
         let value = order[key];
-        // Convert Booleans to Integers for DB compatibility if needed
-        if (integerFields.includes(key) && typeof value === 'boolean') {
-          value = value ? 1 : 0;
+        
+        // Robust Boolean Conversion
+        if (booleanFields.includes(key)) {
+          if (typeof value === 'string') {
+            value = value.toLowerCase() === 'true';
+          } else {
+            value = !!value;
+          }
         }
+        
+        // Robust Integer Conversion (prevents "invalid input syntax for type integer: 'false'")
+        if (integerFields.includes(key)) {
+          if (typeof value === 'string') {
+            if (value.toLowerCase() === 'false') value = 0;
+            else if (value.toLowerCase() === 'true') value = 1;
+            else value = parseInt(value, 10);
+          } else if (typeof value === 'boolean') {
+            value = value ? 1 : 0;
+          }
+          if (isNaN(value) || value === null) value = 0;
+        }
+
         safeOrder[key] = value;
       }
     }
@@ -1370,6 +1399,11 @@ app.get("/api/wastage-logs", authenticateToken, enforceStoreScope, async (req, r
     let query = db.from("wastage_logs").select("*");
     if (storeId) query = query.eq("storeId", storeId);
 
+    // Default to last 30 days
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    query = query.gte("date", thirtyDaysAgo.toISOString());
+
     const { data: logs, error } = await query;
     if (error) throw error;
 
@@ -1398,6 +1432,11 @@ app.get("/api/time-logs", authenticateToken, enforceStoreScope, async (req, res)
   try {
     let query = db.from("time_logs").select("*");
     if (storeId) query = query.eq("storeId", storeId);
+
+    // Default to last 30 days
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    query = query.gte("clockInTime", thirtyDaysAgo.toISOString());
 
     const { data: logs, error } = await query;
     if (error) throw error;
@@ -1452,6 +1491,11 @@ app.get("/api/cash-drawer-logs", authenticateToken, enforceStoreScope, async (re
   try {
     let query = db.from("cash_drawer_logs").select("*");
     if (storeId) query = query.eq("storeId", storeId);
+
+    // Default to last 30 days
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    query = query.gte("logTimestamp", thirtyDaysAgo.toISOString());
 
     const { data: logs, error } = await query;
     if (error) throw error;
@@ -2531,6 +2575,11 @@ app.get("/api/expenses", authenticateToken, enforceStoreScope, async (req, res) 
       query = query.eq("storeId", storeId);
     }
     
+    // Default to last 30 days
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    query = query.gte("timestamp", thirtyDaysAgo.toISOString());
+    
     const { data: expenses, error } = await query.order("date", { ascending: false });
     if (error) throw error;
     res.json(expenses || []);
@@ -2582,6 +2631,11 @@ app.get("/api/leave-requests", authenticateToken, async (req, res) => {
       query = query.eq("storeId", req.user.storeId);
     }
     
+    // Default to last 30 days
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    query = query.gte("requestedAt", thirtyDaysAgo.toISOString());
+    
     const { data, error } = await query.order("requestedAt", { ascending: false });
     if (error) throw error;
     res.json(data || []);
@@ -2628,6 +2682,11 @@ app.get("/api/overtime-requests", authenticateToken, async (req, res) => {
     } else if (req.user.storeId) {
       query = query.eq("storeId", req.user.storeId);
     }
+    
+    // Default to last 30 days
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    query = query.gte("requestedAt", thirtyDaysAgo.toISOString());
     
     const { data, error } = await query.order("requestedAt", { ascending: false });
     if (error) throw error;

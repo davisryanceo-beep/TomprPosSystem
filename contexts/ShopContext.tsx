@@ -278,6 +278,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [overtimeRequestsState, setOvertimeRequestsState] = useState<OvertimeRequest[]>([]);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [pendingOrders, setPendingOrders] = useState<Order[]>([]);
+  const isReloading = React.useRef(false);
 
   // Unique session ID for each device/terminal to prevent "cart jumping" between tablets
   const [posTerminalId] = useState(() => {
@@ -354,6 +355,9 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // --- RELOAD DATA (Exposed) ---
   const reloadData = useCallback(async () => {
+    if (isReloading.current) return;
+    isReloading.current = true;
+    
     // --- PHASE 1: CRITICAL DATA (Blocking) ---
     // Fetch settings, stores, and users first so the app can initialize routing and auth checks.
     try {
@@ -372,13 +376,16 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             setStoresState(storesRes.data);
         } catch (err) {
             console.error("Failed to fetch stores for loyalty", err);
+        } finally {
+            setLoading(false);
+            isReloading.current = false;
         }
-        setLoading(false);
         return;
     }
 
     if (!token) {
       setLoading(false);
+      isReloading.current = false;
       return;
     }
 
@@ -410,6 +417,8 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             setAnnouncementsState(announcementsRes.data || []);
         } catch (e) {
             console.error("Failed to fetch loyalty secondary data", e);
+        } finally {
+            isReloading.current = false;
         }
         return;
     }
@@ -461,6 +470,50 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     } catch (err) {
       console.error("Failed to fetch secondary data", err);
+    } finally {
+      isReloading.current = false;
+    }
+  }, [isStampOnly]);
+
+  // --- REFRESH LIVE DATA (Lighter version for background sync) ---
+  const refreshLiveData = useCallback(async () => {
+    if (isReloading.current) return;
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    
+    isReloading.current = true;
+    
+    try {
+      // Only fetch things that change frequently in the background
+      const [ordersRes, shiftsRes, timeLogsRes, cashLogsRes, announcementsRes, leaveRes, overtimeRes] = await Promise.all([
+        getOrders(),
+        getShifts(),
+        getTimeLogs(),
+        getCashDrawerLogs(),
+        getAnnouncements(),
+        getLeaveRequests(),
+        getOvertimeRequests()
+      ]);
+
+      if (ordersRes.data) {
+        setOrdersState(ordersRes.data.map((o: any) => ({ ...o, timestamp: new Date(o.timestamp) })));
+      }
+      setShiftsState(shiftsRes.data || []);
+      setTimeLogsState(timeLogsRes.data || []);
+      setCashDrawerLogsState((cashLogsRes.data || []).map((l: any) => ({
+        ...l,
+        cashierId: l.reportedBy,
+        cashierNotes: l.notes,
+        cashierName: l.cashierName || l.reportedBy || 'Unknown' 
+      })));
+      setAnnouncementsState(announcementsRes.data || []);
+      setLeaveRequestsState(leaveRes.data || []);
+      setOvertimeRequestsState(overtimeRes.data || []);
+      
+    } catch (err) {
+      console.error("Failed to refresh live data", err);
+    } finally {
+      isReloading.current = false;
     }
   }, []);
 
@@ -471,8 +524,8 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // Auto-refresh every 30 seconds for "Live Update" experience
     const intervalId = setInterval(() => {
       if (document.visibilityState === 'visible') {
-        console.log("Auto-refreshing data...");
-        reloadData();
+        console.log("Refreshing live data...");
+        refreshLiveData();
       }
     }, 30000); // 30 seconds
 
@@ -485,7 +538,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        reloadData(); // Refresh immediately when coming back to the tab
+        refreshLiveData(); // Refresh live data immediately when coming back to the tab
       }
     };
 
@@ -1387,7 +1440,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (!currentOrder || !currentStoreId) return null;
 
     const isExistingTab = currentOrder.id && currentOrder.id.startsWith('order-');
-    const orderId = isExistingTab ? currentOrder.id : `order-${Date.now()}`;
+    const orderId = isExistingTab ? currentOrder.id : `order-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
     const finalizedOrder: Order = {
       ...currentOrder,
@@ -1510,10 +1563,13 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return globalSavedOrder;
     } catch (err) {
       console.error("Failed to finalize order", err);
+      
+      const errorMessage = err.message || (typeof err === 'string' ? err : 'Internal Server Error');
+      alert(`CRITICAL: Failed to finalize order to server!\n\nError: ${errorMessage}\n\nPlease try again or check your internet connection.`);
+
       if (!isOnline) {
         // If already offline, it's already queued. If it failed while online, queue it.
         setPendingOrders(prev => [...prev, finalizedOrder]);
-        alert("Failed to finalize order to server. Order saved locally and will sync when online.");
       }
       return null;
     }
@@ -1524,7 +1580,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     // 1. Identify if this is an existing tab or a new one
     const isExistingTab = currentOrder.id && currentOrder.id.startsWith('order-');
-    const orderId = isExistingTab ? currentOrder.id : `order-${Date.now()}`;
+    const orderId = isExistingTab ? currentOrder.id : `order-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
     const tabOrder: Order = {
       ...currentOrder,

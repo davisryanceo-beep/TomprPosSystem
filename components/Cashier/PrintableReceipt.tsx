@@ -61,7 +61,7 @@ const PrintableReceipt: React.FC<PrintableReceiptProps> = ({ order }) => {
         .printable-receipt-content .footer-note { text-align: center; margin-top: 1rem; font-size: 0.75rem; }
       `}</style>
       <h3>Amble Specialty Cafe</h3>
-      <p><strong>Order #:</strong> {order.dailyOrderNumber ? order.dailyOrderNumber : order.id.slice(-8)}</p>
+      <p><strong>Order #:</strong> {order.dailyOrderNumber ? order.dailyOrderNumber : `ID-${order.id.slice(-8)}`}</p>
       <p><strong>Date:</strong> {new Date(order.timestamp).toLocaleString()}</p>
       <p><strong>Cashier:</strong> {order.cashierId ? order.cashierId.split('-')[0] : 'N/A'}</p>
       {order.tableNumber && <p><strong>For:</strong> {order.tableNumber}</p>}
