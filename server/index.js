@@ -977,11 +977,6 @@ app.post("/api/orders", authenticateToken, async (req, res) => {
           if (isNaN(value) || value === null) value = 0;
         }
 
-        // Ensure objects/arrays are stringified for TEXT columns (backwards compatibility)
-        if (["items", "deliveryDetails"].includes(key) && typeof value === 'object' && value !== null) {
-          value = JSON.stringify(value);
-        }
-
         safeOrder[key] = value;
       }
     }
