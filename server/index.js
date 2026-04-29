@@ -949,8 +949,8 @@ app.post("/api/orders", authenticateToken, async (req, res) => {
     ];
 
     const safeOrder = {};
-    const integerFields = ["dailyOrderNumber", "pendingStampCount"];
-    const booleanFields = ["isRushOrder"];
+    const integerFields = ["dailyOrderNumber", "pendingStampCount", "isRushOrder"];
+    const booleanFields = [];
 
     for (const key of allowedKeys) {
       if (order[key] !== undefined) {
@@ -977,16 +977,30 @@ app.post("/api/orders", authenticateToken, async (req, res) => {
           if (isNaN(value) || value === null) value = 0;
         }
 
+        // Ensure objects/arrays are stringified for TEXT columns (backwards compatibility)
+        if (["items", "deliveryDetails"].includes(key) && typeof value === 'object' && value !== null) {
+          value = JSON.stringify(value);
+        }
+
         safeOrder[key] = value;
       }
     }
 
     const { error } = await db.from("orders").insert(safeOrder);
-    if (error) throw error;
+    if (error) {
+      console.error("Supabase Insert Error:", error);
+      throw error;
+    }
 
     res.json({ success: true, order: safeOrder });
   } catch (err) {
-    console.error("Detailed Order Creation Error:", err);
+    console.error("Detailed Order Creation Error:", {
+      message: err.message,
+      details: err.details,
+      hint: err.hint,
+      code: err.code,
+      orderId: order?.id
+    });
     res.status(500).json({ 
       error: err.message || "Failed to create order", 
       details: err.details || err.hint || err,
@@ -1040,11 +1054,20 @@ app.put("/api/orders/:id", authenticateToken, async (req, res) => {
     }
 
     const { error: updateErr } = await db.from("orders").update(safeUpdates).eq("id", id);
-    if (updateErr) throw updateErr;
+    if (updateErr) {
+      console.error("Supabase Update Error:", updateErr);
+      throw updateErr;
+    }
 
     res.json({ success: true, id });
   } catch (err) {
-    console.error("Update Order Error:", err);
+    console.error("Update Order Error:", {
+      message: err.message,
+      details: err.details,
+      hint: err.hint,
+      code: err.code,
+      orderId: id
+    });
     res.status(500).json({ error: err.message });
   }
 });
